@@ -9,31 +9,34 @@ XímbalGo es una aplicación móvil diseñada para mejorar la experiencia de los
 ## Generar y instalar APK
 - npx expo run:android --variant release
 
-# Arquitectura del proyecto
+## Arquitectura del proyecto
+```plaintext
+Arquitectura del proyecto
 
 assets/
-│── imagenes/
-│── logos/
+├── imagenes/
+├── logos/
 
 src/
-│── components/
-│   │── Buttons/
-│   │── Text/
-│   │── View/
-│   │── Card/
+├── components/
+│   ├── Buttons/
+│   ├── Text/
+│   ├── View/
+│   ├── Card/
 │
-│── modules/
-│   │── Types/   # Datos de roles, campos de la DB
+├── modules/
+│   ├── Types/   # Datos de roles, campos de la DB
 │
-│── screens/
-│   │── Home/
-│   │── Login/
-│   │── Dashboard/
+├── screens/
+│   ├── Home/
+│   ├── Login/
+│   ├── Dashboard/
 │
-│── navigation/
-│   │── rutas_por_rol/
+├── navigation/
+│   ├── rutas_por_rol/
 │
-│── theme/
-│   │── tipografia/
-│   │── paleta_colores/
+├── theme/
+│   ├── tipografia/
+│   ├── paleta_colores/
 
+*Recuerden seguir la arquitectura del proyecto*
