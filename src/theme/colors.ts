@@ -1,9 +1,10 @@
 /**
  * Paleta de colores Material Design (modo claro)
- * Generada a partir de material-theme.zip
+ * Generada por Material3 Design de Google
  */
 
 export const Colors = {
+  //Colores de Ximbalgo
   primary: '#34618D',
   onPrimary: '#FFFFFF',
   primaryContainer: '#D0E4FF',
@@ -62,6 +63,16 @@ export const Colors = {
   surfaceContainer: '#ECEEF4',
   surfaceContainerHigh: '#E6E8EE',
   surfaceContainerHighest: '#E1E2E8',
+
+  //Advertencias
+  danger: '#D6423F',
+  onDanger: '#FFFFFF',
+  success: '#2E9E5B',
+
+  //Colores generales
+  dark: '#000000',
+  white: '#FFFFFF',
+  shadow: '#A9A9A9',
 } as const;
 
 export type ColorKey = keyof typeof Colors;
