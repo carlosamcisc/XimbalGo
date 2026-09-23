@@ -1,10 +1,10 @@
-import React from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/types";
 import Button from "../../components/Button";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image, useWindowDimensions, View, Text, StyleSheet } from "react-native";
+import { Image, useWindowDimensions, View, Text, StyleSheet} from "react-native";
 import Colors from "../../theme/colors";
+import { StatusBar } from "expo-status-bar";
 import { NombreIcono } from "../../components/Icono";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Bienvenida'>;
@@ -20,13 +20,14 @@ const BienvenidaScreen = ({navigation}: Props) =>{
     const insets = useSafeAreaInsets();
 
     const handleSiniciar = () =>{
-        navigation.navigate('InicioSesion');
+        navigation.navigate('SeleccionRol');
     }
 
     return(
         <SafeAreaView
         edges={['top']}
         style={styles.pantalla}>
+            <StatusBar style="dark"/>
             <View style={styles.contenedorText}>
                 <Text style={styles.text}>Bienvenido a Ximbal Go</Text>
             </View>
@@ -35,7 +36,7 @@ const BienvenidaScreen = ({navigation}: Props) =>{
                 style={[styles.fondopantalla, {width, height: width / aspecto}]}
                 resizeMode="cover"
             />
-            <View style={[styles.contenedorButton, {marginBottom: insets.bottom + 20}]}>
+            <View style={styles.contenedorButton}>
                 <Button
                 titulo="Comienza tu experiencia"
                 icono= "navigateNext"
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
         marginTop: 40,
     },
     contenedorButton:{
-        justifyContent: "center",
+        marginBottom: 60,
         margin: 10,
     },
     fondopantalla:{

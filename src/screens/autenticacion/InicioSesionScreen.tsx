@@ -4,12 +4,16 @@ import {View, Text, StyleSheet, Image, Pressable, Alert, ToastAndroid} from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import Colors from "../../theme/colors";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList, Rol } from "../../navigation/types";
+
+type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
 const logoXimbalGo = require('../../../assets/icon.png');
 const width = 100;
 const height = 100
 
-const IncioSesionScreen = () =>{
+const IncioSesionScreen = ({navigation}: Props) =>{
     const [correo, setCorreo] = useState("");
     const [contrasenia, setContrasenia] = useState("");
 
@@ -37,12 +41,15 @@ const IncioSesionScreen = () =>{
                     value={correo}
                     placeholder="Escribe tu correo..."
                     onChangeText={setCorreo}
+                    icono="email"
                 />
                 <TextInputField
                     label="Contraseña"
                     value={contrasenia}
                     placeholder="Escribe tu contraseña..."
                     onChangeText={setContrasenia}
+                    icono="lock"
+                    secureTextEntry
                 />
                 <View style={styles.contentOlviContrasnia}>
                     <Pressable
@@ -56,16 +63,17 @@ const IncioSesionScreen = () =>{
                     <Button
                     titulo="Iniciar sesion "
                     onPress={() => mostrarToast("Iniciando sesion...")}
-                    icono="login"
                     />
                 </View>
-            
+
             </View>
             <View style={styles.contentOpciones}>
-                <Text>¿Ya tienes una cuenta?</Text>
-                <Text style={styles.registrarse}>Registrate</Text>
+                <Text>¿No tienes una cuenta?</Text>
+                <Pressable onPress={() => navigation.navigate('SeleccionRol')}>
+                    <Text style={styles.registrarse}>Registrate</Text>
+                </Pressable>
             </View>
- 
+
         </SafeAreaView>
     );
 };
@@ -76,6 +84,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.surface,
     },
     imagen:{
+        marginTop: 80,
         marginLeft: 150,
     },
     contentText:{

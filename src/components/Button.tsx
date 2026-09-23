@@ -9,31 +9,35 @@ interface ButtonProps {
     onPress: () => void;
     color?: string;
     icono?: NombreIcono; //icono opcional
+    disabled?: boolean;
 }
 
 //crear el componente boton
 const Button: React.FC<ButtonProps> = ({
-    titulo, 
+    titulo,
     color = Colors.primary, //color por defecto si no se pasa otro color
     icono,
-    onPress, 
+    onPress,
+    disabled = false,
 }) =>{
     return(
         <Pressable
         onPress={onPress}
+        disabled={disabled}
         style={({pressed}) => [
             styles.button,
-            {backgroundColor: pressed ? Colors.secondary : color}
+            {backgroundColor: disabled ? Colors.outlineVariant : pressed ? Colors.secondary : color},
+            disabled && styles.buttonDeshabilitado,
         ]}
         >
             {({pressed}) => (
                 <View style={styles.contenedor}>
                     <Text style={[
                         styles.text,
-                        {color: pressed ? Colors.white : Colors.white},
+                        {color: disabled ? Colors.outline : Colors.white},
                     ]}>{titulo}
                     </Text>
-                    {icono && <Icono nombre={icono} tamanio={30} color={Colors.white}/>}
+                    {icono && <Icono nombre={icono} tamanio={30} color={disabled ? Colors.outline : Colors.white}/>}
                 </View>
             )}
 
@@ -52,6 +56,9 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.primary,
         alignItems: "center"
+    },
+    buttonDeshabilitado:{
+        borderColor: Colors.outlineVariant,
     },
     contenedor:{
         flexDirection: "row",
