@@ -43,7 +43,9 @@ const SeleccionRolScreen = ({navigation}: Props) =>{
 
     return(
         <SafeAreaView style={styles.pantalla}>
-            <StatusBar style="dark"/>
+            <View style={styles.contentPasos}>
+                <Text style={styles.textPasos}>Paso 1 de 2</Text>
+            </View>
             <View style={styles.contentEncabezado}>
                 <Text style={styles.encabezado}>¿Como quieres usar XimbalGo?</Text>
             </View>
@@ -89,6 +91,16 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: "bold",
         textAlign: "center",
+    },
+    contentPasos:{
+        marginTop: 10,
+        alignItems: "flex-end",
+        marginEnd: 20,
+    },
+    textPasos:{
+        color: Colors.dark,
+        fontWeight: "bold",
+        fontSize: 16,
     },
     contentOpciones:{
         paddingHorizontal: 20,

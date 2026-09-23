@@ -46,10 +46,15 @@ const RegistroScreen = ({navigation, route}: Props) =>{
 
     return (
         <SafeAreaView style={styles.pantalla}>
-            <StatusBar style="dark"/>
-            <Pressable style={styles.botonAtras} onPress={() => navigation.goBack()}>
-                <Icono nombre="arrowBack" tamanio={26} color={Colors.dark}/>
-            </Pressable>
+
+            <View style={styles.contentNavegacion}>
+                <Pressable style={styles.botonAtras} onPress={() => navigation.goBack()}>
+                  <Icono nombre="arrowBack" tamanio={26} color={Colors.dark}/>
+                </Pressable>
+                <View style={styles.contTextPasos}>
+                    <Text style={styles.textPasos}>Paso 2 de 2</Text>
+                </View>
+            </View>
             <View style={styles.contentEncabezado}>
                 <Text style={styles.encabezado}>Crea tu cuenta</Text>
                 <Text style={styles.subEncabezado}>Te estas registrando como {ROL_LABELS[rol]}</Text>
@@ -60,21 +65,18 @@ const RegistroScreen = ({navigation, route}: Props) =>{
                     value={nombre}
                     placeholder="Escribe tu nombre..."
                     onChangeText={setNombre}
-                    icono="person"
                 />
                 <TextInputField
                     label="Correo electronico"
                     value={correo}
                     placeholder="Escribe tu correo..."
                     onChangeText={setCorreo}
-                    icono="email"
                 />
                 <TextInputField
                     label="Contraseña"
                     value={contrasenia}
                     placeholder="Escribe tu contraseña..."
                     onChangeText={setContrasenia}
-                    icono="lock"
                     secureTextEntry
                 />
                 <TextInputField
@@ -82,7 +84,6 @@ const RegistroScreen = ({navigation, route}: Props) =>{
                     value={confirmarContrasenia}
                     placeholder="Vuelve a escribir tu contraseña..."
                     onChangeText={setConfirmarContrasenia}
-                    icono="lock"
                     secureTextEntry
                 />
                 <View style={styles.contenBoton}>
@@ -107,6 +108,19 @@ const styles = StyleSheet.create({
     pantalla:{
         flex: 1,
         backgroundColor: Colors.surface,
+    },
+    contentNavegacion:{
+        flexDirection: "row",
+    },
+    contTextPasos:{
+        alignItems: "flex-end",
+        marginTop: 13,
+        marginLeft: 240,
+    },
+    textPasos:{
+        color: Colors.dark,
+        fontSize: 17,
+        fontWeight: "bold",
     },
     botonAtras:{
         marginTop: 10,

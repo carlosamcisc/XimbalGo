@@ -27,7 +27,6 @@ const BienvenidaScreen = ({navigation}: Props) =>{
         <SafeAreaView
         edges={['top']}
         style={styles.pantalla}>
-            <StatusBar style="dark"/>
             <View style={styles.contenedorText}>
                 <Text style={styles.text}>Bienvenido a Ximbal Go</Text>
             </View>

@@ -43,7 +43,7 @@ const TextInputField: React.FC<Prop> = ({
 
                 />
                 {esContrasenia && (
-                    <Pressable onPress={() => setMostrarContrasenia((prev) => !prev)}>
+                    <Pressable onPress={() => setMostrarContrasenia((anterior) => !anterior)}>
                         <Icono
                             nombre={mostrarContrasenia ? 'visibilityOff' : 'visibility'}
                             tamanio={20}
