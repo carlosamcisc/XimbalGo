@@ -46,6 +46,7 @@ const RegistroScreen = ({navigation, route}: Props) =>{
 
     return (
         <SafeAreaView style={styles.pantalla}>
+            <StatusBar style="dark" />
 
             <View style={styles.contentNavegacion}>
                 <Pressable style={styles.botonAtras} onPress={() => navigation.goBack()}>

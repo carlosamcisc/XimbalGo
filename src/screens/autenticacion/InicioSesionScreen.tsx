@@ -6,6 +6,7 @@ import { useState } from "react";
 import Colors from "../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList, Rol } from "../../navigation/types";
+import { StatusBar } from "expo-status-bar";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
@@ -25,6 +26,7 @@ const IncioSesionScreen = ({navigation}: Props) =>{
     };
     return (
         <SafeAreaView style={styles.pantalla}>
+            <StatusBar style="dark" />
             <View style={styles.imagen}>
                 <Image
                     source={logoXimbalGo}

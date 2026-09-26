@@ -43,6 +43,7 @@ const SeleccionRolScreen = ({navigation}: Props) =>{
 
     return(
         <SafeAreaView style={styles.pantalla}>
+            <StatusBar style="dark" />
             <View style={styles.contentPasos}>
                 <Text style={styles.textPasos}>Paso 1 de 2</Text>
             </View>
