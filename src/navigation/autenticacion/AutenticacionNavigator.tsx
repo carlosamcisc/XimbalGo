@@ -2,7 +2,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BienvenidaScreen from "../../screens/autenticacion/BienvenidaScreen";
 import IncioSesionScreen from "../../screens/autenticacion/InicioSesionScreen";
 import SeleccionRolScreen from "../../screens/autenticacion/SelecionRolScreen";
-import RecuperarContraseniaScreen from "../../screens/autenticacion/RecuperarContraseniaScreen";
 import RegistroScreen from "../../screens/autenticacion/RegistroScreen";
 import type { AuthStackParamList } from "../types";
 
@@ -40,14 +39,6 @@ export default function AutenticacionNavigator(){
                     title: "Registro"
                 }}
 
-            />
-            <Stack.Screen
-                name="RecuperarContrasenia"
-                component={RecuperarContraseniaScreen}
-                options={{
-                    headerShown: false,
-                    title: "Recupera tu contraseña"
-                }}
             />
         </Stack.Navigator>
     );

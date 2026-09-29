@@ -17,9 +17,6 @@ const ICONOS = {
     lock: 'lock',
     visibility: 'visibility',
     visibilityOff: 'visibility-off',
-    //Iconos en general
-    info: 'info-outline',
-    arrowForward: 'arrow-forward',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

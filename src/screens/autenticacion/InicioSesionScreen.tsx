@@ -7,7 +7,6 @@ import Colors from "../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList, Rol } from "../../navigation/types";
 import { StatusBar } from "expo-status-bar";
-import BottomWave from "../../components/BottomWave";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
@@ -56,7 +55,7 @@ const IncioSesionScreen = ({navigation}: Props) =>{
                 />
                 <View style={styles.contentOlviContrasnia}>
                     <Pressable
-                    onPress={() => navigation.navigate('RecuperarContrasenia')}
+                    onPress={() => Alert.alert('Estara disponible pronto')}
                     >
                         <Text style={styles.textOlviContrasnia}>¿Olvidaste tu contraseña?</Text>
                     </Pressable>
@@ -76,7 +75,6 @@ const IncioSesionScreen = ({navigation}: Props) =>{
                     <Text style={styles.registrarse}>Registrate</Text>
                 </Pressable>
             </View>
-            <BottomWave />
 
         </SafeAreaView>
     );
