@@ -9,6 +9,12 @@ XímbalGo es una aplicación móvil diseñada para mejorar la experiencia de los
 ## Generar y instalar APK
 - npx expo run:android --variant release
 
+=======
+## Fuentes
+| Fuente | Estilo | Uso recomendado |
+|---|---|---|
+| **Poppins** | Moderna, redondeada | Títulos, botones, encabezados |
+
 ## Arquitectura del proyecto
 ```plaintext
 Arquitectura del proyecto
