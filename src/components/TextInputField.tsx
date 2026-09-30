@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { TextInput, StyleSheet, View, Text, Pressable } from "react-native";
 import Colors from "../theme/colors";
 import { Icono, NombreIcono } from "./Icono";
+import AppText from "./AppText";
 
 interface Prop{
     label?: string;
@@ -27,7 +28,7 @@ const TextInputField: React.FC<Prop> = ({
 
     return(
         <View style={styles.contenedor}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label && <AppText style={styles.label}>{label}</AppText>}
             <View style={[styles.input, isFocused && styles.inputFocused]}>
                 {icono && (
                     <Icono nombre={icono} tamanio={20} color={Colors.outline}/>
@@ -46,7 +47,7 @@ const TextInputField: React.FC<Prop> = ({
                     <Pressable onPress={() => setMostrarContrasenia((anterior) => !anterior)}>
                         <Icono
                             nombre={mostrarContrasenia ? 'visibilityOff' : 'visibility'}
-                            tamanio={20}
+                            tamanio={24}
                             color={Colors.outline}
                         />
                     </Pressable>
@@ -62,9 +63,8 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     label:{
-        fontSize: 16,
+        fontSize: 17,
         marginBottom: 5,
-        color: Colors.dark,
     },
     input:{
         flexDirection: "row",
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     },
     texto:{
         flex: 1,
-        fontSize: 12,
+        fontSize: 15,
         paddingVertical: 10,
     },
 
