@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Icono, NombreIcono } from "./Icono";
 import Colors from "../theme/colors";
-
+import AppText from "./AppText";
 interface OpcionRolProps {
     icono: NombreIcono;
     titulo: string;
@@ -27,8 +27,8 @@ const OpcionRol = ({
         >
             <Icono nombre={icono} tamanio={32} color={Colors.primary} />
             <View style={styles.opcionTexto}>
-                <Text style={styles.opcionTitulo}>{titulo}</Text>
-                <Text style={styles.opcionDescripcion}>{descripcion}</Text>
+                <AppText weight="bold" style={styles.opcionTitulo}>{titulo}</AppText>
+                <AppText style={styles.opcionDescripcion}>{descripcion}</AppText>
             </View>
             <Icono
                 nombre="navigateNext"
@@ -49,6 +49,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
+        elevation: 2,
     },
     opcionSeleccionada: {
         borderColor: Colors.primary,
@@ -60,9 +61,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     opcionTitulo: {
-        color: Colors.dark,
         fontSize: 16,
-        fontWeight: "bold",
     },
     opcionDescripcion: {
         color: Colors.onSurfaceVariant,

@@ -1,7 +1,8 @@
 import React from "react"
-import {View, Text, StyleSheet, Pressable} from "react-native"
+import { View, Text, StyleSheet, Pressable } from "react-native"
 import Colors from "../theme/colors"
 import { Icono, NombreIcono } from "./Icono";
+import AppText from "./AppText";
 
 //declarar variables de que lo va a renderizar el boton
 interface ButtonProps {
@@ -19,25 +20,26 @@ const Button: React.FC<ButtonProps> = ({
     icono,
     onPress,
     disabled = false,
-}) =>{
-    return(
+}) => {
+    return (
         <Pressable
-        onPress={onPress}
-        disabled={disabled}
-        style={({pressed}) => [
-            styles.button,
-            {backgroundColor: disabled ? Colors.outlineVariant : pressed ? Colors.secondary : color},
-            disabled && styles.buttonDeshabilitado,
-        ]}
+            onPress={onPress}
+            disabled={disabled}
+            style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: disabled ? Colors.outlineVariant : pressed ? Colors.secondary : color },
+                disabled && styles.buttonDeshabilitado,
+            ]}
         >
-            {({pressed}) => (
+            {({ pressed }) => (
                 <View style={styles.contenedor}>
-                    <Text style={[
+                    <AppText weight="bold" style={[
                         styles.text,
-                        {color: disabled ? Colors.outline : Colors.white},
-                    ]}>{titulo}
-                    </Text>
-                    {icono && <Icono nombre={icono} tamanio={30} color={disabled ? Colors.outline : Colors.white}/>}
+                        { color: disabled ? Colors.outline : Colors.white },
+                    ]}>
+                        {titulo}
+                    </AppText>
+                    {icono && <Icono nombre={icono} tamanio={30} color={disabled ? Colors.outline : Colors.white} />}
                 </View>
             )}
 
@@ -48,7 +50,7 @@ const Button: React.FC<ButtonProps> = ({
 
 //crear estilos del boton
 const styles = StyleSheet.create({
-    button:{
+    button: {
         borderRadius: 10,
         paddingVertical: 12,
         paddingHorizontal: 20,
@@ -57,20 +59,19 @@ const styles = StyleSheet.create({
         borderColor: Colors.primary,
         alignItems: "center"
     },
-    buttonDeshabilitado:{
+    buttonDeshabilitado: {
         borderColor: Colors.outlineVariant,
     },
-    contenedor:{
+    contenedor: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
     },
-    text:{
+    text: {
         color: Colors.white,
         textAlign: "center",
-        fontSize: 16,
+        fontSize: 17,
         lineHeight: 24,
-        fontWeight: "bold",
     },
 });
 
