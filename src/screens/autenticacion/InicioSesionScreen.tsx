@@ -28,7 +28,7 @@ const IncioSesionScreen = ({ navigation }: Props) => {
 
     };
     return (
-        <SafeAreaView style={styles.statusBAR} edges={['top']}>
+        <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
             <StatusBar style="light" />
             <View style={styles.pantalla}>
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
