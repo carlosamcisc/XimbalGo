@@ -2,47 +2,92 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/types";
 import Button from "../../components/Button";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image, useWindowDimensions, View, Text, StyleSheet} from "react-native";
+import { useWindowDimensions, View, StyleSheet } from "react-native";
 import Colors from "../../theme/colors";
 import { StatusBar } from "expo-status-bar";
-import { NombreIcono } from "../../components/Icono";
+import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
+import AppText from "../../components/AppText";
+import BottomWavePrimary from "../../components/BottomWavePrimary";
+import DecorativeBubble from "../../components/DecorativeBubble";
+import LottieView from "lottie-react-native";
+import AreaMap from "../../../assets/lotties/area-map.json";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Bienvenida'>;
 
-//obtener la imagen
-const fondoPantalla = require('../../../assets/bienvenida/bienvenida.png');
-
-const aspecto = 852 / 1846;
-
 //crear la pantalla de bienvenida
-const BienvenidaScreen = ({navigation}: Props) =>{
-    const { width } = useWindowDimensions();
-    const insets = useSafeAreaInsets();
+const BienvenidaScreen = ({ navigation }: Props) => {
+    const { height } = useWindowDimensions();
 
-    const handleSiniciar = () =>{
+    const handleSiniciar = () => {
         navigation.navigate('SeleccionRol');
     }
 
-    return(
-        <SafeAreaView
-        edges={['top']}
-        style={styles.pantalla}>
-            <StatusBar style="dark" />
-            <View style={styles.contenedorText}>
-                <Text style={styles.text}>Bienvenido a Ximbal Go</Text>
-            </View>
-            <Image
-                source={fondoPantalla}
-                style={[styles.fondopantalla, {width, height: width / aspecto}]}
-                resizeMode="cover"
-            />
-            <View style={styles.contenedorButton}>
-                <Button
-                titulo="Comienza tu experiencia"
-                icono= "navigateNext"
-                onPress={handleSiniciar}
+    return (
+        <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
+            <StatusBar style="light" />
+            <View style={styles.pantalla}>
+                {/* =========================
+                    DECORACIONES
+                ========================== */}
+
+                <DecorativeBubble
+                    size={110}
+                    color={Colors.primaryContainer}
+                    opacity={0.55}
+                    style={{
+                        top: 20,
+                        right: -45,
+                    }}
                 />
+
+                <DecorativeBubble
+                    size={70}
+                    color={Colors.primaryContainer}
+                    opacity={0.45}
+                    style={{
+                        top: height * 0.48,
+                        left: -35,
+                    }}
+                />
+
+                <DecorativeBubble
+                    size={45}
+                    color={Colors.primaryContainer}
+                    opacity={0.8}
+                    style={{
+                        top: height * 0.38,
+                        right: 20,
+                    }}
+                />
+                <BottomWavePrimary />
+
+                <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.contenedorText}>
+                        <AppText style={styles.titulo}>Bienvenido a </AppText>
+                        <View style={styles.contentTitulos}>
+                            <AppText weight="bold" style={styles.subtitulo}>Ximbal</AppText>
+                            <AppText weight="bold" style={styles.subtituloGO}> Go</AppText>
+                        </View>
+                        <AppText style={styles.informacion}>Descubre, explora y encuentra lo mejor de tu entorno.</AppText>
+                    </View>
+                    <LottieView
+                        source={AreaMap}
+                        loop
+                        autoPlay
+                        style={styles.lottie}
+                    />
+
+                    <View style={styles.contenedorButton}>
+                        <Button
+                            titulo="Comienza tu experiencia"
+                            icono="navigateNext"
+                            onPress={handleSiniciar}
+                        />
+                    </View>
+                </KeyboardAwareScroll>
+
             </View>
+
         </SafeAreaView>
     );
 
@@ -50,31 +95,46 @@ const BienvenidaScreen = ({navigation}: Props) =>{
 
 //crear estilos de la pantalla
 const styles = StyleSheet.create({
-    pantalla:{
+    statusBAR: {
+        flex: 1,
+        backgroundColor: Colors.primary,
+    },
+    pantalla: {
         flex: 1,
         backgroundColor: Colors.surface,
-        justifyContent: "space-between",
     },
-    text:{
-        color: Colors.white,
+    scrollContent: {
+        paddingBottom: 100,
+    },
+    titulo: {
         fontSize: 25,
-        fontWeight: "bold",
     },
-    contenedorText:{
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 40,
+    contentTitulos: {
+        flexDirection: "row"
     },
-    contenedorButton:{
-        marginBottom: 60,
-        margin: 10,
+    subtitulo: {
+        fontSize: 40,
     },
-    fondopantalla:{
-        flex: 1,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        zIndex: -1, // 🔑 la imagen queda detrás
+    subtituloGO: {
+        fontSize: 40,
+        color: Colors.primary,
+    },
+    informacion: {
+        fontSize: 17,
+        lineHeight: 24,
+    },
+    contenedorText: {
+        marginTop: 30,
+        marginInlineStart: 20,
+    },
+    lottie: {
+        width: '100%',
+        height: 250,
+    },
+    contenedorButton: {
+        marginTop: 200,
+        margin: 20,
+        marginBottom: 20,
     },
 });
 
