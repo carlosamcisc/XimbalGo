@@ -54,7 +54,7 @@ const SeleccionRolScreen = ({ navigation }: Props) => {
                         <AppText weight="bold" style={styles.textPasos}> de 2</AppText>
                     </View>
                     <View style={styles.contentEncabezado}>
-                        <AppText weight="bold" style={styles.encabezado}>¿Como quieres usar Ximbal Go</AppText>
+                        <AppText weight="bold" style={styles.encabezado}>¿Como quieres usar Ximbal Go?</AppText>
                     </View>
                     <View style={styles.contentOpciones}>
                         {OPCIONES_ROL.map((opcion) => {
