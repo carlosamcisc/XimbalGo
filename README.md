@@ -14,7 +14,7 @@ XímbalGo es una aplicación móvil diseñada para mejorar la experiencia de los
 ## Fuentes
 | Fuente | Estilo | Uso recomendado |
 |---|---|---|
-| **Poppins** | Moderna, redondeada | Títulos, botones, encabezados |
+| **Poppins** | Moderna, redondeada e agradable | Títulos, botones, encabezados |
 
 
 ## Arquitectura del proyecto
