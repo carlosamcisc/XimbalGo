@@ -9,6 +9,7 @@ interface ButtonProps {
     titulo: string;
     onPress: () => void;
     color?: string;
+    borderColor?: string;
     icono?: NombreIcono; //icono opcional
     disabled?: boolean;
 }
@@ -17,6 +18,7 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({
     titulo,
     color = Colors.primary, //color por defecto si no se pasa otro color
+    borderColor = Colors.primary,
     icono,
     onPress,
     disabled = false,
@@ -27,7 +29,10 @@ const Button: React.FC<ButtonProps> = ({
             disabled={disabled}
             style={({ pressed }) => [
                 styles.button,
-                { backgroundColor: disabled ? Colors.outlineVariant : pressed ? Colors.secondary : color },
+                {
+                    backgroundColor: disabled ? Colors.outlineVariant : pressed ? Colors.primaryContainer : color,
+                    borderColor: disabled ? Colors.outlineVariant : pressed ? Colors.primaryContainer : borderColor,
+                },
                 disabled && styles.buttonDeshabilitado,
             ]}
         >
@@ -51,7 +56,7 @@ const Button: React.FC<ButtonProps> = ({
 //crear estilos del boton
 const styles = StyleSheet.create({
     button: {
-        borderRadius: 10,
+        borderRadius: 30,
         paddingVertical: 12,
         paddingHorizontal: 20,
         marginVertical: 10,

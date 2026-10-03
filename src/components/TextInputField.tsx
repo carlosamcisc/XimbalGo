@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
         gap: 8,
         borderWidth: 1,
         borderColor: Colors.outlineVariant,
-        borderRadius: 10,
+        borderRadius: 20,
         paddingHorizontal: 10,
         backgroundColor: Colors.onPrimary
     },
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         paddingVertical: 10,
+        color: Colors.onSurfaceVariant,
     },
 
 });

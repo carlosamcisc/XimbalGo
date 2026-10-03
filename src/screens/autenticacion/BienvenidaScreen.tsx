@@ -79,7 +79,7 @@ const BienvenidaScreen = ({ navigation }: Props) => {
 
                     <View style={styles.contenedorButton}>
                         <Button
-                            titulo="Comienza tu experiencia"
+                            titulo="Comienza tu experiencia   "
                             icono="navigateNext"
                             onPress={handleSiniciar}
                         />

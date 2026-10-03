@@ -33,7 +33,7 @@ const BottomWavePrimary = () => {
                         L0 150
                         Z
                     "
-                    fill={Colors.primary}
+                    fill={Colors.primaryContainer}
                 />
 
                 {/* Línea secundaria */}

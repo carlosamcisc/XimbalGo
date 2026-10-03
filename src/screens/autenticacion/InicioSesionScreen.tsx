@@ -7,15 +7,16 @@ import Colors from "../../theme/colors";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList, Rol } from "../../navigation/types";
 import { StatusBar } from "expo-status-bar";
-import BottomWave from "../../components/BottomWave";
+import BottomWavePrimary from "../../components/BottomWavePrimary";
+import DecorativeBubble from "../../components/DecorativeBubble";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import AppText from "../../components/AppText";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
 const logoXimbalGo = require('../../../assets/icon.png');
-const width = 100;
-const height = 100
+const width = 150;
+const height = 150;
 
 const IncioSesionScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
@@ -31,16 +32,38 @@ const IncioSesionScreen = ({ navigation }: Props) => {
         <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
             <StatusBar style="light" />
             <View style={styles.pantalla}>
+
+                <DecorativeBubble
+                    size={110}
+                    color={Colors.primaryContainer}
+                    opacity={0.55}
+                    style={{
+                        top: 20,
+                        right: -45,
+                    }}
+                />
+
+                <DecorativeBubble
+                    size={70}
+                    color={Colors.primaryContainer}
+                    opacity={0.45}
+                    style={{
+                        top: height * 0.48,
+                        left: -35,
+                    }}
+                />
+
+                <BottomWavePrimary />
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                    <View style={styles.imagen}>
-                        <Image
-                            source={logoXimbalGo}
-                            style={[StyleSheet.absoluteFill, { width, height }]}
-                            resizeMode="cover"
-                        />
-                    </View>
-                    <View style={styles.contentText}>
-                        <AppText weight="bold" style={styles.text}>Bienvenido de nuevo</AppText>
+                    <Image
+                        source={logoXimbalGo}
+                        style={[styles.imagen, { width, height }]}
+                        resizeMode="cover"
+                    />
+                    <View style={styles.contentTitulos}>
+                        <AppText weight="bold" style={styles.titulo}>¡Bienvenido de nuevo!</AppText>
+                        <AppText style={styles.subtitulo}>Inicia sesion para continuar con</AppText>
+                        <AppText style={styles.subtitulo}>Ximbal Go</AppText>
                     </View>
                     <View style={styles.contenedor}>
                         <TextInputField
@@ -82,7 +105,6 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                     </View>
 
                 </KeyboardAwareScroll>
-                <BottomWave />
             </View>
 
         </SafeAreaView>
@@ -102,16 +124,23 @@ const styles = StyleSheet.create({
         paddingBottom: 100,
     },
     imagen: {
-        marginTop: 80,
-        marginLeft: 150,
+        marginStart: 120,
+        marginEnd: 120,
+        marginTop: 20,
     },
-    contentText: {
-        marginTop: 100,
+    contentTitulos: {
+        marginTop: 10,
         justifyContent: "center",
         alignItems: "center",
+        margin: 10,
     },
-    text: {
+    titulo: {
         fontSize: 25,
+    },
+    subtitulo: {
+        fontSize: 16,
+        textAlign: "center",
+        color: Colors.onSurfaceVariant,
     },
     contenedor: {
         marginTop: 10,
@@ -131,7 +160,7 @@ const styles = StyleSheet.create({
     },
     textOlviContrasnia: {
         color: Colors.primary,
-        fontSize: 15,
+        fontSize: 17,
     },
     contenBoton: {
         margin: 10,
@@ -141,13 +170,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "center",
     },
-    noCuenta:{
-        fontSize: 15
+    noCuenta: {
+        fontSize: 17
     },
     registrarse: {
         color: Colors.primary,
         marginLeft: 9,
-        fontSize: 15,
+        fontSize: 17,
     }
 });
 

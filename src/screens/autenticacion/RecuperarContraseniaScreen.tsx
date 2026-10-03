@@ -27,6 +27,8 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
         <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
             <StatusBar style="light" />
             <View style={styles.pantalla}>
+                {/* FIGURA CURVA */}
+                <BottomWave />
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
                     <View style={styles.contentNavigation}>
                         <Pressable style={styles.botonAtras} onPress={() => navigation.goBack()}>
@@ -37,7 +39,7 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
 
                     <View style={styles.conteinerTitulos}>
                         <AppText weight="bold" style={styles.titulo}>Recupera tu contraseña</AppText>
-                        <AppText style={styles.subTitulo}>Te enviaremos un enlace para que puedas recuperar para que puedas recuperar tu contraseña.</AppText>
+                        <AppText style={styles.subTitulo}>Te enviaremos un enlace para que puedas recuperar tu contraseña.</AppText>
                     </View>
                     {/**Animacion */}
                     <LottieView
@@ -71,8 +73,7 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
                     </View>
 
                 </KeyboardAwareScroll>
-                {/* FIGURA CURVA */}
-                <BottomWave />
+
             </View>
 
 
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     subTitulo: {
         marginTop: 10,
         marginRight: 10,
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 20,
     },
     lottie: {
