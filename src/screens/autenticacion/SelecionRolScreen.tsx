@@ -12,9 +12,10 @@ import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import AppText from "../../components/AppText";
 import BottomWave from "../../components/BottomWave";
 type Props = NativeStackScreenProps<AuthStackParamList, 'SeleccionRol'>;
+type RolRegistrable = Exclude<Rol, 'administrador'>;
 
 //opciones de rol que puede elegir el usuario al registrarse
-const OPCIONES_ROL: { rol: Rol; icono: NombreIcono; titulo: string; descripcion: string }[] = [
+const OPCIONES_ROL: { rol: RolRegistrable; icono: NombreIcono; titulo: string; descripcion: string }[] = [
     {
         rol: 'cliente',
         icono: 'person',
@@ -26,12 +27,6 @@ const OPCIONES_ROL: { rol: Rol; icono: NombreIcono; titulo: string; descripcion:
         icono: 'localTaxi',
         titulo: 'Taxista',
         descripcion: 'Ofrece viajes y administra tus rutas',
-    },
-    {
-        rol: 'administrador',
-        icono: 'adminPanelSettings',
-        titulo: 'Administrador',
-        descripcion: 'Gestiona rutas, unidades y usuarios',
     },
 ];
 
