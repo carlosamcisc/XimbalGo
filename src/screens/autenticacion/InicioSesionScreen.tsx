@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import BottomWave from "../../components/BottomWave";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import AppText from "../../components/AppText";
+import { iniciarSesion } from "../../infrastructure/supabase/auth/auth.service";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
@@ -20,6 +21,7 @@ const height = 100
 const IncioSesionScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
     const [contrasenia, setContrasenia] = useState("");
+    const [cargando, setCargando] = useState(false);
 
     const mostrarToast = (titulo: string) => {
         ToastAndroid.show(titulo,
@@ -27,6 +29,34 @@ const IncioSesionScreen = ({ navigation }: Props) => {
         );
 
     };
+
+    const handleInicioSesion = async () => {
+        const correoLimpio = correo.trim();
+        const contraseniaLimpia = contrasenia.trim();
+
+        if (!correoLimpio || !contraseniaLimpia) {
+            Alert.alert("Completa todos los campos");
+            return;
+        }
+
+        if (!/\S+@\S+\.\S+/.test(correoLimpio)) {
+            Alert.alert("Correo inválido", "Ingresa un correo electrónico válido");
+            return;
+        }
+
+        setCargando(true);
+
+        try {
+            await iniciarSesion(correoLimpio, contraseniaLimpia);
+            mostrarToast("Sesión iniciada");
+        } catch (error: any) {
+            const mensaje = error?.message ?? "Revisa tus credenciales e intenta nuevamente.";
+            Alert.alert("No se pudo iniciar sesión", mensaje);
+        } finally {
+            setCargando(false);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
             <StatusBar style="light" />
@@ -68,8 +98,9 @@ const IncioSesionScreen = ({ navigation }: Props) => {
 
                         <View style={styles.contenBoton}>
                             <Button
-                                titulo="Iniciar sesion "
-                                onPress={() => mostrarToast("Iniciando sesion...")}
+                                titulo={cargando ? "Iniciando sesion..." : "Iniciar sesion"}
+                                onPress={handleInicioSesion}
+                                disabled={cargando}
                             />
                         </View>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { TextInput, StyleSheet, View, Text, Pressable } from "react-native";
+import { TextInput, StyleSheet, View, Pressable } from "react-native";
+import type { TextInputProps } from "react-native";
 import Colors from "../theme/colors";
 import { Icono, NombreIcono } from "./Icono";
 import AppText from "./AppText";
@@ -11,6 +12,8 @@ interface Prop{
     onChangeText?: (text: string) => void;
     secureTextEntry?: boolean;
     icono?: NombreIcono;
+    keyboardType?: TextInputProps["keyboardType"];
+    autoCapitalize?: TextInputProps["autoCapitalize"];
 }
 
 const TextInputField: React.FC<Prop> = ({
@@ -20,6 +23,8 @@ const TextInputField: React.FC<Prop> = ({
     onChangeText,
     secureTextEntry,
     icono,
+    keyboardType,
+    autoCapitalize,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [mostrarContrasenia, setMostrarContrasenia] = useState(false);
@@ -39,6 +44,8 @@ const TextInputField: React.FC<Prop> = ({
                      placeholder={placeholder}
                      onChangeText={onChangeText}
                      secureTextEntry={esContrasenia && !mostrarContrasenia}
+                     keyboardType={keyboardType}
+                     autoCapitalize={autoCapitalize}
                      onFocus={() => setIsFocused(true)}
                      onBlur={() => setIsFocused(false)}
 
