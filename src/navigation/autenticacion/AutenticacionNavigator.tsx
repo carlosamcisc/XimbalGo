@@ -3,6 +3,7 @@ import BienvenidaScreen from "../../screens/autenticacion/BienvenidaScreen";
 import IncioSesionScreen from "../../screens/autenticacion/InicioSesionScreen";
 import SeleccionRolScreen from "../../screens/autenticacion/SelecionRolScreen";
 import RecuperarContraseniaScreen from "../../screens/autenticacion/RecuperarContraseniaScreen";
+import RestablecerContraseniaScreen from "../../screens/autenticacion/RestablecerContraseniaScreen";
 import RegistroScreen from "../../screens/autenticacion/RegistroScreen";
 import type { AuthStackParamList } from "../types";
 
@@ -47,6 +48,14 @@ export default function AutenticacionNavigator(){
                 options={{
                     headerShown: false,
                     title: "Recupera tu contraseña"
+                }}
+            />
+            <Stack.Screen
+                name="RestablecerContrasenia"
+                component={RestablecerContraseniaScreen}
+                options={{
+                    headerShown: false,
+                    title: "Restablece tu contraseña"
                 }}
             />
         </Stack.Navigator>

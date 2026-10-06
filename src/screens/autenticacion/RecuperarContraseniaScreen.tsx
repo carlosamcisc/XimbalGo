@@ -1,7 +1,7 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, StyleSheet, ToastAndroid, Pressable } from "react-native";
+import { View, StyleSheet, Alert, Pressable } from "react-native";
 import Colors from "../../theme/colors";
 import { StatusBar } from "expo-status-bar";
 import TextInputField from "../../components/TextInputField";
@@ -13,16 +13,44 @@ import LottieView from "lottie-react-native";
 import ForgotPassword from "../../../assets/lotties/ForgotPassword.json";
 import AppText from "../../components/AppText";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
+import { recuperarContrasena } from "../../infrastructure/supabase/auth/auth.service";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'RecuperarContrasenia'>;
 const RecuperarContraseniaScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
-    const mostrarToast = (titulo: string) => {
-        ToastAndroid.show(titulo,
-            ToastAndroid.SHORT
-        );
+    const [cargando, setCargando] = useState(false);
 
+    const handleRecuperarContrasena = async () => {
+        const correoLimpio = correo.trim();
+
+        if (!correoLimpio) {
+            Alert.alert("Ingresa tu correo electrónico");
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoLimpio)) {
+            Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
+            return;
+        }
+
+        setCargando(true);
+        try {
+            await recuperarContrasena(correoLimpio);
+            Alert.alert(
+                "Solicitud enviada",
+                "Si el correo está registrado, recibirás un enlace para recuperar tu contraseña."
+            );
+        } catch (error: unknown) {
+            const mensaje =
+                error instanceof Error
+                    ? error.message
+                    : "Intenta nuevamente en unos momentos.";
+            Alert.alert("No se pudo enviar el enlace", mensaje);
+        } finally {
+            setCargando(false);
+        }
     };
+
     return (
         <SafeAreaView style={styles.statusBAR} edges={['top', 'bottom']}>
             <StatusBar style="light" />
@@ -50,13 +78,14 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
                     />
 
                     <View style={styles.card}>
-                        <Text></Text>
                         <TextInputField
                             label="Correo electronico"
                             value={correo}
                             placeholder="Escribe tu correo..."
                             onChangeText={setCorreo}
                             icono="email"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
                         />
 
                         <View style={styles.cardAviso}>
@@ -66,9 +95,10 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
                     </View>
                     <View style={styles.contenedorBoton}>
                         <Button
-                            titulo="Enviar enlace      "
-                            onPress={() => mostrarToast("Enviando link...")}
+                            titulo={cargando ? "Enviando enlace..." : "Enviar enlace"}
+                            onPress={handleRecuperarContrasena}
                             icono="arrowForward"
+                            disabled={cargando}
                         />
                     </View>
 

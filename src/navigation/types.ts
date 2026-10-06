@@ -6,6 +6,7 @@ export type AuthStackParamList ={
     Bienvenida: undefined;
     InicioSesion: undefined;
     RecuperarContrasenia: undefined;
+    RestablecerContrasenia: { recovery?: string } | undefined;
     Registro: { rol: Rol };
     SeleccionRol: undefined;
 };
