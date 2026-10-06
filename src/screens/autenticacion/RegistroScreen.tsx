@@ -190,7 +190,6 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                         onChangeText={setCorreo}
                         keyboardType="email-address"
                         autoCapitalize="none"
-                        icono="email"
                     />
                     <TextInputField
                         label="Teléfono *"
@@ -221,7 +220,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                     {rol === "taxista" && (
                         <>
                             <AppText weight="bold" style={styles.subtituloCampos}>
-                                Datos de tu servicio (opcionales)
+                                Datos de tu servicio
                             </AppText>
                             <TextInputField
                                 label="Punto de partida"
