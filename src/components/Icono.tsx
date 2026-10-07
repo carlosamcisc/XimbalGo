@@ -20,6 +20,10 @@ const ICONOS = {
     //Iconos en general
     info: 'info-outline',
     arrowForward: 'arrow-forward',
+    //iconos para la pantalla de inicio
+    home: 'home',
+    map: 'map',
+    settings: 'settings',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

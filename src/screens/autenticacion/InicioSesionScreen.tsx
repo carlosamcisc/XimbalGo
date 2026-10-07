@@ -4,14 +4,18 @@ import { View, Text, StyleSheet, Image, Pressable, Alert, ToastAndroid } from "r
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import Colors from "../../theme/colors";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { AuthStackParamList, Rol } from "../../navigation/types";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { AuthStackParamList } from "../../navigation/types";
 import { StatusBar } from "expo-status-bar";
 import BottomWavePrimary from "../../components/BottomWavePrimary";
 import DecorativeBubble from "../../components/DecorativeBubble";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import AppText from "../../components/AppText";
-import { iniciarSesion } from "../../infrastructure/supabase/auth/auth.service";
+import {
+    iniciarSesion,
+    obtenerRolUsuario,
+} from "../../infrastructure/supabase/auth/auth.service";
+import { asignarRolUsuario } from "../../store/autenticacionStore";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
@@ -48,10 +52,15 @@ const IncioSesionScreen = ({ navigation }: Props) => {
         setCargando(true);
 
         try {
-            await iniciarSesion(correoLimpio, contraseniaLimpia);
+            const { user } = await iniciarSesion(correoLimpio, contraseniaLimpia);
+            const rol = await obtenerRolUsuario(user.id);
+            asignarRolUsuario(rol);
             mostrarToast("Sesión iniciada");
-        } catch (error: any) {
-            const mensaje = error?.message ?? "Revisa tus credenciales e intenta nuevamente.";
+        } catch (error: unknown) {
+            const mensaje =
+                error instanceof Error
+                    ? error.message
+                    : "Revisa tus credenciales e intenta nuevamente.";
             Alert.alert("No se pudo iniciar sesión", mensaje);
         } finally {
             setCargando(false);

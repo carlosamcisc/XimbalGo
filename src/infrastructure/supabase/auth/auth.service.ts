@@ -1,6 +1,7 @@
 import { supabase } from "../client";
 
 import type { DatosRegistro } from "./auth.types";
+import type { RolUsuario } from "../../../modules/usuarios/types";
 
 // =====================================================
 // INICIAR SESIÓN
@@ -154,6 +155,49 @@ export async function obtenerUsuarioActual() {
   }
 
   return user;
+}
+
+// =====================================================
+// ROL DEL USUARIO
+// =====================================================
+
+export async function obtenerRolUsuario(
+  usuarioId: string
+): Promise<RolUsuario> {
+  const { data: perfil, error: errorPerfil } = await supabase
+    .from("usuarios")
+    .select("rol_id")
+    .eq("id", usuarioId)
+    .maybeSingle();
+
+  if (errorPerfil) {
+    throw errorPerfil;
+  }
+
+  if (!perfil) {
+    throw new Error("No se encontró el perfil asociado a esta cuenta.");
+  }
+
+  const { data: rol, error: errorRol } = await supabase
+    .from("roles")
+    .select("nombre")
+    .eq("id", perfil.rol_id)
+    .single();
+
+  if (errorRol) {
+    throw errorRol;
+  }
+
+  const nombreRol = rol.nombre.trim().toLowerCase();
+  if (
+    nombreRol !== "cliente" &&
+    nombreRol !== "taxista" &&
+    nombreRol !== "administrador"
+  ) {
+    throw new Error(`El rol "${rol.nombre}" no tiene una pantalla asignada.`);
+  }
+
+  return nombreRol;
 }
 
 

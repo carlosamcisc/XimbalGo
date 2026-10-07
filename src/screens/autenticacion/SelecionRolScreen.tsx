@@ -31,7 +31,7 @@ const OPCIONES_ROL: { rol: RolRegistrable; icono: NombreIcono; titulo: string; d
 ];
 
 const SeleccionRolScreen = ({ navigation }: Props) => {
-    const [rolSeleccionado, setRolSeleccionado] = useState<Rol | null>(null);
+    const [rolSeleccionado, setRolSeleccionado] = useState<RolRegistrable | null>(null);
 
     const continuar = () => {
         if (!rolSeleccionado) return;

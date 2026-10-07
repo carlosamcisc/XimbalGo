@@ -9,10 +9,16 @@ import type { AuthStackParamList } from "../types";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-export default function AutenticacionNavigator(){
+interface AutenticacionNavigatorProps {
+    initialRouteName: keyof AuthStackParamList;
+}
+
+export default function AutenticacionNavigator({
+    initialRouteName,
+}: AutenticacionNavigatorProps) {
     return(
         <Stack.Navigator
-            initialRouteName="Bienvenida"
+            initialRouteName={initialRouteName}
             screenOptions={{headerShown: false}}
         >
             <Stack.Screen name="Bienvenida" component={BienvenidaScreen}/>
