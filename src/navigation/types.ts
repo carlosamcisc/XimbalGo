@@ -1,5 +1,7 @@
 //roles disponibles para un usuario de XimbalGo
-export type Rol = 'cliente' | 'taxista' | 'administrador';
+import type { RolUsuario } from "../modules/usuarios/types";
+
+export type Rol = RolUsuario;
 
 //crear las rutas de las pantallas de Auntenticacion
 export type AuthStackParamList ={
@@ -7,6 +9,19 @@ export type AuthStackParamList ={
     InicioSesion: undefined;
     RecuperarContrasenia: undefined;
     RestablecerContrasenia: { recovery?: string } | undefined;
-    Registro: { rol: Rol };
+    Registro: { rol: Exclude<Rol, 'administrador'> };
     SeleccionRol: undefined;
+};
+
+//crear las rutas de las pantallas de Cliente
+export type ClienteStackParamList ={
+    ClienteInicio: undefined;
+};
+
+export type TaxistaStackParamList = {
+    TaxistaInicio: undefined;
+};
+
+export type AdminStackParamList = {
+    AdminInicio: undefined;
 };

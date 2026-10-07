@@ -1,4 +1,6 @@
-export type RolUsuario = "cliente" | "taxista";
+import type { RolUsuario } from "../../../modules/usuarios/types";
+
+export type RolRegistrable = Exclude<RolUsuario, "administrador">;
 
 export interface DatosRegistro {
   correo: string;
@@ -9,7 +11,7 @@ export interface DatosRegistro {
 
   telefono: string;
 
-  rol: RolUsuario;
+  rol: RolRegistrable;
 
   edad?: number;
   direccion?: string;

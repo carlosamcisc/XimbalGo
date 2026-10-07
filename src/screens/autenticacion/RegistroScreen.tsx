@@ -42,14 +42,6 @@ const RegistroScreen = ({ navigation, route }: Props) => {
     const [cargando, setCargando] = useState(false);
 
     const handleRegistro = async () => {
-        if (rol === "administrador") {
-            Alert.alert(
-                "Registro no disponible",
-                "Las cuentas de administrador no se crean desde la aplicación."
-            );
-            return;
-        }
-
         const correoLimpio = correo.trim();
         if (
             !nombres.trim() ||

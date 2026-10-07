@@ -2,7 +2,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/types";
 import Button from "../../components/Button";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWindowDimensions, View, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Alert, useWindowDimensions, View, StyleSheet } from "react-native";
 import Colors from "../../theme/colors";
 import { StatusBar } from "expo-status-bar";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
@@ -11,15 +12,29 @@ import BottomWavePrimary from "../../components/BottomWavePrimary";
 import DecorativeBubble from "../../components/DecorativeBubble";
 import LottieView from "lottie-react-native";
 import AreaMap from "../../../assets/lotties/area-map.json";
+import { marcarBienvenidaCompletada } from "../../store/autenticacionStore";
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Bienvenida'>;
 
 //crear la pantalla de bienvenida
 const BienvenidaScreen = ({ navigation }: Props) => {
     const { height } = useWindowDimensions();
+    const [guardandoBienvenida, setGuardandoBienvenida] = useState(false);
 
-    const handleSiniciar = () => {
-        navigation.navigate('SeleccionRol');
+    const handleSiniciar = async () => {
+        setGuardandoBienvenida(true);
+        try {
+            await marcarBienvenidaCompletada();
+            navigation.navigate('SeleccionRol');
+        } catch (error: unknown) {
+            const mensaje =
+                error instanceof Error
+                    ? error.message
+                    : 'No se pudo guardar el estado de bienvenida.';
+            Alert.alert('No se pudo continuar', mensaje);
+        } finally {
+            setGuardandoBienvenida(false);
+        }
     }
 
     return (
@@ -79,9 +94,10 @@ const BienvenidaScreen = ({ navigation }: Props) => {
 
                     <View style={styles.contenedorButton}>
                         <Button
-                            titulo="Comienza tu experiencia   "
+                            titulo={guardandoBienvenida ? "Cargando..." : "Comienza tu experiencia   "}
                             icono="navigateNext"
                             onPress={handleSiniciar}
+                            disabled={guardandoBienvenida}
                         />
                     </View>
                 </KeyboardAwareScroll>
