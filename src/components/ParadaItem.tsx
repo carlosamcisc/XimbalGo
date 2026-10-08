@@ -34,7 +34,7 @@ const ParadaItem: React.FC<ParadaItemProps> = ({ nombre, descripcion, foto, onPr
           onPress={onPress}
           disabled={!onPress}
           accessibilityRole="button"
-          accessibilityLabel={`Ver detalles de ${nombre}`}
+          accessibilityLabel={`Seleccionar ${nombre} como origen`}
         >
           <Icono nombre="ArrowRight" tamanio={21} color={Colors.onSurfaceVariant} />
         </Pressable>

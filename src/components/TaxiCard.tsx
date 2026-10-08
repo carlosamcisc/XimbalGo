@@ -6,7 +6,7 @@ import { Icono } from "./Icono";
 
 interface TaxiCardProps {
     nombre: string;
-    distancia: string;   // Ej: "2 km"
+    distancia?: string;  // Solo se muestra cuando se conoce la distancia
     asientos: number;    // Ej: 4
     lleno?: boolean;     // Si está lleno
 }
@@ -20,10 +20,12 @@ const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno 
                 </View>
                 <View style={styles.details}>
                     <AppText weight="semibold" style={styles.nombre}>{nombre}</AppText>
-                    <View style={styles.distanceRow}>
-                        <Icono nombre="myLocation" tamanio={13} color={Colors.onSurfaceVariant} />
-                        <AppText style={styles.distancia}>{distancia} de distancia</AppText>
-                    </View>
+                    {distancia && (
+                        <View style={styles.distanceRow}>
+                            <Icono nombre="myLocation" tamanio={13} color={Colors.onSurfaceVariant} />
+                            <AppText style={styles.distancia}>{distancia} de distancia</AppText>
+                        </View>
+                    )}
                 </View>
                 <View style={[styles.status, lleno ? styles.fullStatus : styles.availableStatus]}>
                     <AppText

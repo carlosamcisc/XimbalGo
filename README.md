@@ -48,3 +48,7 @@ src/
 │   ├── paleta_colores/
 
 *Recuerden seguir la arquitectura del proyecto*
+
+## Documentación de funcionalidades
+
+- [Pantalla de inicio del cliente](./docs/cliente-inicio.md): interfaz, flujo GPS, búsqueda de taxis y paraderos cercanos, arquitectura y configuración de Supabase.
