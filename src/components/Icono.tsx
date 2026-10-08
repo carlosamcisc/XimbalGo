@@ -32,6 +32,8 @@ const ICONOS = {
     home: 'home',
     map: 'map',
     settings: 'settings',
+    moreVert: 'more-vert',
+    bookMarks: 'bookmarks',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

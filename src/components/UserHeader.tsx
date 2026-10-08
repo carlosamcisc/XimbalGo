@@ -1,4 +1,4 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 
@@ -6,9 +6,10 @@ interface Props {
   nombre: string;
   inicial?: string;
   saludo?: string;
+  onPress: () => void;
 
   // Colores personalizables
-  avatarBackground?: string;
+  avatarBackground?: string; 
   avatarTextColor?: string;
   saludoTextColor?: string;
   buenasTextColor?: string;
@@ -16,8 +17,9 @@ interface Props {
 
 export default function UserHeader({
   nombre,
-  inicial = "C",
+  inicial = '?',
   saludo,
+  onPress,
   avatarBackground = Colors.primary,
   avatarTextColor = Colors.white,
   saludoTextColor = Colors.onSurface,
@@ -25,11 +27,11 @@ export default function UserHeader({
 }: Props) {
   return (
     <View style={styles.container}>
-      <View style={[styles.avatar, { backgroundColor: avatarBackground }]}>
+      <Pressable style={[styles.avatar, { backgroundColor: avatarBackground }]} onPress={onPress}>
         <AppText weight="semibold" style={[styles.avatarLetra, { color: avatarTextColor }]}>
           {inicial}
         </AppText>
-      </View>
+      </Pressable>
       <View style={styles.textos}>
         <AppText style={[styles.saludoUsuario, { color: saludoTextColor }]}>
           ¡Hola, {nombre}!

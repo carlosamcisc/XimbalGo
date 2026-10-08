@@ -5,7 +5,7 @@ import Colors from "../theme/colors";
 import { Icono, NombreIcono } from "./Icono";
 import AppText from "../components/AppText";
 
-export type BottomTabId = 'inicio' | 'rutas' | 'ajustes';
+export type BottomTabId = 'inicio' | 'rutas' | 'reservaciones';
 
 interface TabItem {
   id: BottomTabId;
@@ -16,7 +16,7 @@ interface TabItem {
 const TABS: TabItem[] = [
   { id: 'inicio', label: 'Inicio', icono: 'home' },
   { id: 'rutas', label: 'Rutas', icono: 'map' },
-  { id: 'ajustes', label: 'Ajustes', icono: 'settings' }
+  { id: 'reservaciones', label: 'Reservaciones', icono: 'bookMarks' }
 ];
 
 interface Props {

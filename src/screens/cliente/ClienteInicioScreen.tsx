@@ -18,7 +18,7 @@ import { ToastMessage } from "../../components/ToastMessaje";
 const ClienteInicioScreen = () => {
     const nombre = "Carlos";
     const inicial = "C";
-    const saludo = "¡Buenos días!";
+    const saludo = "¡Buenos dias!";
 
     const [origen, setOrigen] = useState("");
     const ubicaciones = [
@@ -36,15 +36,15 @@ const ClienteInicioScreen = () => {
             case "rutas":
                 ToastMessage.show("Rutas");
                 break;
-            case "ajustes":
-                ToastMessage.show("Ajustes")
+            case "reservaciones":
+                ToastMessage.show("Reservaciones")
                 break;
         }
     };
 
     return (
         <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-            <StatusBar style="light" />
+            <StatusBar style="dark" />
             <View style={styles.screen}>
                 <KeyBoardAwareScroll contentContainerStyle={styles.scrollContent}>
                     <View style={styles.hero}>
@@ -53,6 +53,7 @@ const ClienteInicioScreen = () => {
                             nombre={nombre}
                             inicial={inicial}
                             saludo={saludo}
+                            onPress={() => ToastMessage.show("Mi perfil")}
                             avatarBackground={Colors.white}
                             avatarTextColor={Colors.primary}
                             saludoTextColor={Colors.white}
@@ -60,7 +61,7 @@ const ClienteInicioScreen = () => {
                         />
                         <View style={styles.heroCopy}>
                             <AppText weight="bold" style={styles.heroTitle}>
-                                ¿A donde vamos{`\n`}hoy?
+                                ¿Donde vas {`\n`}hoy?
                             </AppText>
                         </View>
                         <View style={styles.heroIcon} pointerEvents="none">
