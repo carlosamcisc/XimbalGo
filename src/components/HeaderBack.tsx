@@ -12,7 +12,7 @@ const HeaderBack: React.FC<HeaderBackProps> = ({ onPress, label = "Atrás" }) =>
   return (
     <View style={styles.contentNavigation}>
       <Pressable style={styles.botonAtras} onPress={onPress}>
-        <Icono nombre="arrowBack" tamanio={26} color={Colors.dark} />
+        <Icono nombre="arrowBack" tamanio={26} color={Colors.black} />
       </Pressable>
       <Text style={styles.textAtras}>{label}</Text>
     </View>
@@ -22,7 +22,7 @@ const HeaderBack: React.FC<HeaderBackProps> = ({ onPress, label = "Atrás" }) =>
 const styles = StyleSheet.create({
   contentNavigation: {
     flexDirection: "row",
-    alignItems: "center", // 🔑 asegura que icono y texto estén alineados
+    alignItems: "center", // asegura que icono y texto estén alineados
   },
   botonAtras: {
     marginTop: 10,
