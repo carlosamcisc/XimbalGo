@@ -11,10 +11,10 @@ const AppText = ({
 }: AppTextProps) => {
 
     const fontFamily = {
-        regular: "PoppinsRegular",
-        medium: "PoppinsMedium",
-        semibold: "PoppinsSemiBold",
-        bold: "PoppinsBold",
+        regular: "InterRegular",
+        medium: "InterMedium",
+        semibold: "InterSemiBold",
+        bold: "InterBold",
     }[weight];
 
     return (
@@ -31,7 +31,7 @@ const AppText = ({
 
 const styles = StyleSheet.create({
     text: {
-        fontFamily: "PoppinsRegular",
+        fontFamily: "InterRegular",
     },
 });
 

@@ -73,6 +73,25 @@ export const Colors = {
   dark: '#000000',
   white: '#FFFFFF',
   shadow: '#A9A9A9',
+
+  // Acentos para la pantalla de inicio
+  brandDeep: '#193F60',
+  brandDeepShadow: '#0B263D',
+  brandText: '#263746',
+  brandSubtitle: '#D6E8F5',
+  brandAccent: '#91DED3',
+  brandAccentStrong: '#14796F',
+  brandAccentBright: '#21A99C',
+  brandAccentContainer: '#E5F6F3',
+  brandSoft: '#EAF2FA',
+  surfaceSoft: '#FBFCFD',
+  surfaceMuted: '#F3F6F8',
+  surfaceBorder: '#E3EAF0',
+  cardBorder: '#E8EDF2',
+  divider: '#EDF0F3',
+  routeLine: '#B8C8D6',
+  brandOverlay: 'rgba(255,255,255,0.055)',
+  errorContainerSoft: '#FFF0EE',
 } as const;
 
 export type ColorKey = keyof typeof Colors;
