@@ -123,7 +123,7 @@ const RestablecerContraseniaScreen = ({ navigation, route }: Props) => {
                                 }
                             }}
                         >
-                            <Icono nombre="arrowBack" tamanio={26} color={Colors.dark} />
+                            <Icono nombre="arrowBack" tamanio={26} color={Colors.black} />
                         </Pressable>
                         <AppText style={styles.textAtras}>Atrás</AppText>
                     </View>

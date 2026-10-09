@@ -60,7 +60,7 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
                     <View style={styles.contentNavigation}>
                         <Pressable style={styles.botonAtras} onPress={() => navigation.goBack()}>
-                            <Icono nombre="arrowBack" tamanio={26} color={Colors.dark} />
+                            <Icono nombre="arrowBack" tamanio={26} color={Colors.black} />
                         </Pressable>
                         <AppText style={styles.textAtras}>Atras</AppText>
                     </View>

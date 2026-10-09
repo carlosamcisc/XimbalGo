@@ -144,7 +144,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                         accessibilityRole="button"
                         accessibilityLabel="Regresar a selección de rol"
                     >
-                        <Icono nombre="arrowBack" tamanio={26} color={Colors.dark} />
+                        <Icono nombre="arrowBack" tamanio={26} color={Colors.black} />
                     </Pressable>
                     <AppText weight="bold" style={styles.textPasos}>
                         Paso 2 de 2
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
         padding: 6,
     },
     textPasos: {
-        color: Colors.dark,
+        color: Colors.black,
         fontSize: 17,
     },
     contentEncabezado: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
     },
     encabezado: {
-        color: Colors.dark,
+        color: Colors.black,
         fontSize: 25,
     },
     subEncabezado: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     subtituloCampos: {
-        color: Colors.dark,
+        color: Colors.black,
         fontSize: 16,
         marginHorizontal: 20,
         marginTop: 8,

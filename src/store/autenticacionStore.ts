@@ -1,6 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session, User } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
+import {
+  cerrarSesion as cerrarSesionSupabase,
+  obtenerRolUsuario,
+} from "../infrastructure/supabase/auth/auth.service";
 import { supabase } from "../infrastructure/supabase/client";
 import type { RolUsuario } from "../modules/usuarios/types";
 
@@ -60,7 +64,12 @@ export function inicializarAutenticacion(): Promise<void> {
     updateState({
       sesion: session,
       usuario: session?.user ?? null,
-      ...(event === "SIGNED_OUT" ? { rol: null } : {}),
+      ...(
+        event === "SIGNED_OUT" ||
+        session?.user.id !== state.usuario?.id
+          ? { rol: null }
+          : {}
+      ),
     });
   }).data.subscription;
 
@@ -79,7 +88,18 @@ export function inicializarAutenticacion(): Promise<void> {
         updateState({
           sesion: sessionResult.data.session,
           usuario: sessionResult.data.session?.user ?? null,
+          rol: null,
         });
+      }
+
+      const session = authEventReceived
+        ? state.sesion
+        : sessionResult.data.session;
+      if (session) {
+        const rol = await obtenerRolUsuario(session.user.id);
+        if (state.sesion?.user.id === session.user.id) {
+          updateState({ rol });
+        }
       }
 
       updateState({
@@ -111,4 +131,13 @@ export async function marcarBienvenidaCompletada(): Promise<void> {
 
 export function asignarRolUsuario(rol: RolUsuario): void {
   updateState({ rol });
+}
+
+export async function cerrarSesionUsuario(): Promise<void> {
+  await cerrarSesionSupabase();
+  updateState({
+    sesion: null,
+    usuario: null,
+    rol: null,
+  });
 }
