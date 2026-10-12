@@ -52,8 +52,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 0,
-    padding: 12, //para que el fondo se vea bien
+    padding: 20, //para que el fondo se vea bien
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
