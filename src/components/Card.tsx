@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     padding: 8,
-    elevation: 2,
+    elevation: 1,
     shadowColor: Colors.brandDeep,
     shadowOpacity: 0.06,
     shadowRadius: 12,

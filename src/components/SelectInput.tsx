@@ -1,93 +1,145 @@
-import { Picker } from "@react-native-picker/picker";
-import { StyleSheet, View } from "react-native";
+import React from "react";
+import { View, StyleSheet, Pressable } from "react-native";
 import Colors from "../theme/colors";
+import { Icono, NombreIcono } from "./Icono";
 import AppText from "./AppText";
-import { Icono, NombreIcono, IconoFontAwesome6, NombreIconoFontAwesome6 } from "./Icono";
 
-interface SelectOption {
-  label: string;
-  value: string;
-}
-
-interface SelectInputProps {
+interface Prop {
   label?: string;
-  options: SelectOption[];
   value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  iconLeft?: NombreIconoFontAwesome6;   // 🔑 icono opcional a la izquierda
-  iconRight?: NombreIcono;  // 🔑 icono opcional a la derecha
+  placeholder: string;
+  onPress: () => void; // callback para abrir modal/picker
+  active?: boolean;
+  iconLeft?: NombreIcono;
+  iconRight?: NombreIcono;
+  disabled?: boolean;
+  error?: string;
 }
 
-const SelectInput = ({
+const SelectInput: React.FC<Prop> = ({
   label,
-  options,
   value,
-  onChange,
-  placeholder = "Mi ubicación actual",
+  placeholder,
+  onPress,
+  active = false,
   iconLeft,
   iconRight,
-}: SelectInputProps) => {
+  disabled = false,
+  error,
+}) => {
+  const handlePress = () => {
+    if (!disabled) {
+      onPress();
+    }
+  };
+
+  const displayText = value || placeholder;
+  const isPlaceholder = !value;
+
   return (
     <View style={styles.container}>
       {label && <AppText style={styles.label}>{label}</AppText>}
-      <View style={styles.pickerRow}>
+
+      <Pressable
+        style={[
+          styles.input,
+          active && styles.inputFocused,
+          error && styles.inputError,
+          disabled && styles.inputDisabled,
+        ]}
+        onPress={handlePress}
+        disabled={disabled}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={label || "Seleccionar"}
+        accessibilityHint={`Presiona para seleccionar. Valor actual: ${displayText}`}
+      >
         {iconLeft && (
-          <IconoFontAwesome6 nombre={iconLeft} tamanio={22} color={Colors.primary} backgroundColor={Colors.primaryContainer}/>
+          <Icono
+            nombre={iconLeft}
+            tamanio={22}
+            color={disabled ? Colors.outlineVariant : Colors.primary}
+            backgroundColor={Colors.primaryContainer}
+          />
         )}
-        <View style={styles.pickerContainer}>
-          <Picker<string>
-            accessibilityLabel={label}
-            selectedValue={value}
-            onValueChange={onChange}
-            style={styles.picker}
-          >
-            <Picker.Item label={placeholder} value="" />
-            {options.map((option) => (
-              <Picker.Item
-                key={option.value}
-                label={option.label}
-                value={option.value}
-              />
-            ))}
-          </Picker>
-        </View>
+
+        <AppText
+          style={[
+            styles.text,
+            isPlaceholder && styles.placeholderText,
+            disabled && styles.disabledText,
+          ]}
+        >
+          {displayText}
+        </AppText>
+
         {iconRight && (
-          <Icono nombre={iconRight} tamanio={22} color={Colors.primary} />
+          <Icono
+            nombre={iconRight}
+            tamanio={22}
+            color={disabled ? Colors.outlineVariant : Colors.onSurfaceVariant}
+          />
         )}
-      </View>
+      </Pressable>
+
+      {error && <AppText style={styles.errorText}>{error}</AppText>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 8,
-    paddingVertical: 7,
+    margin: 10,
+    marginVertical: 10,
   },
   label: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "600",
+    marginBottom: 8,
     color: Colors.onSurfaceVariant,
-    marginBottom: 6,
   },
-  pickerRow: {
+  input: {
+    elevation: 1,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    borderRadius: 16,
-    backgroundColor: Colors.surfaceSoft,
-    overflow: "hidden",
-    paddingHorizontal: 7,
+    borderColor: Colors.outlineVariant,
+    borderRadius: 20,
+    padding: 10,
+    paddingHorizontal: 14,
+    backgroundColor: Colors.onPrimary,
+    justifyContent: "space-between",
+    gap: 8,
   },
-  pickerContainer: {
+  inputFocused: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+  },
+  inputError: {
+    borderColor: Colors.error,
+  },
+  inputDisabled: {
+    opacity: 0.6,
+    backgroundColor: Colors.outlineVariant,
+  },
+  text: {
     flex: 1,
-  },
-  picker: {
+    fontSize: 15,
+    fontWeight: "500",
     color: Colors.onSurfaceVariant,
-    height: 50,
-    fontSize: 14,
+  },
+  placeholderText: {
+    color: Colors.outlineVariant,
+    fontWeight: "400",
+  },
+  disabledText: {
+    color: Colors.outlineVariant,
+  },
+  errorText: {
+    fontSize: 12,
+    color: Colors.error,
+    marginTop: 5,
+    marginLeft: 14,
   },
 });
 

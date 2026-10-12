@@ -5,6 +5,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../theme/colors";
 
 interface BottomSheetProps {
@@ -13,27 +14,31 @@ interface BottomSheetProps {
   children: ReactNode;
 }
 
-const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) => (
-  <Modal
-    visible={visible}
-    transparent
-    animationType="slide"
-    onRequestClose={onClose}
-  >
-    <View style={styles.overlay}>
-      <Pressable
-        style={StyleSheet.absoluteFill}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel="Cerrar panel"
-      />
-      <View style={styles.container}>
-        <View style={styles.handle} />
-        {children}
+const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) => {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.overlay}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar panel"
+        />
+        <View style={[styles.container, { paddingBottom: Math.max(30, 16 + insets.bottom) }]}>
+          <View style={styles.handle} />
+          {children}
+        </View>
       </View>
-    </View>
-  </Modal>
-);
+    </Modal>
+  );
+};
 
 const styles = StyleSheet.create({
   overlay: {
@@ -44,7 +49,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 22,
     paddingTop: 12,
-    paddingBottom: 30,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     backgroundColor: Colors.surface,

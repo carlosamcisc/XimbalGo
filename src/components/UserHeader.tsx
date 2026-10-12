@@ -9,6 +9,7 @@ interface Props {
   onPress: () => void;
 
   // Colores personalizables
+  backgroundColor?: string;   //fondo del encabezado
   avatarBackground?: string; 
   avatarTextColor?: string;
   saludoTextColor?: string;
@@ -20,13 +21,14 @@ export default function UserHeader({
   inicial = '?',
   saludo,
   onPress,
+  backgroundColor = Colors.surface, //nuevo fondo del contenedor
   avatarBackground = Colors.primary,
   avatarTextColor = Colors.white,
   saludoTextColor = Colors.onSurface,
   buenasTextColor = Colors.onSurfaceVariant,
 }: Props) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor }]}>
       <Pressable style={[styles.avatar, { backgroundColor: avatarBackground }]} onPress={onPress}>
         <AppText weight="semibold" style={[styles.avatarLetra, { color: avatarTextColor }]}>
           {inicial}
@@ -50,8 +52,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 26,
-    marginHorizontal: 24,
+    marginTop: 0,
+    padding: 12, //para que el fondo se vea bien
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   avatar: {
     width: 48,

@@ -28,6 +28,7 @@ const ICONOS = {
     locationOn: 'location-on',
     myLocation: 'my-location',
     ArrowRight: 'keyboard-arrow-right',
+    ArrowDown: 'keyboard-arrow-down',
     //iconos para la pantalla de inicio
     home: 'home',
     map: 'map',
@@ -63,6 +64,7 @@ const ICONOS_FONTAWESOME6 = {
     road: 'road',
     locationArrow: 'location-arrow',
     locationDot: 'location-dot',
+    personWalkingLuggage: 'person-walking-luggage',
 } as const;
 
 export type NombreIconoFontAwesome6 = keyof typeof ICONOS_FONTAWESOME6;
