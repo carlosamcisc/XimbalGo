@@ -49,12 +49,8 @@ export async function registrarUsuario(
       direccion: datos.direccion.trim(),
     }),
 
-    ...(datos.puntoPartida?.trim() && {
-      punto_partida: datos.puntoPartida.trim(),
-    }),
-
-    ...(datos.puntoDestino?.trim() && {
-      punto_destino: datos.puntoDestino.trim(),
+    ...(datos.rutaId && {
+      ruta_id: datos.rutaId,
     }),
 
     ...(datos.horarioTrabajo?.trim() && {

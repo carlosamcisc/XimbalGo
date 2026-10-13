@@ -16,8 +16,8 @@ export interface DatosRegistro {
   edad?: number;
   direccion?: string;
 
-  puntoPartida?: string;
-  puntoDestino?: string;
+  /** `handle_new_user` copia el origen y destino de la ruta al taxista. */
+  rutaId?: string;
   horarioTrabajo?: string;
   precioRuta?: number;
 }
