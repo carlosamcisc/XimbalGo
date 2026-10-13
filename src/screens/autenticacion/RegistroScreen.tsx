@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Alert,
     Pressable,
@@ -15,6 +15,11 @@ import AppText from "../../components/AppText";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import type { AuthStackParamList, Rol } from "../../navigation/types";
 import { registrarUsuario } from "../../infrastructure/supabase/auth/auth.service";
+import { obtenerCatalogoRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
+import SelectInput from "../../components/SelectInput";
+import BottomSheet from "../../components/BottomSheet";
+import OptionList from "../../components/OptionList";
+import type { RutaCatalogo } from "../../modules/cliente/rutas";
 import Colors from "../../theme/colors";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Registro">;
@@ -35,11 +40,50 @@ const RegistroScreen = ({ navigation, route }: Props) => {
     const [confirmarContrasenia, setConfirmarContrasenia] = useState("");
     const [edad, setEdad] = useState("");
     const [direccion, setDireccion] = useState("");
-    const [puntoPartida, setPuntoPartida] = useState("");
-    const [puntoDestino, setPuntoDestino] = useState("");
+    const [rutas, setRutas] = useState<RutaCatalogo[]>([]);
+    const [cargandoRutas, setCargandoRutas] = useState(rol === "taxista");
+    const [errorRutas, setErrorRutas] = useState(false);
+    const [ruta, setRuta] = useState<RutaCatalogo | null>(null);
+    const [selectorRutaVisible, setSelectorRutaVisible] = useState(false);
     const [horarioTrabajo, setHorarioTrabajo] = useState("");
     const [precioRuta, setPrecioRuta] = useState("");
     const [cargando, setCargando] = useState(false);
+
+    const cargarRutas = async () => {
+        setCargandoRutas(true);
+        setErrorRutas(false);
+        try {
+            setRutas(await obtenerCatalogoRutas());
+        } catch {
+            setErrorRutas(true);
+        } finally {
+            setCargandoRutas(false);
+        }
+    };
+
+    useEffect(() => {
+        if (rol === "taxista") {
+            void cargarRutas();
+        }
+    }, [rol]);
+
+    const seleccionarRuta = (seleccionada: RutaCatalogo) => {
+        setRuta(seleccionada);
+        // Sugiere la tarifa base; el taxista puede cambiarla.
+        if (!precioRuta.trim()) {
+            setPrecioRuta(String(seleccionada.precioBase));
+        }
+    };
+
+    const opcionesRutas = rutas.map((opcion) => ({
+        ...opcion,
+        titulo: `${opcion.nombre}\n${opcion.origen} → ${opcion.destino}`,
+    }));
+    const textoSinRutas = cargandoRutas
+        ? "Cargando rutas..."
+        : errorRutas
+            ? "No se pudieron cargar las rutas."
+            : "Todavía no hay rutas registradas.";
 
     const handleRegistro = async () => {
         const correoLimpio = correo.trim();
@@ -98,12 +142,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                     ? { edad: edadNumero }
                     : {}),
                 ...(direccion.trim() ? { direccion: direccion.trim() } : {}),
-                ...(rol === "taxista" && puntoPartida.trim()
-                    ? { puntoPartida: puntoPartida.trim() }
-                    : {}),
-                ...(rol === "taxista" && puntoDestino.trim()
-                    ? { puntoDestino: puntoDestino.trim() }
-                    : {}),
+                ...(rol === "taxista" && ruta ? { rutaId: ruta.id } : {}),
                 ...(rol === "taxista" && horarioTrabajo.trim()
                     ? { horarioTrabajo: horarioTrabajo.trim() }
                     : {}),
@@ -214,20 +253,43 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             <AppText weight="bold" style={styles.subtituloCampos}>
                                 Datos de tu servicio
                             </AppText>
-                            <TextInputField
-                                label="Punto de partida"
-                                value={puntoPartida}
-                                placeholder="Ej. Centro de la ciudad"
-                                onChangeText={setPuntoPartida}
-                                autoCapitalize="sentences"
+                            <SelectInput
+                                label="Ruta"
+                                value={ruta ? `${ruta.origen} → ${ruta.destino}` : ""}
+                                placeholder={cargandoRutas ? "Cargando rutas..." : "Selecciona tu ruta"}
+                                onPress={() => setSelectorRutaVisible(true)}
+                                active={selectorRutaVisible}
+                                iconLeft="map"
+                                iconRight="ArrowDown"
                             />
-                            <TextInputField
-                                label="Punto de destino"
-                                value={puntoDestino}
-                                placeholder="Ej. Terminal de autobuses"
-                                onChangeText={setPuntoDestino}
-                                autoCapitalize="sentences"
-                            />
+                            {errorRutas && (
+                                <Pressable
+                                    onPress={() => void cargarRutas()}
+                                    accessibilityRole="button"
+                                    style={styles.reintentarRutas}
+                                >
+                                    <AppText weight="semibold" style={styles.textoReintentar}>
+                                        No se pudieron cargar las rutas. Reintentar
+                                    </AppText>
+                                </Pressable>
+                            )}
+                            <BottomSheet
+                                visible={selectorRutaVisible}
+                                onClose={() => setSelectorRutaVisible(false)}
+                            >
+                                <View>
+                                    <AppText weight="semibold" style={styles.tituloSelector}>
+                                        Elige tu ruta
+                                    </AppText>
+                                    <OptionList
+                                        data={opcionesRutas}
+                                        style={styles.listaRutas}
+                                        emptyText={textoSinRutas}
+                                        onSelect={seleccionarRuta}
+                                        onClose={() => setSelectorRutaVisible(false)}
+                                    />
+                                </View>
+                            </BottomSheet>
                             <TextInputField
                                 label="Horario de trabajo"
                                 value={horarioTrabajo}
@@ -344,6 +406,21 @@ const styles = StyleSheet.create({
     },
     contenBoton: {
         margin: 10,
+    },
+    reintentarRutas: {
+        marginHorizontal: 20,
+    },
+    textoReintentar: {
+        fontSize: 14,
+        color: Colors.primary,
+    },
+    tituloSelector: {
+        textAlign: "center",
+        fontSize: 20,
+        marginBottom: 12,
+    },
+    listaRutas: {
+        maxHeight: 320,
     },
     contentOpciones: {
         margin: 1,

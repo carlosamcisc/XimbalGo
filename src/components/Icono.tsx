@@ -41,6 +41,12 @@ const ICONOS = {
     phone: 'phone',
     payments: 'payments',
     notes: 'notes',
+    //iconos para las rutas
+    search: 'search',
+    close: 'close',
+    timer: 'timer',
+    straighten: 'straighten',
+    groups: 'groups',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

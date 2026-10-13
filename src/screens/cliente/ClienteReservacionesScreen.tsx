@@ -73,7 +73,7 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
                 navigation.navigate("ClienteInicio");
                 break;
             case "rutas":
-                ToastMessage.show("Rutas");
+                navigation.navigate("ClienteRutas");
                 break;
             case "reservaciones":
                 break;
