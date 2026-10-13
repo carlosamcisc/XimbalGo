@@ -10,7 +10,7 @@ import Button from "../../components/Button";
 import BottomSheet from "../../components/BottomSheet";
 import ReservaCard from "../../components/ReservaCard";
 import { ToastMessage } from "../../components/ToastMessaje";
-import { BottomTabBar, type BottomTabId } from "../../components/BottomTabBar";
+import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
 import {
@@ -254,7 +254,7 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
                 )}
             </BottomSheet>
 
-            <BottomTabBar activeTab="reservaciones" onPressTab={handlePressTab} />
+            <BottomTabBar tabs={TABS_CLIENTE} activeTab="reservaciones" onPressTab={handlePressTab} />
         </SafeAreaView>
     );
 };

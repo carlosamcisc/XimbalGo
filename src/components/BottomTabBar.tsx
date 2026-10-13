@@ -5,31 +5,41 @@ import Colors from "../theme/colors";
 import { Icono, NombreIcono } from "./Icono";
 import AppText from "../components/AppText";
 
-export type BottomTabId = 'inicio' | 'rutas' | 'reservaciones';
-
-interface TabItem {
-  id: BottomTabId;
+export interface TabItem<T extends string> {
+  id: T;
   label: string;
   icono: NombreIcono;
 }
 
-const TABS: TabItem[] = [
+export type BottomTabId = 'inicio' | 'rutas' | 'reservaciones';
+
+export const TABS_CLIENTE: readonly TabItem<BottomTabId>[] = [
   { id: 'inicio', label: 'Inicio', icono: 'home' },
   { id: 'rutas', label: 'Rutas', icono: 'map' },
   { id: 'reservaciones', label: 'Reservaciones', icono: 'bookMarks' }
 ];
 
-interface Props {
-  activeTab: BottomTabId;
-  onPressTab: (id: BottomTabId) => void;
+export type TaxistaTabId = 'inicio' | 'viajes' | 'vehiculo' | 'perfil';
+
+export const TABS_TAXISTA: readonly TabItem<TaxistaTabId>[] = [
+  { id: 'inicio', label: 'Inicio', icono: 'home' },
+  { id: 'viajes', label: 'Viajes', icono: 'bookMarks' },
+  { id: 'vehiculo', label: 'Vehículo', icono: 'localTaxi' },
+  { id: 'perfil', label: 'Perfil', icono: 'person' },
+];
+
+interface Props<T extends string> {
+  tabs: readonly TabItem<T>[];
+  activeTab: T;
+  onPressTab: (id: T) => void;
 }
 
-export function BottomTabBar({ activeTab, onPressTab }: Props) {
+export function BottomTabBar<T extends string>({ tabs, activeTab, onPressTab }: Props<T>) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.bar, { bottom: insets.bottom }]}>
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active = tab.id === activeTab;
         return (
           <TouchableOpacity
