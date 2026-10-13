@@ -27,8 +27,9 @@ El perfil alimenta el nombre y la inicial del encabezado. Los paraderos activos 
 
 - El selector de origen ofrece **Mi ubicación actual** además de los paraderos activos.
 - Elegir esa opción solicita permiso de ubicación mientras se usa la aplicación, comprueba que los servicios de ubicación estén habilitados y obtiene una posición con precisión balanceada mediante `expo-location`.
-- Después de obtener el GPS, se muestra un panel inferior con la dirección obtenida mediante geocodificación inversa y las coordenadas. Si no hay una dirección disponible o falla esa consulta, las coordenadas siguen disponibles y se informa el problema; el origen GPS no se descarta.
-- Al seleccionar un origen y un destino, se consultan hasta cinco resultados de cada tipo: taxis disponibles y paraderos activos. Los resultados se ordenan por distancia en metros al GPS del cliente y se presentan como metros o kilómetros.
+- Después de obtener el GPS, el selector de origen muestra la dirección obtenida mediante geocodificación inversa. Si no hay una dirección disponible o falla esa consulta, se muestra «Mi ubicación actual» y el origen GPS se conserva.
+- Al abrir la pantalla se obtiene el GPS y se consultan hasta cinco resultados de cada tipo: taxis disponibles y paraderos activos. No hace falta haber elegido origen y destino. Los resultados se ordenan por distancia en metros al GPS del cliente y se presentan como metros o kilómetros. Elegir «Mi ubicación actual» o deslizar hacia abajo repite la búsqueda con una posición nueva.
+- Tocar un paradero cercano lo selecciona como origen.
 - Solo se listan taxis con taxista activo, vehículo activo y asientos disponibles mayores que cero.
 - Las búsquedas se ejecutan en Supabase mediante PostGIS. La app envía latitud y longitud y recibe las filas cercanas ya ordenadas; no descarga la ubicación de todos los taxistas para calcular distancias en el dispositivo.
 - Si el usuario escoge un paradero como origen en vez del GPS, el paradero se usa como selección del viaje, pero la búsqueda de proximidad sigue tomando el GPS actual del dispositivo.
@@ -39,7 +40,9 @@ El perfil alimenta el nombre y la inicial del encabezado. Los paraderos activos 
 
 | Archivo | Responsabilidad |
 | --- | --- |
-| `src/screens/cliente/ClienteInicioScreen.tsx` | Estado de pantalla, carga inicial, selectores, solicitud de GPS, resultados, estados de carga/error/vacío y refresco. |
+| `src/screens/cliente/ClienteInicioScreen.tsx` | Presentación: selectores, resultados, estados de carga/error/vacío y refresco. |
+| `src/screens/cliente/useClienteInicio.ts` | Carga del perfil y paraderos, GPS, búsqueda de cercanos y reglas de selección de origen/destino. |
+| `src/modules/cliente/types.ts` | Tipos del perfil, paraderos y origen del viaje. |
 | `src/components/BottomSheet.tsx` | Contenedor genérico de panel inferior modal con fondo, cierre al tocar afuera y contenido reutilizable. |
 | `src/navigation/cliente/ClienteNavigator.tsx` | Entrada de navegación del cliente. |
 | `src/infrastructure/location/location.service.ts` | Permiso de ubicación en primer plano y lectura de la posición actual con Expo Location. |
@@ -93,7 +96,7 @@ La migración `20261008210000_busqueda_cercana_cliente.sql` se aplicó al proyec
 - La distancia es geográfica directa entre coordenadas; no es distancia de conducción ni tiempo estimado por carretera.
 - Se muestran como máximo cinco resultados y no hay un radio máximo: si existen menos de cinco registros válidos, se muestran los encontrados, aunque estén lejos.
 - Los resultados de taxis requieren que el taxista tenga `ubicacion_actual` registrada, además de estar activo y tener un vehículo activo con asientos disponibles.
-- El permiso GPS se solicita al elegir «Mi ubicación actual» y, si todavía no se había obtenido, cuando se inicia una búsqueda con ambos selectores completos. Si se deniega o el GPS está desactivado, se informa el error y no se muestran resultados cercanos.
+- El permiso GPS se solicita al abrir la pantalla. Si se deniega o el GPS está desactivado, las listas de cercanos muestran el error con la acción «Reintentar».
 - La acción de perfil y las pestañas Rutas/Reservaciones no navegan todavía a flujos de perfil, reservas o rutas.
 
 ## Validación realizada

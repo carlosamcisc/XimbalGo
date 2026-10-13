@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, RefreshControl } from "react-native";
 import AppText from "../../components/AppText";
 import { StatusBar } from "expo-status-bar";
 import Colors from "../../theme/colors";
@@ -7,10 +7,9 @@ import UserHeader from "../../components/UserHeader";
 import { ToastMessage } from "../../components/ToastMessaje";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import SelectInput from "../../components/SelectInput";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import BottomSheet from "../../components/BottomSheet";
 import Button from "../../components/Button";
-import Divider from "../../components/Divider";
 import OptionList from "../../components/OptionList";
 import { BottomTabBar, BottomTabId } from "../../components/BottomTabBar";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -19,21 +18,57 @@ import { Icono, IconoFontAwesome6 } from "../../components/Icono";
 import TaxiCard from "../../components/TaxiCard";
 import Card from "../../components/Card";
 import ParadaItem from "../../components/ParadaItem";
-
-const origenes = [
-    { id: '1', titulo: 'Tekax' },
-    { id: '2', titulo: 'Akil' },
-    { id: '3', titulo: 'Ticul' },
-];
-
-const destinos = [
-    { id: '1', titulo: 'Tekax' },
-    { id: '2', titulo: 'Oxkutzcab' },
-    { id: '3', titulo: 'Peto' },
-    { id: '4', titulo: 'Ticul' },
-];
+import { formatearDistancia } from "../../modules/cliente/ubicacion";
+import type { ParaderoViaje } from "../../modules/cliente/types";
+import { useClienteInicio } from "./useClienteInicio";
 
 type SelectorActivo = "origen" | "destino" | null;
+
+const mostrarAviso = (mensaje: string | null) => {
+    if (mensaje) {
+        ToastMessage.show(mensaje);
+    }
+};
+
+interface EstadoListaProps {
+    cargando: boolean;
+    error: string | null;
+    vacio: boolean;
+    textoCargando: string;
+    textoVacio: string;
+    onReintentar: () => void;
+    children: ReactNode;
+}
+
+// Muestra carga, error o vacío antes de renderizar los elementos de la lista.
+const EstadoLista = ({ cargando, error, vacio, textoCargando, textoVacio, onReintentar, children }: EstadoListaProps) => {
+    if (cargando) {
+        return (
+            <View style={styles.estadoLista}>
+                <ActivityIndicator color={Colors.primary} />
+                <AppText style={styles.textoEstado}>{textoCargando}</AppText>
+            </View>
+        );
+    }
+    if (error) {
+        return (
+            <View style={styles.estadoLista}>
+                <AppText style={styles.textoEstado}>{error}</AppText>
+                <Pressable onPress={onReintentar} accessibilityRole="button">
+                    <AppText weight="semibold" style={styles.textoReintentar}>Reintentar</AppText>
+                </Pressable>
+            </View>
+        );
+    }
+    if (vacio) {
+        return (
+            <View style={styles.estadoLista}>
+                <AppText style={styles.textoEstado}>{textoVacio}</AppText>
+            </View>
+        );
+    }
+    return <>{children}</>;
+};
 
 const handlePressTab = (tab: BottomTabId) => {
     switch (tab) {
@@ -52,18 +87,46 @@ const handlePressTab = (tab: BottomTabId) => {
 type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteInicio'>;
 
 const ClienteInicioScreen = ({ navigation }: Props) => {
-    const [origen, setOrigen] = useState("");
-    const [destino, setDestino] = useState("");
     const [selectorActivo, setSelectorActivo] = useState<SelectorActivo>(null);
+    const inicio = useClienteInicio();
+
+    const opcionesParaderos = inicio.paraderos.map((paradero) => ({
+        ...paradero,
+        titulo: paradero.nombre,
+    }));
+    const textoSinParaderos = inicio.cargandoDatos
+        ? "Cargando paraderos..."
+        : "No hay paraderos disponibles.";
+
+    const usarUbicacionActual = async () => {
+        setSelectorActivo(null);
+        mostrarAviso(await inicio.usarUbicacionActual());
+    };
+
+    const seleccionarParaderoCercano = (paradero: ParaderoViaje) => {
+        const aviso = inicio.seleccionarOrigenParadero(paradero);
+        mostrarAviso(aviso ?? `${paradero.nombre} seleccionado como origen`);
+    };
+
     return (
         <SafeAreaView style={styles.statusBar} edges={['top', 'bottom']}>
             <StatusBar style="light" />
             <View style={styles.pantalla}>
-                <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
+                <KeyboardAwareScroll
+                    contentContainerStyle={styles.scrollContent}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={inicio.refrescando}
+                            onRefresh={() => void inicio.refrescar()}
+                            tintColor={Colors.primary}
+                            colors={[Colors.primary]}
+                        />
+                    }
+                >
                     <UserHeader
-                        nombre="Carlos"
-                        inicial="C"
-                        saludo="Buenas tardes"
+                        nombre={inicio.nombre}
+                        inicial={inicio.inicial}
+                        saludo={inicio.saludo}
                         onPress={() => ToastMessage.show("Mi perfil")}
                         backgroundColor={Colors.primary}
                         avatarBackground={Colors.primaryContainer}
@@ -81,11 +144,24 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         </View>
                     </View>
 
+                    {inicio.errorDatos && (
+                        <Card>
+                            <View style={styles.estadoLista}>
+                                <AppText style={styles.textoEstado}>
+                                    No se pudieron cargar tus datos: {inicio.errorDatos}
+                                </AppText>
+                                <Pressable onPress={() => void inicio.cargarDatos()} accessibilityRole="button">
+                                    <AppText weight="semibold" style={styles.textoReintentar}>Reintentar</AppText>
+                                </Pressable>
+                            </View>
+                        </Card>
+                    )}
+
                     <Card>
                         <SelectInput
                             label="Origen"
-                            value={origen}
-                            placeholder="Seleccione el origen"
+                            value={inicio.etiquetaOrigen}
+                            placeholder={inicio.obteniendoUbicacion ? "Obteniendo ubicación..." : "Seleccione el origen"}
                             onPress={() => setSelectorActivo("origen")}
                             active={selectorActivo === "origen"}
                             iconLeft="locationHistory"
@@ -93,7 +169,7 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         />
                         <SelectInput
                             label="Destino"
-                            value={destino}
+                            value={inicio.destino?.nombre ?? ""}
                             placeholder="Seleccione el destino"
                             onPress={() => setSelectorActivo("destino")}
                             active={selectorActivo === "destino"}
@@ -109,17 +185,17 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         <View>
                             <AppText style={styles.tituloItems}>Elige tu origen</AppText>
                             <OptionList
-                                data={origenes}
-                                onSelect={setOrigen}
+                                data={opcionesParaderos}
+                                style={styles.listaOpciones}
+                                emptyText={textoSinParaderos}
+                                onSelect={(paradero) => mostrarAviso(inicio.seleccionarOrigenParadero(paradero))}
                                 onClose={() => setSelectorActivo(null)}
                             />
 
                             <Button
-                                titulo="Mi ubicacion actual"
-                                onPress={() => {
-                                    setOrigen("Mi ubicacion actual");
-                                    setSelectorActivo(null);
-                                }}
+                                titulo={inicio.obteniendoUbicacion ? "Obteniendo ubicación..." : "Mi ubicación actual"}
+                                disabled={inicio.obteniendoUbicacion}
+                                onPress={() => void usarUbicacionActual()}
                             />
 
                         </View>
@@ -133,8 +209,10 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         <View>
                             <AppText style={styles.tituloItems}>Elige tu destino</AppText>
                             <OptionList
-                                data={destinos}
-                                onSelect={setDestino}
+                                data={opcionesParaderos}
+                                style={styles.listaOpciones}
+                                emptyText={textoSinParaderos}
+                                onSelect={(paradero) => mostrarAviso(inicio.seleccionarDestino(paradero))}
                                 onClose={() => setSelectorActivo(null)}
                             />
 
@@ -149,16 +227,50 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         <Icono nombre="ArrowRight" tamanio={25} color={Colors.outlineVariant} />
                     </View>
                     <Card>
-                        <TaxiCard nombre="XFT-980" distancia="2.5 km" asientos={3} />
-                        <TaxiCard nombre="KLP-010" distancia="1.4 km" asientos={0} lleno />
+                        <EstadoLista
+                            cargando={inicio.cargandoCercanos}
+                            error={inicio.errorCercanos}
+                            vacio={inicio.taxisCercanos.length === 0}
+                            textoCargando="Buscando taxis cercanos..."
+                            textoVacio="No hay taxis cercanos con asientos disponibles."
+                            onReintentar={() => void inicio.buscarCercanos()}
+                        >
+                            {inicio.taxisCercanos.map((taxi) => (
+                                <TaxiCard
+                                    key={taxi.id}
+                                    nombre={`${taxi.matricula} · ${taxi.nombreTaxista}`}
+                                    distancia={formatearDistancia(taxi.distanciaMetros)}
+                                    asientos={taxi.asientosDisponibles}
+                                    lleno={taxi.asientosDisponibles <= 0}
+                                />
+                            ))}
+                        </EstadoLista>
                     </Card>
                     <View style={styles.conteParaderoCerca}>
                         <Icono nombre="business" tamanio={22} color={Colors.primary} />
                         <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
                     </View>
                     <Card>
-                        <ParadaItem nombre="ITSSY" descripcion="Escuela" onPress={() => ToastMessage.show("Ittsy")}/>
-                        <ParadaItem nombre="Centro" descripcion="Centro de oxcutzcab" onPress={() => ToastMessage.show("Centro")}/>
+                        <EstadoLista
+                            cargando={inicio.cargandoCercanos}
+                            error={inicio.errorCercanos}
+                            vacio={inicio.paraderosCercanos.length === 0}
+                            textoCargando="Buscando paraderos cercanos..."
+                            textoVacio="No hay paraderos cercanos con ubicación registrada."
+                            onReintentar={() => void inicio.buscarCercanos()}
+                        >
+                            {inicio.paraderosCercanos.map((paradero) => (
+                                <ParadaItem
+                                    key={paradero.id}
+                                    nombre={paradero.nombre}
+                                    descripcion={[
+                                        paradero.referencia,
+                                        formatearDistancia(paradero.distanciaMetros),
+                                    ].filter(Boolean).join(" · ")}
+                                    onPress={() => seleccionarParaderoCercano(paradero)}
+                                />
+                            ))}
+                        </EstadoLista>
                     </Card>
                 </KeyboardAwareScroll>
             </View>
@@ -231,6 +343,23 @@ const styles = StyleSheet.create({
     },
     textParadero: {
         fontSize: 15,
+    },
+    listaOpciones: {
+        maxHeight: 320,
+    },
+    estadoLista: {
+        alignItems: "center",
+        gap: 8,
+        padding: 16,
+    },
+    textoEstado: {
+        fontSize: 14,
+        textAlign: "center",
+        color: Colors.onSurfaceVariant,
+    },
+    textoReintentar: {
+        fontSize: 14,
+        color: Colors.primary,
     },
 });
 

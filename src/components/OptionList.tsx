@@ -1,29 +1,35 @@
 import React from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 import AppText from "./AppText";
 import Colors from "../theme/colors";
 
-interface Option {
+export interface Option {
   id: string;
   titulo: string;
 }
 
-interface OptionListProps {
-  data: Option[];
-  onSelect: (value: string) => void;
+interface OptionListProps<T extends Option> {
+  data: T[];
+  onSelect: (item: T) => void; // devuelve la opción completa, no solo el título
   onClose?: () => void; // opcional, para cerrar modal
+  emptyText?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-const OptionList: React.FC<OptionListProps> = ({ data, onSelect, onClose }) => {
+function OptionList<T extends Option>({ data, onSelect, onClose, emptyText, style }: OptionListProps<T>) {
   return (
     <FlatList
       data={data}
+      style={style}
       keyExtractor={(item) => item.id}
+      ListEmptyComponent={
+        emptyText ? <AppText style={styles.emptyText}>{emptyText}</AppText> : null
+      }
       renderItem={({ item }) => (
         <Pressable
           style={styles.item}
           onPress={() => {
-            onSelect(item.titulo);
+            onSelect(item);
             onClose?.(); //si existe, cierra modal
           }}
           accessibilityRole="button"
@@ -34,7 +40,7 @@ const OptionList: React.FC<OptionListProps> = ({ data, onSelect, onClose }) => {
       )}
     />
   );
-};
+}
 
 const styles = StyleSheet.create({
   item: {
@@ -45,6 +51,11 @@ const styles = StyleSheet.create({
   textItem: {
     fontSize: 17,
     color: Colors.onSurfaceVariant,
+  },
+  emptyText: {
+    padding: 12,
+    textAlign: "center",
+    color: Colors.outline,
   },
 });
 
