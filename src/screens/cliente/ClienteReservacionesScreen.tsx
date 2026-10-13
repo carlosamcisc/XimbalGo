@@ -13,6 +13,8 @@ import { ToastMessage } from "../../components/ToastMessaje";
 import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
+import ClienteSideBar, { BotonMenuCliente } from "./ClienteSideBar";
 import {
     PRESENTACION_ESTADO,
     formatearFecha,
@@ -37,6 +39,7 @@ const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta:
 );
 
 const ClienteReservacionesScreen = ({ navigation }: Props) => {
+    const [menuVisible, setMenuVisible] = useState(false);
     const reservaciones = useClienteReservaciones();
     const [filtro, setFiltro] = useState<Filtro>("activas");
     const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null);
@@ -131,10 +134,11 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <View style={styles.encabezado}>
-                <AppText weight="bold" style={styles.titulo}>Mis reservaciones</AppText>
-                <AppText style={styles.subtitulo}>Consulta y administra tus viajes</AppText>
-            </View>
+            <EncabezadoPantalla
+                titulo="Mis reservaciones"
+                subtitulo="Consulta y administra tus viajes"
+                accion={<BotonMenuCliente onPress={() => setMenuVisible(true)} />}
+            />
             <View style={styles.pantalla}>
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["activas", "historial"] as const).map((opcion) => {
@@ -255,6 +259,7 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
             </BottomSheet>
 
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="reservaciones" onPressTab={handlePressTab} />
+            <ClienteSideBar visible={menuVisible} onClose={() => setMenuVisible(false)} />
         </SafeAreaView>
     );
 };
@@ -263,20 +268,6 @@ const styles = StyleSheet.create({
     statusBar: {
         backgroundColor: Colors.primary,
         flex: 1,
-    },
-    encabezado: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 24,
-    },
-    titulo: {
-        fontSize: 24,
-        color: Colors.white,
-    },
-    subtitulo: {
-        fontSize: 15,
-        color: Colors.brandSubtitle,
-        marginTop: 4,
     },
     pantalla: {
         backgroundColor: Colors.surface,

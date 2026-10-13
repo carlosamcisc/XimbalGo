@@ -21,6 +21,8 @@ import ParadaItem from "../../components/ParadaItem";
 import { formatearDistancia, type TaxiCercano } from "../../modules/cliente/ubicacion";
 import type { ParaderoViaje } from "../../modules/cliente/types";
 import { useClienteInicio } from "./useClienteInicio";
+import { useCliente } from "./ClienteContext";
+import ClienteSideBar from "./ClienteSideBar";
 
 type SelectorActivo = "origen" | "destino" | null;
 
@@ -75,7 +77,9 @@ type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteInicio'>;
 const ClienteInicioScreen = ({ navigation }: Props) => {
     const [selectorActivo, setSelectorActivo] = useState<SelectorActivo>(null);
     const [taxiPorReservar, setTaxiPorReservar] = useState<TaxiCercano | null>(null);
+    const [menuVisible, setMenuVisible] = useState(false);
     const inicio = useClienteInicio();
+    const cliente = useCliente();
 
     const handlePressTab = (tab: BottomTabId) => {
         switch (tab) {
@@ -146,10 +150,11 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                     }
                 >
                     <UserHeader
-                        nombre={inicio.nombre}
-                        inicial={inicio.inicial}
+                        nombre={cliente.primerNombre}
+                        inicial={cliente.inicial}
                         saludo={inicio.saludo}
-                        onPress={() => ToastMessage.show("Mi perfil")}
+                        onPress={() => setMenuVisible(true)}
+                        indicador={cliente.noLeidas > 0}
                         backgroundColor={Colors.primary}
                         avatarBackground={Colors.primaryContainer}
                         avatarTextColor={Colors.secondary}
@@ -334,6 +339,7 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                 </KeyboardAwareScroll>
             </View>
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="inicio" onPressTab={handlePressTab} />
+            <ClienteSideBar visible={menuVisible} onClose={() => setMenuVisible(false)} />
         </SafeAreaView>
     );
 };

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   obtenerParaderosActivos,
   obtenerParaderosCercanos,
-  obtenerPerfilCliente,
 } from "../../infrastructure/supabase/repositories/cliente.repository";
 import { obtenerTaxisCercanos } from "../../infrastructure/supabase/repositories/vehiculos.repository";
 import { crearReserva } from "../../infrastructure/supabase/repositories/reservas.repository";
@@ -19,7 +18,6 @@ import type {
 import type {
   OrigenViaje,
   ParaderoViaje,
-  PerfilCliente,
 } from "../../modules/cliente/types";
 
 const LIMITE_CERCANOS = 5;
@@ -55,7 +53,6 @@ export function useClienteInicio() {
   const { usuario } = useAutenticacionStore();
   const usuarioId = usuario?.id ?? null;
 
-  const [perfil, setPerfil] = useState<PerfilCliente | null>(null);
   const [paraderos, setParaderos] = useState<ParaderoViaje[]>([]);
   const [cargandoDatos, setCargandoDatos] = useState(true);
   const [errorDatos, setErrorDatos] = useState<string | null>(null);
@@ -88,15 +85,11 @@ export function useClienteInicio() {
     }
 
     try {
-      const [perfilCliente, paraderosActivos] = await Promise.all([
-        obtenerPerfilCliente(usuarioId),
-        obtenerParaderosActivos(),
-      ]);
+      const paraderosActivos = await obtenerParaderosActivos();
       if (solicitud !== solicitudDatos.current) {
         return;
       }
 
-      setPerfil(perfilCliente);
       setParaderos(paraderosActivos);
 
       // Descarta selecciones de paraderos que dejaron de estar activos.
@@ -271,7 +264,6 @@ export function useClienteInicio() {
     };
   }, [cargarDatos, buscarCercanos]);
 
-  const nombre = perfil?.nombres.trim().split(/\s+/)[0] || "Cliente";
   const etiquetaOrigen = !origen
     ? ""
     : origen.tipo === "paradero"
@@ -279,8 +271,6 @@ export function useClienteInicio() {
       : origen.direccion ?? "Mi ubicación actual";
 
   return {
-    nombre,
-    inicial: nombre.charAt(0).toUpperCase(),
     saludo: obtenerSaludo(),
     paraderos,
     cargandoDatos,

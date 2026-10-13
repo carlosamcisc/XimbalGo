@@ -12,6 +12,8 @@ import RutaCard from "../../components/RutaCard";
 import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
+import ClienteSideBar, { BotonMenuCliente } from "./ClienteSideBar";
 import { formatearPrecio } from "../../modules/cliente/reservas";
 import {
     coincideBusqueda,
@@ -78,6 +80,7 @@ const TaxistaItem = ({ taxista }: { taxista: TaxistaRuta }) => {
 };
 
 const ClienteRutasScreen = ({ navigation }: Props) => {
+    const [menuVisible, setMenuVisible] = useState(false);
     const rutasCliente = useClienteRutas();
     const [filtro, setFiltro] = useState<Filtro>("todas");
     const [busqueda, setBusqueda] = useState("");
@@ -161,10 +164,11 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <View style={styles.encabezado}>
-                <AppText weight="bold" style={styles.titulo}>Rutas</AppText>
-                <AppText style={styles.subtitulo}>Conoce los trayectos y los taxistas que los cubren</AppText>
-            </View>
+            <EncabezadoPantalla
+                titulo="Rutas"
+                subtitulo="Conoce los trayectos y los taxistas que los cubren"
+                accion={<BotonMenuCliente onPress={() => setMenuVisible(true)} />}
+            />
             <View style={styles.pantalla}>
                 <View style={styles.buscador}>
                     <Icono nombre="search" tamanio={20} color={Colors.outline} />
@@ -264,6 +268,7 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
             </BottomSheet>
 
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="rutas" onPressTab={handlePressTab} />
+            <ClienteSideBar visible={menuVisible} onClose={() => setMenuVisible(false)} />
         </SafeAreaView>
     );
 };
@@ -272,20 +277,6 @@ const styles = StyleSheet.create({
     statusBar: {
         backgroundColor: Colors.primary,
         flex: 1,
-    },
-    encabezado: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 24,
-    },
-    titulo: {
-        fontSize: 24,
-        color: Colors.white,
-    },
-    subtitulo: {
-        fontSize: 15,
-        color: Colors.brandSubtitle,
-        marginTop: 4,
     },
     pantalla: {
         backgroundColor: Colors.surface,
