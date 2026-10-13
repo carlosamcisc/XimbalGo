@@ -18,6 +18,10 @@ export type ClienteStackParamList ={
     ClienteInicio: undefined;
     ClienteReservaciones: undefined;
     ClienteRutas: undefined;
+    ClientePerfil: undefined;
+    ClienteNotificaciones: undefined;
+    ClienteSeguridad: undefined;
+    ClienteAyuda: undefined;
 };
 
 export type TaxistaStackParamList = {
