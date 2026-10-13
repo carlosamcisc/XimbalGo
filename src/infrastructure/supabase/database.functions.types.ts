@@ -28,6 +28,22 @@ type NearbyFunctions = {
       distancia_metros: number;
     }[];
   };
+  crear_reserva_cliente: {
+    Args: {
+      p_vehiculo_id: string;
+      p_paradero_destino_id: string;
+      p_paradero_origen_id?: string | null;
+      p_fecha_hora_viaje?: string | null;
+      p_notas?: string | null;
+    };
+    Returns: string;
+  };
+  cancelar_reserva_cliente: {
+    Args: {
+      p_reserva_id: string;
+    };
+    Returns: undefined;
+  };
 };
 
 type PublicSchema = Database["public"];
