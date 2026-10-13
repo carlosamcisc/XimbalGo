@@ -80,12 +80,17 @@ export async function cancelarReserva(reservaId: string): Promise<void> {
   }
 }
 
+let suscripciones = 0;
+
 export function escucharReservasCliente(
   clienteId: string,
   onChange: () => void
 ) {
+  // `supabase.channel` reutiliza el canal con el mismo nombre, y `removeChannel`
+  // es asíncrono: al volver a montar la pantalla, el canal anterior aún está
+  // suscrito y no admite nuevos callbacks. Cada suscripción usa un nombre único.
   const channel = supabase
-    .channel(`reservas-cliente-${clienteId}`)
+    .channel(`reservas-cliente-${clienteId}-${++suscripciones}`)
     .on(
       "postgres_changes",
       {
