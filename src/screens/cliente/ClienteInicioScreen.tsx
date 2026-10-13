@@ -18,7 +18,7 @@ import { Icono, IconoFontAwesome6 } from "../../components/Icono";
 import TaxiCard from "../../components/TaxiCard";
 import Card from "../../components/Card";
 import ParadaItem from "../../components/ParadaItem";
-import { formatearDistancia } from "../../modules/cliente/ubicacion";
+import { formatearDistancia, type TaxiCercano } from "../../modules/cliente/ubicacion";
 import type { ParaderoViaje } from "../../modules/cliente/types";
 import { useClienteInicio } from "./useClienteInicio";
 
@@ -70,25 +70,47 @@ const EstadoLista = ({ cargando, error, vacio, textoCargando, textoVacio, onRein
     return <>{children}</>;
 };
 
-const handlePressTab = (tab: BottomTabId) => {
-    switch (tab) {
-        case 'inicio':
-            break;
-        case 'rutas':
-            ToastMessage.show("Rutas");
-            break;
-        case 'reservaciones':
-            ToastMessage.show("Reservaciones");
-            break;
-    }
-
-};
-
 type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteInicio'>;
 
 const ClienteInicioScreen = ({ navigation }: Props) => {
     const [selectorActivo, setSelectorActivo] = useState<SelectorActivo>(null);
+    const [taxiPorReservar, setTaxiPorReservar] = useState<TaxiCercano | null>(null);
     const inicio = useClienteInicio();
+
+    const handlePressTab = (tab: BottomTabId) => {
+        switch (tab) {
+            case 'inicio':
+                break;
+            case 'rutas':
+                ToastMessage.show("Rutas");
+                break;
+            case 'reservaciones':
+                navigation.navigate("ClienteReservaciones");
+                break;
+        }
+    };
+
+    const elegirTaxi = (taxi: TaxiCercano) => {
+        if (!inicio.origen || !inicio.destino) {
+            ToastMessage.show("Elige tu origen y destino para reservar en este taxi.");
+            return;
+        }
+        setTaxiPorReservar(taxi);
+    };
+
+    const confirmarReserva = async () => {
+        if (!taxiPorReservar) {
+            return;
+        }
+        const error = await inicio.reservar(taxiPorReservar);
+        if (error) {
+            ToastMessage.show(error);
+            return;
+        }
+        setTaxiPorReservar(null);
+        ToastMessage.show("Reservación enviada al taxista");
+        navigation.navigate("ClienteReservaciones");
+    };
 
     const opcionesParaderos = inicio.paraderos.map((paradero) => ({
         ...paradero,
@@ -242,10 +264,47 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                                     distancia={formatearDistancia(taxi.distanciaMetros)}
                                     asientos={taxi.asientosDisponibles}
                                     lleno={taxi.asientosDisponibles <= 0}
+                                    onPress={() => elegirTaxi(taxi)}
                                 />
                             ))}
                         </EstadoLista>
                     </Card>
+                    {/**ButtomSheet para confirmar la reservación */}
+                    <BottomSheet
+                        visible={taxiPorReservar !== null}
+                        onClose={() => !inicio.reservando && setTaxiPorReservar(null)}
+                    >
+                        {taxiPorReservar && (
+                            <View>
+                                <AppText style={styles.tituloItems}>Confirma tu reservación</AppText>
+                                <View style={styles.filaResumen}>
+                                    <Icono nombre="locationHistory" tamanio={20} color={Colors.primary} />
+                                    <AppText style={styles.textoResumen} numberOfLines={2}>
+                                        <AppText weight="semibold">Origen: </AppText>{inicio.etiquetaOrigen}
+                                    </AppText>
+                                </View>
+                                <View style={styles.filaResumen}>
+                                    <Icono nombre="locationOn" tamanio={20} color={Colors.primary} />
+                                    <AppText style={styles.textoResumen} numberOfLines={2}>
+                                        <AppText weight="semibold">Destino: </AppText>{inicio.destino?.nombre}
+                                    </AppText>
+                                </View>
+                                <TaxiCard
+                                    nombre={`${taxiPorReservar.matricula} · ${taxiPorReservar.nombreTaxista}`}
+                                    distancia={formatearDistancia(taxiPorReservar.distanciaMetros)}
+                                    asientos={taxiPorReservar.asientosDisponibles}
+                                />
+                                <AppText style={styles.textoEstado}>
+                                    Apartaremos un asiento y el taxista recibirá tu solicitud.
+                                </AppText>
+                                <Button
+                                    titulo={inicio.reservando ? "Reservando..." : "Reservar asiento"}
+                                    disabled={inicio.reservando}
+                                    onPress={() => void confirmarReserva()}
+                                />
+                            </View>
+                        )}
+                    </BottomSheet>
                     <View style={styles.conteParaderoCerca}>
                         <Icono nombre="business" tamanio={22} color={Colors.primary} />
                         <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
@@ -360,6 +419,17 @@ const styles = StyleSheet.create({
     textoReintentar: {
         fontSize: 14,
         color: Colors.primary,
+    },
+    filaResumen: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingVertical: 6,
+    },
+    textoResumen: {
+        flex: 1,
+        fontSize: 14,
+        color: Colors.brandText,
     },
 });
 
