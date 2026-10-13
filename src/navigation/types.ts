@@ -17,6 +17,7 @@ export type AuthStackParamList ={
 export type ClienteStackParamList ={
     ClienteInicio: undefined;
     ClienteReservaciones: undefined;
+    ClienteRutas: undefined;
 };
 
 export type TaxistaStackParamList = {
