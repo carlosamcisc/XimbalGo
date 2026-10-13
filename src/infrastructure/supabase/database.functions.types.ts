@@ -48,8 +48,10 @@ type NearbyFunctions = {
 
 type PublicSchema = Database["public"];
 
+// Los tipos generados no admiten `null` en los parámetros opcionales: estas
+// definiciones reemplazan a las generadas en lugar de combinarse con ellas.
 export type DatabaseWithNearbyFunctions = Omit<Database, "public"> & {
   public: Omit<PublicSchema, "Functions"> & {
-    Functions: PublicSchema["Functions"] & NearbyFunctions;
+    Functions: Omit<PublicSchema["Functions"], keyof NearbyFunctions> & NearbyFunctions;
   };
 };
