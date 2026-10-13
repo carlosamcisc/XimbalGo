@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 import { Icono } from "./Icono";
@@ -9,11 +9,17 @@ interface TaxiCardProps {
     distancia?: string;  // Solo se muestra cuando se conoce la distancia
     asientos: number;    // Ej: 4
     lleno?: boolean;     // Si está lleno
+    onPress?: () => void;
 }
 
-const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno }) => {
+const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno, onPress }) => {
     return (
-        <View>
+        <Pressable
+            onPress={onPress}
+            disabled={!onPress || lleno}
+            accessibilityRole={onPress ? "button" : undefined}
+            style={({ pressed }) => pressed && styles.pressed}
+        >
             <View style={styles.card}>
                 <View style={styles.iconContainer}>
                     <Icono nombre="localTaxi" tamanio={21} color={Colors.primary} />
@@ -37,11 +43,15 @@ const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno 
                 </View>
             </View>
             <View style={styles.divider} />
-        </View>
+        </Pressable>
     );
 };
 
 const styles = StyleSheet.create({
+    pressed: {
+        backgroundColor: Colors.surfaceSoft,
+        borderRadius: 15,
+    },
     card: {
         flexDirection: "row",
         alignItems: "center",

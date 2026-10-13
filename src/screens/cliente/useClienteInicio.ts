@@ -5,6 +5,7 @@ import {
   obtenerPerfilCliente,
 } from "../../infrastructure/supabase/repositories/cliente.repository";
 import { obtenerTaxisCercanos } from "../../infrastructure/supabase/repositories/vehiculos.repository";
+import { crearReserva } from "../../infrastructure/supabase/repositories/reservas.repository";
 import {
   obtenerDireccionActual,
   obtenerUbicacionActual,
@@ -24,7 +25,7 @@ import type {
 const LIMITE_CERCANOS = 5;
 const MENSAJE_MISMO_PARADERO = "El origen y el destino deben ser distintos.";
 
-function mensajeError(error: unknown, respaldo: string): string {
+export function mensajeError(error: unknown, respaldo: string): string {
   if (error instanceof Error) {
     return error.message;
   }
@@ -68,6 +69,7 @@ export function useClienteInicio() {
   const [destino, setDestino] = useState<ParaderoViaje | null>(null);
   const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
+  const [reservando, setReservando] = useState(false);
 
   // Cada contador descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitudDatos = useRef(0);
@@ -213,6 +215,39 @@ export function useClienteInicio() {
     [destino]
   );
 
+  /** Devuelve un mensaje de error para el usuario, o null si se reservó. */
+  const reservar = useCallback(
+    async (taxi: TaxiCercano): Promise<string | null> => {
+      if (!destino) {
+        return "Selecciona tu destino antes de reservar.";
+      }
+      if (!origen) {
+        return "Selecciona tu origen antes de reservar.";
+      }
+
+      setReservando(true);
+      try {
+        await crearReserva({
+          vehiculoId: taxi.id,
+          paraderoDestinoId: destino.id,
+          paraderoOrigenId: origen.tipo === "paradero" ? origen.paradero.id : null,
+          // La reserva solo guarda paraderos; el origen GPS viaja en las notas.
+          notas:
+            origen.tipo === "ubicacion"
+              ? `Origen: ${origen.direccion ?? "ubicación actual"} (${origen.coordenadas.latitud.toFixed(5)}, ${origen.coordenadas.longitud.toFixed(5)})`
+              : null,
+        });
+        void buscarCercanos();
+        return null;
+      } catch (error: unknown) {
+        return mensajeError(error, "No se pudo crear la reservación.");
+      } finally {
+        setReservando(false);
+      }
+    },
+    [origen, destino, buscarCercanos]
+  );
+
   /** Devuelve un mensaje para el usuario si el destino no es válido. */
   const seleccionarDestino = useCallback(
     (paradero: ParaderoViaje): string | null => {
@@ -265,5 +300,7 @@ export function useClienteInicio() {
     seleccionarDestino,
     refrescando,
     refrescar,
+    reservando,
+    reservar,
   };
 }
