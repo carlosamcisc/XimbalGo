@@ -85,7 +85,7 @@ No se necesitaron tablas ni funciones nuevas; todo usa las políticas existentes
 
 `authenticated` tenía permiso de `UPDATE` en todas las columnas de `usuarios` y la política solo exige que la fila sea propia: **cualquier cliente o taxista podía cambiar su `rol_id` y volverse administrador**, además de su `correo` o `activo`. Se comprobó contra la base remota (en una transacción revertida).
 
-La migración `20261016120000_perfil_cliente.sql` deja editables solo `numero_telefono` y `foto_perfil_url`. **No se ha aplicado a la base remota**; la app funciona igual con o sin ella.
+La migración `20261016120000_perfil_cliente.sql` deja editables solo `numero_telefono` y `foto_perfil_url`. Ya está aplicada en la base remota y registrada en `supabase_migrations.schema_migrations`.
 
 ## Límites actuales y pendientes
 
@@ -102,6 +102,6 @@ La migración `20261016120000_perfil_cliente.sql` deja editables solo `numero_te
 - Contra la base remota, en transacciones revertidas y como un cliente real bajo RLS:
   - El perfil con correo y fecha de registro se lee; la actualización de `clientes` y de `usuarios.numero_telefono` afecta 1 fila.
   - Solo ve sus notificaciones; marcarlas leídas afecta las suyas y 0 ajenas.
-  - Con la migración, cambiar el teléfono funciona y cambiar `rol_id` o `activo` se rechaza; sin ella, cambiar `rol_id` funciona.
+  - Antes de la migración, un cliente podía cambiar su `rol_id`. Ya aplicada, cambiar el teléfono funciona y cambiar `rol_id` o `activo` se rechaza.
 - PostgREST acepta la relación `clientes → usuarios!clientes_id_fkey`.
 - **No se probó en un dispositivo.**
