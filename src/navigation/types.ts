@@ -16,6 +16,7 @@ export type AuthStackParamList ={
 //crear las rutas de las pantallas de Cliente
 export type ClienteStackParamList ={
     ClienteInicio: undefined;
+    ClienteReservaciones: undefined;
 };
 
 export type TaxistaStackParamList = {

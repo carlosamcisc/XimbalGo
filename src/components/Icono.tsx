@@ -35,6 +35,12 @@ const ICONOS = {
     settings: 'settings',
     moreVert: 'more-vert',
     bookMarks: 'bookmarks',
+    //iconos para las reservaciones
+    eventSeat: 'event-seat',
+    schedule: 'schedule',
+    phone: 'phone',
+    payments: 'payments',
+    notes: 'notes',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;
