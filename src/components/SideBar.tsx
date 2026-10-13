@@ -144,7 +144,12 @@ export function SideBar<T extends string>({
         ]}
         accessibilityViewIsModal
       >
-        <View style={{ paddingTop: insets.top }}>{encabezado}</View>
+        <View>
+          {encabezado && insets.top > 0 && (
+            <View style={{ height: insets.top, backgroundColor: Colors.primary }} />
+          )}
+          {encabezado}
+        </View>
         <ScrollView contentContainerStyle={styles.lista} bounces={false}>
           {opciones.map(renderOpcion)}
         </ScrollView>
