@@ -11,7 +11,7 @@ import { useState, type ReactNode } from "react";
 import BottomSheet from "../../components/BottomSheet";
 import Button from "../../components/Button";
 import OptionList from "../../components/OptionList";
-import { BottomTabBar, BottomTabId } from "../../components/BottomTabBar";
+import { BottomTabBar, TABS_CLIENTE, BottomTabId } from "../../components/BottomTabBar";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ClienteStackParamList } from "../../navigation/types";
 import { Icono, IconoFontAwesome6 } from "../../components/Icono";
@@ -333,7 +333,7 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                     </Card>
                 </KeyboardAwareScroll>
             </View>
-            <BottomTabBar activeTab="inicio" onPressTab={handlePressTab} />
+            <BottomTabBar tabs={TABS_CLIENTE} activeTab="inicio" onPressTab={handlePressTab} />
         </SafeAreaView>
     );
 };

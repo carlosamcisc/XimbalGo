@@ -9,7 +9,7 @@ import Card from "../../components/Card";
 import Button from "../../components/Button";
 import BottomSheet from "../../components/BottomSheet";
 import RutaCard from "../../components/RutaCard";
-import { BottomTabBar, type BottomTabId } from "../../components/BottomTabBar";
+import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
 import { formatearPrecio } from "../../modules/cliente/reservas";
@@ -263,7 +263,7 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
                 )}
             </BottomSheet>
 
-            <BottomTabBar activeTab="rutas" onPressTab={handlePressTab} />
+            <BottomTabBar tabs={TABS_CLIENTE} activeTab="rutas" onPressTab={handlePressTab} />
         </SafeAreaView>
     );
 };
