@@ -528,6 +528,7 @@ export type Database = {
           taxista_activo: boolean
           telefono: string | null
           ubicacion_actual: unknown
+          ubicacion_actualizada_en: string | null
         }
         Insert: {
           apellidos: string
@@ -544,6 +545,7 @@ export type Database = {
           taxista_activo?: boolean
           telefono?: string | null
           ubicacion_actual?: unknown
+          ubicacion_actualizada_en?: string | null
         }
         Update: {
           apellidos?: string
@@ -560,6 +562,7 @@ export type Database = {
           taxista_activo?: boolean
           telefono?: string | null
           ubicacion_actual?: unknown
+          ubicacion_actualizada_en?: string | null
         }
         Relationships: [
           {
@@ -810,6 +813,14 @@ export type Database = {
         Returns: unknown
       }
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      actualizar_reserva_taxista: {
+        Args: { p_estado: string; p_reserva_id: string }
+        Returns: undefined
+      }
+      actualizar_ubicacion_taxista: {
+        Args: { p_latitud: number; p_longitud: number }
+        Returns: undefined
+      }
       addauth: { Args: { "": string }; Returns: boolean }
       addgeometrycolumn:
         | {
@@ -848,6 +859,14 @@ export type Database = {
             }
             Returns: string
           }
+      cambiar_servicio_taxista: {
+        Args: {
+          p_en_servicio: boolean
+          p_latitud?: number
+          p_longitud?: number
+        }
+        Returns: undefined
+      }
       cancelar_reserva_cliente: {
         Args: { p_reserva_id: string }
         Returns: undefined
@@ -1002,6 +1021,23 @@ export type Database = {
           id: string
           nombre: string
           referencia: string
+        }[]
+      }
+      obtener_reservas_taxista: {
+        Args: never
+        Returns: {
+          destino: string
+          estado: string
+          fecha_hora_reserva: string
+          fecha_hora_viaje: string
+          id: string
+          matricula: string
+          nombre_cliente: string
+          notas: string
+          numero_asiento: number
+          origen: string
+          precio: number
+          telefono_cliente: string
         }[]
       }
       obtener_taxis_cercanos: {

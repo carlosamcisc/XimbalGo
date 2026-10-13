@@ -44,6 +44,23 @@ type NearbyFunctions = {
     };
     Returns: undefined;
   };
+  obtener_reservas_taxista: {
+    Args: never;
+    Returns: {
+      id: string;
+      estado: string;
+      fecha_hora_reserva: string;
+      fecha_hora_viaje: string | null;
+      precio: number | null;
+      notas: string | null;
+      origen: string | null;
+      destino: string | null;
+      matricula: string | null;
+      numero_asiento: number | null;
+      nombre_cliente: string;
+      telefono_cliente: string | null;
+    }[];
+  };
 };
 
 type PublicSchema = Database["public"];
