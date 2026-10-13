@@ -1,25 +1,58 @@
 import * as Location from "expo-location";
 import type { Coordenadas } from "../../modules/cliente/ubicacion";
 
-export async function obtenerUbicacionActual(): Promise<Coordenadas> {
+const MENSAJE_PERMISO_CERCANOS =
+  "Se necesita permiso de ubicación para buscar opciones cercanas.";
+
+async function asegurarUbicacionDisponible(mensajePermiso: string) {
   const permiso = await Location.requestForegroundPermissionsAsync();
   if (!permiso.granted) {
-    throw new Error("Se necesita permiso de ubicación para buscar opciones cercanas.");
+    throw new Error(mensajePermiso);
   }
 
   const serviciosActivos = await Location.hasServicesEnabledAsync();
   if (!serviciosActivos) {
     throw new Error("Activa el GPS del dispositivo para usar tu ubicación.");
   }
+}
+
+const aCoordenadas = (ubicacion: Location.LocationObject): Coordenadas => ({
+  latitud: ubicacion.coords.latitude,
+  longitud: ubicacion.coords.longitude,
+});
+
+export async function obtenerUbicacionActual(
+  mensajePermiso = MENSAJE_PERMISO_CERCANOS
+): Promise<Coordenadas> {
+  await asegurarUbicacionDisponible(mensajePermiso);
 
   const ubicacion = await Location.getCurrentPositionAsync({
     accuracy: Location.Accuracy.Balanced,
   });
 
-  return {
-    latitud: ubicacion.coords.latitude,
-    longitud: ubicacion.coords.longitude,
-  };
+  return aCoordenadas(ubicacion);
+}
+
+/**
+ * Avisa cada vez que el dispositivo se mueve. Solo funciona con la app en
+ * primer plano. Devuelve la función para dejar de observar.
+ */
+export async function observarUbicacion(
+  onCambio: (coordenadas: Coordenadas) => void,
+  mensajePermiso = MENSAJE_PERMISO_CERCANOS
+): Promise<() => void> {
+  await asegurarUbicacionDisponible(mensajePermiso);
+
+  const suscripcion = await Location.watchPositionAsync(
+    {
+      accuracy: Location.Accuracy.Balanced,
+      distanceInterval: 50,
+      timeInterval: 30_000,
+    },
+    (ubicacion) => onCambio(aCoordenadas(ubicacion))
+  );
+
+  return () => suscripcion.remove();
 }
 
 export async function obtenerDireccionActual(

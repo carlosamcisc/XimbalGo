@@ -4,6 +4,7 @@ import {
   type RutaCatalogo,
   type TaxistaRuta,
 } from "../../../modules/cliente/rutas";
+import { ubicacionVigente } from "../../../modules/taxista/types";
 
 export async function obtenerCatalogoRutas(): Promise<RutaCatalogo[]> {
   // La política `rutas_ver_todos` ya oculta las rutas inactivas.
@@ -33,6 +34,7 @@ export async function obtenerCatalogoRutas(): Promise<RutaCatalogo[]> {
 const SELECT_TAXISTA_RUTA = `
   id, nombres, apellidos, telefono, ruta_id, punto_partida, punto_destino, precio_ruta,
   horario_trabajo, hora_inicio_trabajo, hora_fin_trabajo, taxista_activo,
+  ubicacion_actualizada_en,
   vehiculos(id, matricula, marca, modelo, activo,
     asientos!asientos_vehiculo_id_fkey(estado))
 `;
@@ -66,7 +68,9 @@ export async function obtenerTaxistasConRuta(): Promise<TaxistaRuta[]> {
         taxista.hora_fin_trabajo
       ),
       precio: taxista.precio_ruta,
-      enServicio: taxista.taxista_activo,
+      // Igual que `obtener_taxis_cercanos`: sin ubicación reciente no cuenta.
+      enServicio:
+        taxista.taxista_activo && ubicacionVigente(taxista.ubicacion_actualizada_en),
       origen: taxista.punto_partida!.trim(),
       destino: taxista.punto_destino!.trim(),
       // Las políticas RLS solo devuelven vehículos activos al cliente.

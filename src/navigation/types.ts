@@ -22,6 +22,9 @@ export type ClienteStackParamList ={
 
 export type TaxistaStackParamList = {
     TaxistaInicio: undefined;
+    TaxistaViajes: undefined;
+    TaxistaVehiculo: undefined;
+    TaxistaPerfil: undefined;
 };
 
 export type AdminStackParamList = {
