@@ -47,6 +47,18 @@ const ICONOS = {
     timer: 'timer',
     straighten: 'straighten',
     groups: 'groups',
+    //iconos para el menu lateral y el perfil
+    menu: 'menu',
+    notifications: 'notifications',
+    lockReset: 'lock-reset',
+    help: 'help-outline',
+    logout: 'logout',
+    badge: 'badge',
+    cake: 'cake',
+    calendar: 'calendar-today',
+    doneAll: 'done-all',
+    checkCircle: 'check-circle',
+    cancel: 'cancel',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

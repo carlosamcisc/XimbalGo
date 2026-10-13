@@ -7,6 +7,9 @@ interface Props {
   inicial?: string;
   saludo?: string;
   onPress: () => void;
+  /** Muestra un punto sobre el avatar (p. ej. notificaciones sin leer). */
+  indicador?: boolean;
+  accessibilityLabel?: string;
 
   // Colores personalizables
   backgroundColor?: string;   //fondo del encabezado
@@ -21,6 +24,8 @@ export default function UserHeader({
   inicial = '?',
   saludo,
   onPress,
+  indicador = false,
+  accessibilityLabel = "Abrir menú",
   backgroundColor = Colors.surface, //nuevo fondo del contenedor
   avatarBackground = Colors.primary,
   avatarTextColor = Colors.white,
@@ -29,10 +34,16 @@ export default function UserHeader({
 }: Props) {
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Pressable style={[styles.avatar, { backgroundColor: avatarBackground }]} onPress={onPress}>
+      <Pressable
+        style={[styles.avatar, { backgroundColor: avatarBackground }]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+      >
         <AppText weight="semibold" style={[styles.avatarLetra, { color: avatarTextColor }]}>
           {inicial}
         </AppText>
+        {indicador && <View style={[styles.indicador, { borderColor: backgroundColor }]} />}
       </Pressable>
       <View style={styles.textos}>
         <AppText style={[styles.saludoUsuario, { color: saludoTextColor }]}>
@@ -67,6 +78,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
+  },
+  indicador: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    backgroundColor: Colors.danger,
   },
   avatarLetra: {
     fontSize: 23,
