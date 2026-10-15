@@ -11,6 +11,11 @@ XímbalGo es una aplicación móvil diseñada para mejorar la experiencia de los
 ## Verificar typecheck
 - npm run typecheck
 
+## Limpiar carpeta nativa android
+- npx expo prebuild --platform android --clean
+Nota: Se limpia o se borra unicamente si se realizacion cambios en modulos o en app.json
+
+
 ## Fuentes
 | Fuente | Estilo | Uso recomendado |
 |---|---|---|
