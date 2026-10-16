@@ -17,7 +17,8 @@ export type AuthStackParamList ={
 export type ClienteStackParamList ={
     ClienteInicio: undefined;
     ClienteReservaciones: undefined;
-    ClienteRutas: undefined;
+    /** Desde «Buscar ruta»: muestra solo las rutas de ese origen y destino. */
+    ClienteRutas: { origen?: string; destino?: string } | undefined;
     ClientePerfil: undefined;
     ClienteNotificaciones: undefined;
     ClienteSeguridad: undefined;

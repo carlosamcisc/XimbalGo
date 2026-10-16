@@ -167,6 +167,18 @@ export function coincideBusqueda(ruta: RutaCliente, busqueda: string): boolean {
   );
 }
 
+export interface FiltroTrayecto {
+  origen?: string;
+  destino?: string;
+}
+
+/** Sin origen o sin destino en el filtro, ese extremo acepta cualquier valor. */
+export function coincideTrayecto(ruta: RutaCliente, { origen, destino }: FiltroTrayecto): boolean {
+  const coincide = (valor: string, filtro?: string) =>
+    !filtro || normalizarTexto(valor) === normalizarTexto(filtro);
+  return coincide(ruta.origen, origen) && coincide(ruta.destino, destino);
+}
+
 // `time` de Postgres llega como "HH:MM:SS".
 export function formatearHorario(
   horarioTexto: string | null,

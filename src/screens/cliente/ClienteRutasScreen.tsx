@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, StyleSheet, Pressable, ActivityIndicator, RefreshControl, ScrollView, TextInput } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
 import Colors from "../../theme/colors";
@@ -17,8 +17,10 @@ import ClienteSideBar, { BotonMenuCliente } from "./ClienteSideBar";
 import { formatearPrecio } from "../../modules/cliente/reservas";
 import {
     coincideBusqueda,
+    coincideTrayecto,
     formatearDuracion,
     formatearKilometros,
+    type FiltroTrayecto,
     type RutaCliente,
     type TaxistaRuta,
 } from "../../modules/cliente/rutas";
@@ -79,16 +81,38 @@ const TaxistaItem = ({ taxista }: { taxista: TaxistaRuta }) => {
     );
 };
 
-const ClienteRutasScreen = ({ navigation }: Props) => {
+const ClienteRutasScreen = ({ navigation, route }: Props) => {
     const [menuVisible, setMenuVisible] = useState(false);
     const rutasCliente = useClienteRutas();
     const [filtro, setFiltro] = useState<Filtro>("todas");
     const [busqueda, setBusqueda] = useState("");
     const [seleccionadaClave, setSeleccionadaClave] = useState<string | null>(null);
+    const [trayecto, setTrayecto] = useState<FiltroTrayecto | null>(null);
 
-    const enServicio = rutasCliente.rutas.filter((ruta) => ruta.taxistasEnServicio > 0);
-    const lista = (filtro === "todas" ? rutasCliente.rutas : enServicio)
+    // «Buscar ruta» puede volver a abrir esta pantalla con otro origen y destino.
+    const origenParam = route.params?.origen;
+    const destinoParam = route.params?.destino;
+    useEffect(() => {
+        if (origenParam || destinoParam) {
+            setTrayecto({ origen: origenParam, destino: destinoParam });
+            setBusqueda("");
+            setFiltro("todas");
+            setSeleccionadaClave(null);
+        }
+    }, [origenParam, destinoParam]);
+
+    const quitarTrayecto = () => {
+        setTrayecto(null);
+        navigation.setParams({ origen: undefined, destino: undefined });
+    };
+
+    const delTrayecto = rutasCliente.rutas.filter((ruta) => !trayecto || coincideTrayecto(ruta, trayecto));
+    const enServicio = delTrayecto.filter((ruta) => ruta.taxistasEnServicio > 0);
+    const lista = (filtro === "todas" ? delTrayecto : enServicio)
         .filter((ruta) => coincideBusqueda(ruta, busqueda));
+    const textoTrayecto = trayecto
+        ? `${trayecto.origen ?? "Cualquier origen"} → ${trayecto.destino ?? "Cualquier destino"}`
+        : null;
     // Se busca por clave para que el detalle refleje los cambios en tiempo real.
     const seleccionada: RutaCliente | undefined = rutasCliente.rutas
         .find((ruta) => ruta.clave === seleccionadaClave);
@@ -135,7 +159,9 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
         if (lista.length === 0) {
             const textoVacio = busqueda.trim()
                 ? `No hay rutas que coincidan con «${busqueda.trim()}».`
-                : filtro === "enServicio"
+                : textoTrayecto && filtro === "todas"
+                    ? `No hay rutas para ${textoTrayecto}.`
+                    : filtro === "enServicio"
                     ? "Ahora no hay taxistas en servicio en ninguna ruta."
                     : "Todavía no hay rutas disponibles.";
             return (
@@ -145,6 +171,11 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
                         <AppText style={styles.textoEstado}>{textoVacio}</AppText>
                         {filtro === "enServicio" && !busqueda.trim() && (
                             <Pressable onPress={() => setFiltro("todas")} accessibilityRole="button">
+                                <AppText weight="semibold" style={styles.textoReintentar}>Ver todas las rutas</AppText>
+                            </Pressable>
+                        )}
+                        {textoTrayecto && filtro === "todas" && !busqueda.trim() && (
+                            <Pressable onPress={quitarTrayecto} accessibilityRole="button">
                                 <AppText weight="semibold" style={styles.textoReintentar}>Ver todas las rutas</AppText>
                             </Pressable>
                         )}
@@ -189,10 +220,22 @@ const ClienteRutasScreen = ({ navigation }: Props) => {
                     )}
                 </View>
 
+                {textoTrayecto && (
+                    <View style={styles.trayecto}>
+                        <Icono nombre="map" tamanio={18} color={Colors.primary} />
+                        <AppText weight="medium" style={styles.textoTrayecto} numberOfLines={2}>
+                            {textoTrayecto}
+                        </AppText>
+                        <Pressable onPress={quitarTrayecto} accessibilityRole="button" accessibilityLabel="Quitar filtro de origen y destino">
+                            <Icono nombre="close" tamanio={18} color={Colors.primary} />
+                        </Pressable>
+                    </View>
+                )}
+
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["todas", "enServicio"] as const).map((opcion) => {
                         const activo = filtro === opcion;
-                        const total = opcion === "todas" ? rutasCliente.rutas.length : enServicio.length;
+                        const total = opcion === "todas" ? delTrayecto.length : enServicio.length;
                         return (
                             <Pressable
                                 key={opcion}
@@ -302,6 +345,22 @@ const styles = StyleSheet.create({
         fontSize: 15,
         paddingVertical: 10,
         color: Colors.onSurfaceVariant,
+    },
+    trayecto: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        marginHorizontal: 12,
+        marginTop: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 16,
+        backgroundColor: Colors.primaryContainer,
+    },
+    textoTrayecto: {
+        flex: 1,
+        fontSize: 14,
+        color: Colors.brandText,
     },
     filtros: {
         flexDirection: "row",
