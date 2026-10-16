@@ -36,6 +36,15 @@ El perfil alimenta el nombre y la inicial del encabezado. Los paraderos activos 
 - Si el origen y el destino elegidos son el mismo paradero, se informa que deben ser distintos.
 - Si no hay datos cercanos, se presenta un estado vacío. Los errores de la búsqueda incluyen una acción de reintento.
 
+### Origen y destino desde el catálogo de rutas
+
+Reemplaza el uso de paraderos en los selectores descrito arriba (migración `20261017120000_origen_destino_cliente.sql`):
+
+- Al abrir el selector de origen se traen de Supabase todos los `origen` de las rutas activas, y al abrir el de destino, todos los `destino` (`obtenerPuntosRutas` en `rutas.repository.ts`). Los textos que solo difieren en mayúsculas, acentos o espacios se muestran una vez.
+- **Mi ubicación actual** guarda el punto en `clientes.ubicacion_actual` mediante `actualizar_ubicacion_cliente`. Si falla el guardado, el GPS se sigue usando como origen y se avisa al cliente.
+- `crear_reserva_cliente` ahora recibe `p_destino` y `p_origen` como texto (o `p_paradero_origen_id` al tocar un paradero cercano, o `p_latitud`/`p_longitud` para el GPS). Valida que el origen y el destino existan en una ruta activa, y guarda `reservas.origen`, `reservas.destino`, `reservas.ubicacion_origen` y `reservas.ruta_id` (la ruta del taxista). También actualiza `clientes.destino_deseado` y, con GPS, `clientes.ubicacion_actual`.
+- Las reservas anteriores siguen mostrando el nombre de sus paraderos.
+
 ## Arquitectura y archivos
 
 | Archivo | Responsabilidad |
