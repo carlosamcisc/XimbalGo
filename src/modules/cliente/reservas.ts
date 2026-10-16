@@ -1,4 +1,5 @@
 import Colors from "../../theme/colors";
+import type { Coordenadas } from "./ubicacion";
 
 // Valores permitidos por `reservas_estado_check` en la base de datos.
 export type EstadoReserva =
@@ -28,8 +29,11 @@ export interface ReservaCliente {
 
 export interface NuevaReserva {
   vehiculoId: string;
-  paraderoDestinoId: string;
+  destino: string;
+  /** Origen del catálogo de rutas, o la dirección cuando el origen es el GPS. */
+  origen: string | null;
   paraderoOrigenId: string | null;
+  ubicacionOrigen: Coordenadas | null;
   notas: string | null;
 }
 

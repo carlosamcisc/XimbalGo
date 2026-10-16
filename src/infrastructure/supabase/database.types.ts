@@ -148,6 +148,7 @@ export type Database = {
           nombres: string
           telefono: string | null
           ubicacion_actual: unknown
+          ubicacion_actualizada_en: string | null
         }
         Insert: {
           apellidos: string
@@ -158,6 +159,7 @@ export type Database = {
           nombres: string
           telefono?: string | null
           ubicacion_actual?: unknown
+          ubicacion_actualizada_en?: string | null
         }
         Update: {
           apellidos?: string
@@ -168,6 +170,7 @@ export type Database = {
           nombres?: string
           telefono?: string | null
           ubicacion_actual?: unknown
+          ubicacion_actualizada_en?: string | null
         }
         Relationships: [
           {
@@ -339,46 +342,55 @@ export type Database = {
         Row: {
           asiento_id: string | null
           cliente_id: string
+          destino: string | null
           estado: string
           fecha_hora_reserva: string
           fecha_hora_viaje: string | null
           id: string
           notas: string | null
+          origen: string | null
           paradero_destino_id: string | null
           paradero_origen_id: string | null
           precio: number | null
           ruta_id: string | null
           taxista_id: string
+          ubicacion_origen: unknown
           vehiculo_id: string
         }
         Insert: {
           asiento_id?: string | null
           cliente_id: string
+          destino?: string | null
           estado?: string
           fecha_hora_reserva?: string
           fecha_hora_viaje?: string | null
           id?: string
           notas?: string | null
+          origen?: string | null
           paradero_destino_id?: string | null
           paradero_origen_id?: string | null
           precio?: number | null
           ruta_id?: string | null
           taxista_id: string
+          ubicacion_origen?: unknown
           vehiculo_id: string
         }
         Update: {
           asiento_id?: string | null
           cliente_id?: string
+          destino?: string | null
           estado?: string
           fecha_hora_reserva?: string
           fecha_hora_viaje?: string | null
           id?: string
           notas?: string | null
+          origen?: string | null
           paradero_destino_id?: string | null
           paradero_origen_id?: string | null
           precio?: number | null
           ruta_id?: string | null
           taxista_id?: string
+          ubicacion_origen?: unknown
           vehiculo_id?: string
         }
         Relationships: [
@@ -817,6 +829,10 @@ export type Database = {
         Args: { p_estado: string; p_reserva_id: string }
         Returns: undefined
       }
+      actualizar_ubicacion_cliente: {
+        Args: { p_latitud: number; p_longitud: number }
+        Returns: undefined
+      }
       actualizar_ubicacion_taxista: {
         Args: { p_latitud: number; p_longitud: number }
         Returns: undefined
@@ -873,9 +889,12 @@ export type Database = {
       }
       crear_reserva_cliente: {
         Args: {
+          p_destino: string
           p_fecha_hora_viaje?: string
+          p_latitud?: number
+          p_longitud?: number
           p_notas?: string
-          p_paradero_destino_id: string
+          p_origen?: string
           p_paradero_origen_id?: string
           p_vehiculo_id: string
         }

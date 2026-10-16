@@ -1,9 +1,11 @@
 import { supabase } from "../client";
 import {
   formatearHorario,
+  normalizarTexto,
   type RutaCatalogo,
   type TaxistaRuta,
 } from "../../../modules/cliente/rutas";
+import type { TipoPuntoViaje } from "../../../modules/cliente/types";
 import { ubicacionVigente } from "../../../modules/taxista/types";
 
 export async function obtenerCatalogoRutas(): Promise<RutaCatalogo[]> {
@@ -27,6 +29,31 @@ export async function obtenerCatalogoRutas(): Promise<RutaCatalogo[]> {
     tiempoEstimadoMin: ruta.tiempo_estimado_min,
     precioBase: ruta.precio_base,
   }));
+}
+
+/**
+ * Todos los orígenes o destinos de las rutas activas, sin repetir. Dos textos
+ * que solo difieren en mayúsculas, acentos o espacios cuentan como uno.
+ */
+export async function obtenerPuntosRutas(tipo: TipoPuntoViaje): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("rutas")
+    .select("origen, destino")
+    .eq("activa", true);
+
+  if (error) {
+    throw error;
+  }
+
+  const puntos = new Map<string, string>();
+  for (const ruta of data) {
+    const punto = ruta[tipo].trim();
+    const clave = normalizarTexto(punto);
+    if (clave && !puntos.has(clave)) {
+      puntos.set(clave, punto);
+    }
+  }
+  return [...puntos.values()].sort((a, b) => a.localeCompare(b, "es"));
 }
 
 // `asientos` también se relaciona con la vista de asientos, por eso se indica

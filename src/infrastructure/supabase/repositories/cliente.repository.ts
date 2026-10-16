@@ -165,18 +165,17 @@ export function escucharCliente(clienteId: string, onChange: () => void) {
   };
 }
 
-export async function obtenerParaderosActivos() {
-  const { data, error } = await supabase
-    .from("paraderos")
-    .select("id, nombre, referencia")
-    .eq("activo", true)
-    .order("nombre");
+export async function guardarUbicacionCliente(
+  ubicacion: Coordenadas
+): Promise<void> {
+  const { error } = await supabase.rpc("actualizar_ubicacion_cliente", {
+    p_latitud: ubicacion.latitud,
+    p_longitud: ubicacion.longitud,
+  });
 
   if (error) {
     throw error;
   }
-
-  return data;
 }
 
 export async function obtenerParaderosCercanos(

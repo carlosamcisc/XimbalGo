@@ -31,8 +31,11 @@ type NearbyFunctions = {
   crear_reserva_cliente: {
     Args: {
       p_vehiculo_id: string;
-      p_paradero_destino_id: string;
+      p_destino: string;
+      p_origen?: string | null;
       p_paradero_origen_id?: string | null;
+      p_latitud?: number | null;
+      p_longitud?: number | null;
       p_fecha_hora_viaje?: string | null;
       p_notas?: string | null;
     };

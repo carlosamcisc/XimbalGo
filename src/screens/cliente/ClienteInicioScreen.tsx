@@ -19,12 +19,12 @@ import TaxiCard from "../../components/TaxiCard";
 import Card from "../../components/Card";
 import ParadaItem from "../../components/ParadaItem";
 import { formatearDistancia, type TaxiCercano } from "../../modules/cliente/ubicacion";
-import type { ParaderoViaje } from "../../modules/cliente/types";
+import type { ParaderoViaje, TipoPuntoViaje } from "../../modules/cliente/types";
 import { useClienteInicio } from "./useClienteInicio";
 import { useCliente } from "./ClienteContext";
 import ClienteSideBar from "./ClienteSideBar";
 
-type SelectorActivo = "origen" | "destino" | null;
+type SelectorActivo = TipoPuntoViaje | null;
 
 const mostrarAviso = (mensaje: string | null) => {
     if (mensaje) {
@@ -116,13 +116,25 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
         navigation.navigate("ClienteReservaciones");
     };
 
-    const opcionesParaderos = inicio.paraderos.map((paradero) => ({
-        ...paradero,
-        titulo: paradero.nombre,
-    }));
-    const textoSinParaderos = inicio.cargandoDatos
-        ? "Cargando paraderos..."
-        : "No hay paraderos disponibles.";
+    const abrirSelector = (tipo: TipoPuntoViaje) => {
+        setSelectorActivo(tipo);
+        void inicio.cargarOpciones(tipo);
+    };
+
+    // El GPS y los paraderos no son orígenes del catálogo: entonces solo se
+    // filtra por destino.
+    const buscarRuta = () => {
+        if (!inicio.destino) {
+            ToastMessage.show("Elige tu destino para buscar rutas.");
+            return;
+        }
+        navigation.navigate("ClienteRutas", {
+            origen: inicio.origen?.tipo === "ruta" ? inicio.origen.nombre : undefined,
+            destino: inicio.destino,
+        });
+    };
+
+    const aOpciones =(puntos: string[]) => puntos.map((punto) => ({ id: punto, titulo: punto }));
 
     const usarUbicacionActual = async () => {
         setSelectorActivo(null);
@@ -171,38 +183,26 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                         </View>
                     </View>
 
-                    {inicio.errorDatos && (
-                        <Card>
-                            <View style={styles.estadoLista}>
-                                <AppText style={styles.textoEstado}>
-                                    No se pudieron cargar tus datos: {inicio.errorDatos}
-                                </AppText>
-                                <Pressable onPress={() => void inicio.cargarDatos()} accessibilityRole="button">
-                                    <AppText weight="semibold" style={styles.textoReintentar}>Reintentar</AppText>
-                                </Pressable>
-                            </View>
-                        </Card>
-                    )}
-
                     <Card>
                         <SelectInput
                             label="Origen"
                             value={inicio.etiquetaOrigen}
                             placeholder={inicio.obteniendoUbicacion ? "Obteniendo ubicación..." : "Seleccione el origen"}
-                            onPress={() => setSelectorActivo("origen")}
+                            onPress={() => abrirSelector("origen")}
                             active={selectorActivo === "origen"}
                             iconLeft="locationHistory"
                             iconRight="ArrowDown"
                         />
                         <SelectInput
                             label="Destino"
-                            value={inicio.destino?.nombre ?? ""}
+                            value={inicio.destino ?? ""}
                             placeholder="Seleccione el destino"
-                            onPress={() => setSelectorActivo("destino")}
+                            onPress={() => abrirSelector("destino")}
                             active={selectorActivo === "destino"}
                             iconLeft="locationOn"
                             iconRight="ArrowDown"
                         />
+                        <Button titulo="Buscar ruta" onPress={buscarRuta} />
                     </Card>
                     {/**ButtomSheet para origen */}
                     <BottomSheet
@@ -211,13 +211,21 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                     >
                         <View>
                             <AppText style={styles.tituloItems}>Elige tu origen</AppText>
-                            <OptionList
-                                data={opcionesParaderos}
-                                style={styles.listaOpciones}
-                                emptyText={textoSinParaderos}
-                                onSelect={(paradero) => mostrarAviso(inicio.seleccionarOrigenParadero(paradero))}
-                                onClose={() => setSelectorActivo(null)}
-                            />
+                            <EstadoLista
+                                cargando={inicio.cargandoOpciones && inicio.opciones.origen.length === 0}
+                                error={inicio.errorOpciones}
+                                vacio={inicio.opciones.origen.length === 0}
+                                textoCargando="Cargando orígenes..."
+                                textoVacio="No hay orígenes disponibles."
+                                onReintentar={() => void inicio.cargarOpciones("origen")}
+                            >
+                                <OptionList
+                                    data={aOpciones(inicio.opciones.origen)}
+                                    style={styles.listaOpciones}
+                                    onSelect={(opcion) => mostrarAviso(inicio.seleccionarOrigen(opcion.titulo))}
+                                    onClose={() => setSelectorActivo(null)}
+                                />
+                            </EstadoLista>
 
                             <Button
                                 titulo={inicio.obteniendoUbicacion ? "Obteniendo ubicación..." : "Mi ubicación actual"}
@@ -235,13 +243,21 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                     >
                         <View>
                             <AppText style={styles.tituloItems}>Elige tu destino</AppText>
-                            <OptionList
-                                data={opcionesParaderos}
-                                style={styles.listaOpciones}
-                                emptyText={textoSinParaderos}
-                                onSelect={(paradero) => mostrarAviso(inicio.seleccionarDestino(paradero))}
-                                onClose={() => setSelectorActivo(null)}
-                            />
+                            <EstadoLista
+                                cargando={inicio.cargandoOpciones && inicio.opciones.destino.length === 0}
+                                error={inicio.errorOpciones}
+                                vacio={inicio.opciones.destino.length === 0}
+                                textoCargando="Cargando destinos..."
+                                textoVacio="No hay destinos disponibles."
+                                onReintentar={() => void inicio.cargarOpciones("destino")}
+                            >
+                                <OptionList
+                                    data={aOpciones(inicio.opciones.destino)}
+                                    style={styles.listaOpciones}
+                                    onSelect={(opcion) => mostrarAviso(inicio.seleccionarDestino(opcion.titulo))}
+                                    onClose={() => setSelectorActivo(null)}
+                                />
+                            </EstadoLista>
 
                         </View>
                     </BottomSheet>
@@ -291,7 +307,7 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                                 <View style={styles.filaResumen}>
                                     <Icono nombre="locationOn" tamanio={20} color={Colors.primary} />
                                     <AppText style={styles.textoResumen} numberOfLines={2}>
-                                        <AppText weight="semibold">Destino: </AppText>{inicio.destino?.nombre}
+                                        <AppText weight="semibold">Destino: </AppText>{inicio.destino}
                                     </AppText>
                                 </View>
                                 <TaxiCard

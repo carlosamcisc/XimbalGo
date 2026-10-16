@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  obtenerParaderosActivos,
+  guardarUbicacionCliente,
   obtenerParaderosCercanos,
 } from "../../infrastructure/supabase/repositories/cliente.repository";
+import { obtenerPuntosRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
 import { obtenerTaxisCercanos } from "../../infrastructure/supabase/repositories/vehiculos.repository";
 import { crearReserva } from "../../infrastructure/supabase/repositories/reservas.repository";
 import {
   obtenerDireccionActual,
   obtenerUbicacionActual,
 } from "../../infrastructure/location/location.service";
-import { useAutenticacionStore } from "../../store/autenticacionStore";
+import { normalizarTexto } from "../../modules/cliente/rutas";
 import type {
   Coordenadas,
   ParaderoCercano,
@@ -18,10 +19,11 @@ import type {
 import type {
   OrigenViaje,
   ParaderoViaje,
+  TipoPuntoViaje,
 } from "../../modules/cliente/types";
 
 const LIMITE_CERCANOS = 5;
-const MENSAJE_MISMO_PARADERO = "El origen y el destino deben ser distintos.";
+const MENSAJE_MISMO_PUNTO = "El origen y el destino deben ser distintos.";
 
 export function mensajeError(error: unknown, respaldo: string): string {
   if (error instanceof Error) {
@@ -49,13 +51,30 @@ export function obtenerSaludo(hora = new Date().getHours()): string {
   return "Buenas noches";
 }
 
-export function useClienteInicio() {
-  const { usuario } = useAutenticacionStore();
-  const usuarioId = usuario?.id ?? null;
+/** Nombre del origen para compararlo con el destino; el GPS no tiene. */
+function nombreOrigen(origen: OrigenViaje | null): string | null {
+  if (origen?.tipo === "ruta") {
+    return origen.nombre;
+  }
+  if (origen?.tipo === "paradero") {
+    return origen.paradero.nombre;
+  }
+  return null;
+}
 
-  const [paraderos, setParaderos] = useState<ParaderoViaje[]>([]);
-  const [cargandoDatos, setCargandoDatos] = useState(true);
-  const [errorDatos, setErrorDatos] = useState<string | null>(null);
+const mismoPunto = (a: string | null, b: string | null) =>
+  a !== null && b !== null && normalizarTexto(a) === normalizarTexto(b);
+
+const formatearCoordenadas = ({ latitud, longitud }: Coordenadas) =>
+  `${latitud.toFixed(5)}, ${longitud.toFixed(5)}`;
+
+export function useClienteInicio() {
+  const [opciones, setOpciones] = useState<Record<TipoPuntoViaje, string[]>>({
+    origen: [],
+    destino: [],
+  });
+  const [cargandoOpciones, setCargandoOpciones] = useState(false);
+  const [errorOpciones, setErrorOpciones] = useState<string | null>(null);
 
   const [taxisCercanos, setTaxisCercanos] = useState<TaxiCercano[]>([]);
   const [paraderosCercanos, setParaderosCercanos] = useState<ParaderoCercano[]>([]);
@@ -63,56 +82,52 @@ export function useClienteInicio() {
   const [errorCercanos, setErrorCercanos] = useState<string | null>(null);
 
   const [origen, setOrigen] = useState<OrigenViaje | null>(null);
-  const [destino, setDestino] = useState<ParaderoViaje | null>(null);
+  const [destino, setDestino] = useState<string | null>(null);
   const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
   const [reservando, setReservando] = useState(false);
 
   // Cada contador descarta respuestas de solicitudes que ya fueron reemplazadas.
-  const solicitudDatos = useRef(0);
+  const solicitudOpciones = useRef(0);
   const solicitudCercanos = useRef(0);
   const solicitudOrigen = useRef(0);
 
-  const cargarDatos = useCallback(async () => {
-    const solicitud = ++solicitudDatos.current;
-    setCargandoDatos(true);
-    setErrorDatos(null);
-
-    if (!usuarioId) {
-      setErrorDatos("No se encontró una sesión de cliente activa.");
-      setCargandoDatos(false);
-      return;
-    }
+  /** Trae de Supabase todos los orígenes o destinos de las rutas activas. */
+  const cargarOpciones = useCallback(async (tipo: TipoPuntoViaje) => {
+    const solicitud = ++solicitudOpciones.current;
+    setCargandoOpciones(true);
+    setErrorOpciones(null);
 
     try {
-      const paraderosActivos = await obtenerParaderosActivos();
-      if (solicitud !== solicitudDatos.current) {
+      const puntos = await obtenerPuntosRutas(tipo);
+      if (solicitud !== solicitudOpciones.current) {
         return;
       }
 
-      setParaderos(paraderosActivos);
+      setOpciones((actuales) => ({ ...actuales, [tipo]: puntos }));
 
-      // Descarta selecciones de paraderos que dejaron de estar activos.
-      const sigueActivo = (id: string) =>
-        paraderosActivos.some((paradero) => paradero.id === id);
-      setOrigen((actual) =>
-        actual?.tipo === "paradero" && !sigueActivo(actual.paradero.id)
-          ? null
-          : actual
-      );
-      setDestino((actual) => (actual && !sigueActivo(actual.id) ? null : actual));
+      // Descarta la selección si su ruta dejó de estar activa.
+      const sigueDisponible = (nombre: string) =>
+        puntos.some((punto) => mismoPunto(punto, nombre));
+      if (tipo === "origen") {
+        setOrigen((actual) =>
+          actual?.tipo === "ruta" && !sigueDisponible(actual.nombre) ? null : actual
+        );
+      } else {
+        setDestino((actual) => (actual && !sigueDisponible(actual) ? null : actual));
+      }
     } catch (error: unknown) {
-      if (solicitud === solicitudDatos.current) {
-        setErrorDatos(
-          mensajeError(error, "Ocurrió un error desconocido al cargar tus datos.")
+      if (solicitud === solicitudOpciones.current) {
+        setErrorOpciones(
+          mensajeError(error, `No se pudieron cargar los ${tipo === "origen" ? "orígenes" : "destinos"}.`)
         );
       }
     } finally {
-      if (solicitud === solicitudDatos.current) {
-        setCargandoDatos(false);
+      if (solicitud === solicitudOpciones.current) {
+        setCargandoOpciones(false);
       }
     }
-  }, [usuarioId]);
+  }, []);
 
   // Sin coordenadas, vuelve a leer el GPS para reflejar la posición actual.
   const buscarCercanos = useCallback(async (coordenadas?: Coordenadas) => {
@@ -154,58 +169,102 @@ export function useClienteInicio() {
 
   const refrescar = useCallback(async () => {
     setRefrescando(true);
-    await Promise.all([cargarDatos(), buscarCercanos()]);
+    await buscarCercanos();
     setRefrescando(false);
-  }, [cargarDatos, buscarCercanos]);
+  }, [buscarCercanos]);
 
-  /** Devuelve un mensaje para el usuario si no se pudo usar el GPS. */
+  /**
+   * Usa el GPS como origen y busca lo cercano a ese punto. Devuelve un
+   * mensaje para el usuario si no se pudo usar o guardar el GPS.
+   */
   const usarUbicacionActual = useCallback(async (): Promise<string | null> => {
     const solicitud = ++solicitudOrigen.current;
     setObteniendoUbicacion(true);
 
+    let punto: Coordenadas;
     try {
-      const punto = await obtenerUbicacionActual();
-      if (solicitud !== solicitudOrigen.current) {
-        return null;
-      }
-
-      setOrigen({ tipo: "ubicacion", coordenadas: punto, direccion: null });
-      setObteniendoUbicacion(false);
-      void buscarCercanos(punto);
-
-      // La dirección es opcional: si falla, el origen sigue siendo el GPS.
-      try {
-        const direccion = await obtenerDireccionActual(punto);
-        if (direccion && solicitud === solicitudOrigen.current) {
-          setOrigen((actual) =>
-            actual?.tipo === "ubicacion" ? { ...actual, direccion } : actual
-          );
-        }
-      } catch {}
-      return null;
+      punto = await obtenerUbicacionActual();
     } catch (error: unknown) {
-      if (solicitud !== solicitudOrigen.current) {
-        return null;
+      const mensaje = mensajeError(error, "No se pudo obtener tu ubicación actual.");
+      // Sin GPS tampoco hay cercanos: las listas muestran el motivo.
+      solicitudCercanos.current += 1;
+      setTaxisCercanos([]);
+      setParaderosCercanos([]);
+      setErrorCercanos(mensaje);
+      setCargandoCercanos(false);
+      if (solicitud === solicitudOrigen.current) {
+        setObteniendoUbicacion(false);
+        return mensaje;
       }
-      setObteniendoUbicacion(false);
-      return mensajeError(error, "No se pudo obtener tu ubicación actual.");
+      return null;
     }
+
+    void buscarCercanos(punto);
+    // El cliente eligió otro origen mientras se obtenía el GPS.
+    if (solicitud !== solicitudOrigen.current) {
+      return null;
+    }
+
+    setOrigen({ tipo: "ubicacion", coordenadas: punto, direccion: null });
+    setObteniendoUbicacion(false);
+
+    // La dirección es opcional: si falla, el origen sigue siendo el GPS.
+    const [guardado, direccion] = await Promise.allSettled([
+      guardarUbicacionCliente(punto),
+      obtenerDireccionActual(punto),
+    ]);
+    if (
+      direccion.status === "fulfilled" &&
+      direccion.value &&
+      solicitud === solicitudOrigen.current
+    ) {
+      const texto = direccion.value;
+      setOrigen((actual) =>
+        actual?.tipo === "ubicacion" ? { ...actual, direccion: texto } : actual
+      );
+    }
+    if (guardado.status === "rejected") {
+      return mensajeError(guardado.reason, "No se pudo guardar tu ubicación.");
+    }
+    return null;
   }, [buscarCercanos]);
 
   /** Devuelve un mensaje para el usuario si la selección tuvo que ajustarse. */
-  const seleccionarOrigenParadero = useCallback(
-    (paradero: ParaderoViaje): string | null => {
+  const elegirOrigen = useCallback(
+    (nuevo: OrigenViaje): string | null => {
       solicitudOrigen.current += 1;
       setObteniendoUbicacion(false);
-      setOrigen({ tipo: "paradero", paradero });
+      setOrigen(nuevo);
 
-      if (destino?.id === paradero.id) {
+      if (mismoPunto(nombreOrigen(nuevo), destino)) {
         setDestino(null);
-        return `${MENSAJE_MISMO_PARADERO} Elige un nuevo destino.`;
+        return `${MENSAJE_MISMO_PUNTO} Elige un nuevo destino.`;
       }
       return null;
     },
     [destino]
+  );
+
+  const seleccionarOrigen = useCallback(
+    (nombre: string) => elegirOrigen({ tipo: "ruta", nombre }),
+    [elegirOrigen]
+  );
+
+  const seleccionarOrigenParadero = useCallback(
+    (paradero: ParaderoViaje) => elegirOrigen({ tipo: "paradero", paradero }),
+    [elegirOrigen]
+  );
+
+  /** Devuelve un mensaje para el usuario si el destino no es válido. */
+  const seleccionarDestino = useCallback(
+    (nombre: string): string | null => {
+      if (mismoPunto(nombreOrigen(origen), nombre)) {
+        return MENSAJE_MISMO_PUNTO;
+      }
+      setDestino(nombre);
+      return null;
+    },
+    [origen]
   );
 
   /** Devuelve un mensaje de error para el usuario, o null si se reservó. */
@@ -222,13 +281,16 @@ export function useClienteInicio() {
       try {
         await crearReserva({
           vehiculoId: taxi.id,
-          paraderoDestinoId: destino.id,
+          destino,
+          origen:
+            origen.tipo === "ruta"
+              ? origen.nombre
+              : origen.tipo === "ubicacion"
+                ? origen.direccion ?? `Ubicación actual (${formatearCoordenadas(origen.coordenadas)})`
+                : null,
           paraderoOrigenId: origen.tipo === "paradero" ? origen.paradero.id : null,
-          // La reserva solo guarda paraderos; el origen GPS viaja en las notas.
-          notas:
-            origen.tipo === "ubicacion"
-              ? `Origen: ${origen.direccion ?? "ubicación actual"} (${origen.coordenadas.latitud.toFixed(5)}, ${origen.coordenadas.longitud.toFixed(5)})`
-              : null,
+          ubicacionOrigen: origen.tipo === "ubicacion" ? origen.coordenadas : null,
+          notas: null,
         });
         void buscarCercanos();
         return null;
@@ -241,41 +303,30 @@ export function useClienteInicio() {
     [origen, destino, buscarCercanos]
   );
 
-  /** Devuelve un mensaje para el usuario si el destino no es válido. */
-  const seleccionarDestino = useCallback(
-    (paradero: ParaderoViaje): string | null => {
-      if (origen?.tipo === "paradero" && origen.paradero.id === paradero.id) {
-        return MENSAJE_MISMO_PARADERO;
-      }
-      setDestino(paradero);
-      return null;
-    },
-    [origen]
-  );
-
+  // Al entrar se pide el permiso de ubicación; si se concede, el GPS queda
+  // como origen y se buscan los taxis y paraderos cercanos.
   useEffect(() => {
-    void cargarDatos();
-    void buscarCercanos();
+    void usarUbicacionActual();
 
     return () => {
-      solicitudDatos.current += 1;
+      solicitudOpciones.current += 1;
       solicitudCercanos.current += 1;
       solicitudOrigen.current += 1;
     };
-  }, [cargarDatos, buscarCercanos]);
+  }, [usarUbicacionActual]);
 
   const etiquetaOrigen = !origen
     ? ""
-    : origen.tipo === "paradero"
-      ? origen.paradero.nombre
-      : origen.direccion ?? "Mi ubicación actual";
+    : origen.tipo === "ubicacion"
+      ? origen.direccion ?? "Mi ubicación actual"
+      : nombreOrigen(origen) ?? "";
 
   return {
     saludo: obtenerSaludo(),
-    paraderos,
-    cargandoDatos,
-    errorDatos,
-    cargarDatos,
+    opciones,
+    cargandoOpciones,
+    errorOpciones,
+    cargarOpciones,
     taxisCercanos,
     paraderosCercanos,
     cargandoCercanos,
@@ -286,6 +337,7 @@ export function useClienteInicio() {
     destino,
     obteniendoUbicacion,
     usarUbicacionActual,
+    seleccionarOrigen,
     seleccionarOrigenParadero,
     seleccionarDestino,
     refrescando,

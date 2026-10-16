@@ -50,6 +50,10 @@ export interface ParaderoViaje {
   referencia: string | null;
 }
 
+/** Origen o destino del catálogo de rutas. */
+export type TipoPuntoViaje = "origen" | "destino";
+
 export type OrigenViaje =
+  | { tipo: "ruta"; nombre: string }
   | { tipo: "paradero"; paradero: ParaderoViaje }
   | { tipo: "ubicacion"; coordenadas: Coordenadas; direccion: string | null };
