@@ -59,6 +59,8 @@ function useTaxistaEstado() {
   const [cambiandoServicio, setCambiandoServicio] = useState(false);
   const [errorUbicacion, setErrorUbicacion] = useState<string | null>(null);
   const [procesandoReservaId, setProcesandoReservaId] = useState<string | null>(null);
+  // Para mostrar «Procesando...» solo en el botón que se tocó.
+  const [procesandoAccion, setProcesandoAccion] = useState<AccionReserva | null>(null);
 
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
@@ -132,6 +134,7 @@ function useTaxistaEstado() {
       }
       procesandoReserva.current = reservaId;
       setProcesandoReservaId(reservaId);
+      setProcesandoAccion(accion);
       try {
         await actualizarReserva(reservaId, accion);
       } catch (e: unknown) {
@@ -139,6 +142,7 @@ function useTaxistaEstado() {
       } finally {
         procesandoReserva.current = null;
         setProcesandoReservaId(null);
+        setProcesandoAccion(null);
       }
 
       // El cambio ya se guardó: se muestra de inmediato, sin esperar la
@@ -315,6 +319,7 @@ function useTaxistaEstado() {
     errorUbicacion,
     cambiarEstadoServicio,
     procesandoReservaId,
+    procesandoAccion,
     responderReserva,
     guardarPerfil,
     guardarVehiculo,

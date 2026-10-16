@@ -36,7 +36,7 @@ interface Props {
 }
 
 export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
-  const { reservas, procesandoReservaId } = useTaxista();
+  const { reservas, procesandoReservaId, procesandoAccion } = useTaxista();
   // Al terminar la acción se cierra el detalle para volver a la lista ya
   // actualizada.
   const ejecutarAccion = useAccionReserva(onClose);
@@ -105,7 +105,7 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
               return (
                 <Button
                   key={accion}
-                  titulo={procesando ? "Procesando..." : presentacion.etiqueta}
+                  titulo={procesando && procesandoAccion === accion ? "Procesando..." : presentacion.etiqueta}
                   disabled={procesando}
                   color={presentacion.peligrosa ? Colors.danger : Colors.primary}
                   borderColor={presentacion.peligrosa ? Colors.danger : Colors.primary}

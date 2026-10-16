@@ -8,7 +8,7 @@ import {
   formatearFecha,
   formatearPrecio,
 } from "../modules/cliente/reservas";
-import type { ReservaTaxista } from "../modules/taxista/types";
+import type { AccionReserva, ReservaTaxista } from "../modules/taxista/types";
 
 interface ReservaTaxistaCardProps {
   reserva: ReservaTaxista;
@@ -16,7 +16,8 @@ interface ReservaTaxistaCardProps {
   /** Botones rápidos para una solicitud pendiente. */
   onAceptar?: () => void;
   onRechazar?: () => void;
-  procesando?: boolean;
+  /** Acción en curso sobre esta reserva; desactiva ambos botones. */
+  accionProcesando?: AccionReserva | null;
 }
 
 const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
@@ -24,8 +25,9 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
   onPress,
   onAceptar,
   onRechazar,
-  procesando = false,
+  accionProcesando = null,
 }) => {
+  const procesando = accionProcesando !== null;
   const estado = PRESENTACION_ESTADO[reserva.estado];
   const precio = formatearPrecio(reserva.precio);
   const mostrarAcciones = reserva.estado === "pendiente" && onAceptar && onRechazar;
@@ -81,7 +83,9 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
             accessibilityRole="button"
             style={({ pressed }) => [styles.boton, styles.botonRechazar, pressed && styles.pressed]}
           >
-            <AppText weight="semibold" style={styles.textoRechazar}>Rechazar</AppText>
+            <AppText weight="semibold" style={styles.textoRechazar}>
+              {accionProcesando === "rechazada" ? "Procesando..." : "Rechazar"}
+            </AppText>
           </Pressable>
           <Pressable
             onPress={onAceptar}
@@ -90,11 +94,11 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
             style={({ pressed }) => [
               styles.boton,
               styles.botonAceptar,
-              (pressed || procesando) && styles.botonAceptarPresionado,
+              (pressed || accionProcesando === "aceptada") && styles.botonAceptarPresionado,
             ]}
           >
             <AppText weight="semibold" style={styles.textoAceptar}>
-              {procesando ? "Procesando..." : "Aceptar"}
+              {accionProcesando === "aceptada" ? "Procesando..." : "Aceptar"}
             </AppText>
           </Pressable>
         </View>

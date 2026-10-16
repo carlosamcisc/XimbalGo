@@ -216,7 +216,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                         <ReservaTaxistaCard
                             key={reserva.id}
                             reserva={reserva}
-                            procesando={taxista.procesandoReservaId === reserva.id}
+                            accionProcesando={taxista.procesandoReservaId === reserva.id ? taxista.procesandoAccion : null}
                             onPress={() => setReservaId(reserva.id)}
                             onAceptar={() => ejecutarAccion(reserva.id, "aceptada")}
                             onRechazar={() => ejecutarAccion(reserva.id, "rechazada")}
