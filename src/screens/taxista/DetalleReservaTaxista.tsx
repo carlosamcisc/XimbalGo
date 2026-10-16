@@ -37,7 +37,9 @@ interface Props {
 
 export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
   const { reservas, procesandoReservaId } = useTaxista();
-  const ejecutarAccion = useAccionReserva();
+  // Al terminar la acción se cierra el detalle para volver a la lista ya
+  // actualizada.
+  const ejecutarAccion = useAccionReserva(onClose);
   const reserva: ReservaTaxista | undefined = reservas.find((item) => item.id === reservaId);
   const procesando = reserva !== undefined && procesandoReservaId === reserva.id;
 
@@ -107,7 +109,15 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
                   disabled={procesando}
                   color={presentacion.peligrosa ? Colors.danger : Colors.primary}
                   borderColor={presentacion.peligrosa ? Colors.danger : Colors.primary}
-                  onPress={() => ejecutarAccion(reserva.id, accion)}
+                  onPress={() => {
+                    // La confirmación se muestra sin el panel abierto: un
+                    // `Alert` encima de un `Modal` puede dejar la pantalla sin
+                    // responder a toques en Android.
+                    if (presentacion.confirmacion) {
+                      onClose();
+                    }
+                    ejecutarAccion(reserva.id, accion);
+                  }}
                 />
               );
             })}

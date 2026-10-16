@@ -63,6 +63,7 @@ function useTaxistaEstado() {
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
   const ultimaUbicacion = useRef<Coordenadas | null>(null);
+  const procesandoReserva = useRef<string | null>(null);
 
   const cargar = useCallback(async () => {
     const actual = ++solicitud.current;
@@ -125,16 +126,33 @@ function useTaxistaEstado() {
   /** Devuelve un mensaje de error para el usuario, o null si funcionó. */
   const responderReserva = useCallback(
     async (reservaId: string, accion: AccionReserva): Promise<string | null> => {
+      // Un segundo toque antes de re-renderizar enviaría la acción dos veces.
+      if (procesandoReserva.current) {
+        return "Espera a que termine de procesarse la reservación.";
+      }
+      procesandoReserva.current = reservaId;
       setProcesandoReservaId(reservaId);
       try {
         await actualizarReserva(reservaId, accion);
-        await cargar();
-        return null;
       } catch (e: unknown) {
         return mensajeError(e, "No se pudo actualizar la reservación.");
       } finally {
+        procesandoReserva.current = null;
         setProcesandoReservaId(null);
       }
+
+      // El cambio ya se guardó: se muestra de inmediato, sin esperar la
+      // recarga. Antes la tarjeta seguía pendiente, con «Aceptar», hasta que
+      // terminaba la recarga, y en una red lenta eso tardaba varios segundos.
+      // `cargar` también descarta las recargas en curso, que traerían el
+      // estado anterior.
+      setReservas((actuales) =>
+        actuales.map((reserva) =>
+          reserva.id === reservaId ? { ...reserva, estado: accion } : reserva
+        )
+      );
+      void cargar();
+      return null;
     },
     [cargar]
   );
@@ -245,14 +263,29 @@ function useTaxistaEstado() {
     }, REENVIO_UBICACION_MS);
 
     // Al volver a la app, la ubicación pudo vencerse: se envía de inmediato.
+    // Solo al volver de segundo plano y sin pedir permiso: en Android los
+    // diálogos de permiso también disparan "active", y pedir el permiso aquí
+    // abría otro diálogo, que al cerrarse volvía a disparar "active": la
+    // pantalla quedaba atrapada en ese ciclo y parecía congelada.
+    let estadoAnterior = AppState.currentState;
+    let obteniendo = false;
     const cambioApp = AppState.addEventListener("change", (estado) => {
-      if (estado !== "active") {
+      const volvio = estadoAnterior === "background" && estado === "active";
+      estadoAnterior = estado;
+      if (!volvio || obteniendo) {
         return;
       }
       void cargar();
-      obtenerUbicacionActual(MENSAJE_PERMISO).then(enviar, (e: unknown) =>
-        setErrorUbicacion(mensajeError(e, "No se pudo obtener tu ubicación."))
-      );
+      obteniendo = true;
+      obtenerUbicacionActual(MENSAJE_PERMISO, false)
+        .then(enviar, (e: unknown) => {
+          if (activo) {
+            setErrorUbicacion(mensajeError(e, "No se pudo obtener tu ubicación."));
+          }
+        })
+        .finally(() => {
+          obteniendo = false;
+        });
     });
 
     return () => {

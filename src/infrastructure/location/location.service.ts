@@ -4,8 +4,10 @@ import type { Coordenadas } from "../../modules/cliente/ubicacion";
 const MENSAJE_PERMISO_CERCANOS =
   "Se necesita permiso de ubicación para buscar opciones cercanas.";
 
-async function asegurarUbicacionDisponible(mensajePermiso: string) {
-  const permiso = await Location.requestForegroundPermissionsAsync();
+async function asegurarUbicacionDisponible(mensajePermiso: string, pedirPermiso = true) {
+  const permiso = pedirPermiso
+    ? await Location.requestForegroundPermissionsAsync()
+    : await Location.getForegroundPermissionsAsync();
   if (!permiso.granted) {
     throw new Error(mensajePermiso);
   }
@@ -21,10 +23,15 @@ const aCoordenadas = (ubicacion: Location.LocationObject): Coordenadas => ({
   longitud: ubicacion.coords.longitude,
 });
 
+/**
+ * Con `pedirPermiso` en false no abre el diálogo de permiso: si no está
+ * concedido, falla con `mensajePermiso`.
+ */
 export async function obtenerUbicacionActual(
-  mensajePermiso = MENSAJE_PERMISO_CERCANOS
+  mensajePermiso = MENSAJE_PERMISO_CERCANOS,
+  pedirPermiso = true
 ): Promise<Coordenadas> {
-  await asegurarUbicacionDisponible(mensajePermiso);
+  await asegurarUbicacionDisponible(mensajePermiso, pedirPermiso);
 
   const ubicacion = await Location.getCurrentPositionAsync({
     accuracy: Location.Accuracy.Balanced,
