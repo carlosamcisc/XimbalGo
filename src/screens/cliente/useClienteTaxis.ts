@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { obtenerUbicacionActual } from "../../infrastructure/location/location.service";
 import { escucharDisponibilidadRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
 import { obtenerTaxisDisponibles } from "../../infrastructure/supabase/repositories/vehiculos.repository";
-import type { TaxiDisponible } from "../../modules/cliente/ubicacion";
+import type { Coordenadas, TaxiDisponible } from "../../modules/cliente/ubicacion";
 import { mensajeError } from "./useClienteInicio";
 
 // Un taxista envía su ubicación y una reserva aparta asientos a la vez.
@@ -19,14 +19,16 @@ export function useClienteTaxis() {
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
 
-  const cargar = useCallback(async () => {
+  /** Con `coordenadas` (p. ej. al elegir «Mi ubicación actual») no lee el GPS. */
+  const cargar = useCallback(async (coordenadas?: Coordenadas) => {
     const actual = ++solicitud.current;
     setError(null);
 
     try {
       // Inicio ya pidió el permiso: aquí no se vuelve a pedir. Sin GPS se
       // muestran igual, sin distancia.
-      const punto = await obtenerUbicacionActual(undefined, false).catch(() => null);
+      const punto =
+        coordenadas ?? (await obtenerUbicacionActual(undefined, false).catch(() => null));
       const datos = await obtenerTaxisDisponibles(punto);
       if (actual === solicitud.current) {
         setTaxis(datos);

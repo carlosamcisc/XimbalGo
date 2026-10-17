@@ -1,20 +1,23 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
 import Card from "../../components/Card";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
+import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import TaxiCard from "../../components/TaxiCard";
 import { Icono } from "../../components/Icono";
 import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
 import type { ClienteStackParamList } from "../../navigation/types";
-import { etiquetaOrigen, formatearPrecio } from "../../modules/cliente/reservas";
+import { formatearPrecio } from "../../modules/cliente/reservas";
 import { normalizarTexto } from "../../modules/cliente/rutas";
 import { formatearDistancia, type TaxiDisponible } from "../../modules/cliente/ubicacion";
 import { useClienteTaxis } from "./useClienteTaxis";
+import { useSeleccionViaje } from "./useSeleccionViaje";
+import SelectorViaje from "./SelectorViaje";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteTaxis">;
 
@@ -25,17 +28,22 @@ const coincide = (taxi: TaxiDisponible, busqueda: string) => {
 };
 
 const ClienteTaxisScreen = ({ navigation, route }: Props) => {
-  const origen = route.params?.origen;
-  const destino = route.params?.destino;
   const lista = useClienteTaxis();
+  // Empieza con lo elegido en Inicio; aquí se puede cambiar sin volver.
+  const viaje = useSeleccionViaje({
+    origenInicial: route.params?.origen ?? null,
+    destinoInicial: route.params?.destino ?? null,
+    // Con el GPS nuevo, las distancias se calculan desde ese punto.
+    alObtenerUbicacion: (punto) => void lista.cargar(punto),
+  });
+  const { origen, destino } = viaje;
   const [busqueda, setBusqueda] = useState("");
 
   const taxis = lista.taxis.filter((taxi) => coincide(taxi, busqueda));
 
   const elegir = (taxi: TaxiDisponible) => {
     if (!origen || !destino) {
-      ToastMessage.show("Elige tu origen y destino en Inicio para reservar.");
-      navigation.popTo("ClienteInicio");
+      ToastMessage.show("Elige tu origen y destino para reservar en este taxi.");
       return;
     }
     navigation.navigate("ClienteReservar", {
@@ -98,37 +106,12 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
       <StatusBar style="light" />
       <EncabezadoPantalla
         titulo="Taxis disponibles"
-        subtitulo="Elige cualquier taxi para reservar"
+        subtitulo="Elige tu viaje y cualquier taxi para reservar"
         onBack={() => navigation.goBack()}
       />
       <View style={styles.pantalla}>
-        <View style={styles.buscador}>
-          <Icono nombre="search" tamanio={20} color={Colors.outline} />
-          <TextInput
-            style={styles.inputBusqueda}
-            value={busqueda}
-            onChangeText={setBusqueda}
-            placeholder="Buscar por matrícula, taxista o ruta"
-            placeholderTextColor={Colors.outline}
-            autoCorrect={false}
-            returnKeyType="search"
-            accessibilityLabel="Buscar taxi"
-          />
-          {busqueda.length > 0 && (
-            <Pressable onPress={() => setBusqueda("")} accessibilityRole="button" accessibilityLabel="Limpiar búsqueda">
-              <Icono nombre="close" tamanio={20} color={Colors.outline} />
-            </Pressable>
-          )}
-        </View>
-        <AppText style={styles.trayecto} numberOfLines={2}>
-          {origen && destino
-            ? `${etiquetaOrigen(origen)} → ${destino}`
-            : "Elige tu origen y destino en Inicio para poder reservar."}
-          {!lista.cargando && !lista.conDistancia && " Sin tu ubicación no se muestran distancias."}
-        </AppText>
-        <ScrollView
+        <KeyboardAwareScroll
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={lista.refrescando}
@@ -138,8 +121,36 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
             />
           }
         >
+          <AppText weight="semibold" style={styles.tituloSeccion}>Tu viaje</AppText>
+          <SelectorViaje viaje={viaje} />
+
+          <AppText weight="semibold" style={styles.tituloSeccion}>Elige un taxi</AppText>
+          <View style={styles.buscador}>
+            <Icono nombre="search" tamanio={20} color={Colors.outline} />
+            <TextInput
+              style={styles.inputBusqueda}
+              value={busqueda}
+              onChangeText={setBusqueda}
+              placeholder="Buscar por matrícula, taxista o ruta"
+              placeholderTextColor={Colors.outline}
+              autoCorrect={false}
+              returnKeyType="search"
+              accessibilityLabel="Buscar taxi"
+            />
+            {busqueda.length > 0 && (
+              <Pressable onPress={() => setBusqueda("")} accessibilityRole="button" accessibilityLabel="Limpiar búsqueda">
+                <Icono nombre="close" tamanio={20} color={Colors.outline} />
+              </Pressable>
+            )}
+          </View>
+          <AppText style={styles.trayecto}>
+            {origen && destino
+              ? "Toca un taxi para elegir tus asientos y la hora."
+              : "Elige tu origen y destino para poder reservar."}
+            {!lista.cargando && !lista.conDistancia && " Sin tu ubicación no se muestran distancias."}
+          </AppText>
           <Card>{renderContenido()}</Card>
-        </ScrollView>
+        </KeyboardAwareScroll>
       </View>
     </SafeAreaView>
   );
@@ -157,12 +168,18 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     overflow: "hidden",
   },
+  tituloSeccion: {
+    fontSize: 16,
+    color: Colors.brandDeep,
+    marginHorizontal: 16,
+    marginTop: 18,
+  },
   buscador: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginHorizontal: 12,
-    marginTop: 18,
+    marginTop: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
