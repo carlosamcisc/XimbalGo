@@ -1,6 +1,6 @@
 //roles disponibles para un usuario de XimbalGo
 import type { RolUsuario } from "../modules/usuarios/types";
-import type { ParaderoViaje } from "../modules/cliente/types";
+import type { OrigenViaje, ParaderoViaje } from "../modules/cliente/types";
 
 export type Rol = RolUsuario;
 
@@ -19,6 +19,17 @@ export type ClienteStackParamList ={
     /** Desde el detalle de un paradero: lo selecciona como origen. */
     ClienteInicio: { paraderoOrigen?: ParaderoViaje } | undefined;
     ClienteReservaciones: undefined;
+    /** Todos los taxis disponibles; el origen y destino vienen de Inicio. */
+    ClienteTaxis: { origen?: OrigenViaje; destino?: string } | undefined;
+    /** Elegir asientos, fecha y hora en un taxi. */
+    ClienteReservar: {
+        vehiculoId: string;
+        origen: OrigenViaje;
+        destino: string;
+        distanciaMetros?: number;
+    };
+    /** Detalle de una reservación con el seguimiento del taxi. */
+    ClienteReserva: { reservaId: string };
     /** Todos los paraderos activos. */
     ClienteParaderos: undefined;
     /** `distanciaMetros` llega desde los paraderos cercanos. */

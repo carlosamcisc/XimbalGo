@@ -9,10 +9,11 @@ interface TaxiCardProps {
     distancia?: string;  // Solo se muestra cuando se conoce la distancia
     asientos: number;    // Ej: 4
     lleno?: boolean;     // Si está lleno
+    detalle?: string;    // Línea extra, p. ej. la ruta y el precio
     onPress?: () => void;
 }
 
-const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno, onPress }) => {
+const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno, detalle, onPress }) => {
     return (
         <Pressable
             onPress={onPress}
@@ -31,6 +32,9 @@ const TaxiCard: React.FC<TaxiCardProps> = ({ nombre, distancia, asientos, lleno,
                             <Icono nombre="myLocation" tamanio={13} color={Colors.onSurfaceVariant} />
                             <AppText style={styles.distancia}>{distancia} de distancia</AppText>
                         </View>
+                    )}
+                    {detalle && (
+                        <AppText style={styles.distancia} numberOfLines={1}>{detalle}</AppText>
                     )}
                 </View>
                 <View style={[styles.status, lleno ? styles.fullStatus : styles.availableStatus]}>

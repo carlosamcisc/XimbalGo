@@ -1,4 +1,5 @@
 import Colors from "../../theme/colors";
+import type { OrigenViaje } from "./types";
 import type { Coordenadas } from "./ubicacion";
 
 // Valores permitidos por `reservas_estado_check` en la base de datos.
@@ -25,6 +26,9 @@ export interface ReservaCliente {
   nombreTaxista: string | null;
   telefonoTaxista: string | null;
   numeroAsiento: number | null;
+  cantidadAsientos: number;
+  /** Solo se conocen mientras la reserva tiene los asientos apartados. */
+  numerosAsientos: number[];
 }
 
 export interface NuevaReserva {
@@ -35,6 +39,56 @@ export interface NuevaReserva {
   paraderoOrigenId: string | null;
   ubicacionOrigen: Coordenadas | null;
   notas: string | null;
+  cantidadAsientos: number;
+  /** Null para viajar en cuanto pase el taxi. */
+  fechaViaje: string | null;
+}
+
+const formatearCoordenadas = ({ latitud, longitud }: Coordenadas) =>
+  `${latitud.toFixed(5)}, ${longitud.toFixed(5)}`;
+
+/** Texto del origen elegido para mostrarlo al cliente. */
+export function etiquetaOrigen(origen: OrigenViaje | null): string {
+  if (!origen) {
+    return "";
+  }
+  if (origen.tipo === "ubicacion") {
+    return origen.direccion ?? "Mi ubicación actual";
+  }
+  return origen.tipo === "ruta" ? origen.nombre : origen.paradero.nombre;
+}
+
+/** Campos del origen que espera `crear_reserva_cliente`. */
+export function origenDeReserva(
+  origen: OrigenViaje
+): Pick<NuevaReserva, "origen" | "paraderoOrigenId" | "ubicacionOrigen"> {
+  switch (origen.tipo) {
+    case "ruta":
+      return { origen: origen.nombre, paraderoOrigenId: null, ubicacionOrigen: null };
+    case "paradero":
+      return { origen: null, paraderoOrigenId: origen.paradero.id, ubicacionOrigen: null };
+    case "ubicacion":
+      return {
+        origen: origen.direccion ?? `Ubicación actual (${formatearCoordenadas(origen.coordenadas)})`,
+        paraderoOrigenId: null,
+        ubicacionOrigen: origen.coordenadas,
+      };
+  }
+}
+
+/** Límites de `crear_reserva_cliente`. */
+export const MAXIMO_ASIENTOS_RESERVA = 20;
+export const DIAS_ANTICIPACION_RESERVA = 7;
+
+export const textoAsientos = (cantidad: number) =>
+  `${cantidad} ${cantidad === 1 ? "asiento" : "asientos"}`;
+
+/** «3 asientos · núm. 1, 2, 3», o solo la cantidad si no hay números. */
+export function formatearAsientos(cantidad: number, numeros: number[]): string {
+  if (numeros.length === 0) {
+    return textoAsientos(cantidad);
+  }
+  return `${textoAsientos(cantidad)} · núm. ${numeros.join(", ")}`;
 }
 
 const ESTADOS_ACTIVOS: readonly EstadoReserva[] = ["pendiente", "aceptada"];
@@ -101,6 +155,13 @@ export function formatearFecha(fechaIso: string): string {
   return new Date(fechaIso).toLocaleString("es-MX", {
     day: "numeric",
     month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export function formatearHora(fecha: Date | string): string {
+  return new Date(fecha).toLocaleTimeString("es-MX", {
     hour: "numeric",
     minute: "2-digit",
   });

@@ -8,6 +8,9 @@ import ClienteSeguridadScreen from "../../screens/cliente/ClienteSeguridadScreen
 import ClienteAyudaScreen from "../../screens/cliente/ClienteAyudaScreen";
 import ClienteParaderosScreen from "../../screens/cliente/ClienteParaderosScreen";
 import ClienteParaderoScreen from "../../screens/cliente/ClienteParaderoScreen";
+import ClienteTaxisScreen from "../../screens/cliente/ClienteTaxisScreen";
+import ClienteReservarScreen from "../../screens/cliente/ClienteReservarScreen";
+import ClienteReservaScreen from "../../screens/cliente/ClienteReservaScreen";
 import { ClienteProvider } from "../../screens/cliente/ClienteContext";
 import type { ClienteStackParamList } from "../types";
 
@@ -39,6 +42,9 @@ export default function ClienteNavigator(){
                 <Stack.Screen name="ClienteAyuda" component={ClienteAyudaScreen}/>
                 <Stack.Screen name="ClienteParaderos" component={ClienteParaderosScreen}/>
                 <Stack.Screen name="ClienteParadero" component={ClienteParaderoScreen}/>
+                <Stack.Screen name="ClienteTaxis" component={ClienteTaxisScreen}/>
+                <Stack.Screen name="ClienteReservar" component={ClienteReservarScreen}/>
+                <Stack.Screen name="ClienteReserva" component={ClienteReservaScreen}/>
             </Stack.Navigator>
         </ClienteProvider>
     );

@@ -341,6 +341,7 @@ export type Database = {
       reservas: {
         Row: {
           asiento_id: string | null
+          cantidad_asientos: number
           cliente_id: string
           destino: string | null
           estado: string
@@ -359,6 +360,7 @@ export type Database = {
         }
         Insert: {
           asiento_id?: string | null
+          cantidad_asientos?: number
           cliente_id: string
           destino?: string | null
           estado?: string
@@ -377,6 +379,7 @@ export type Database = {
         }
         Update: {
           asiento_id?: string | null
+          cantidad_asientos?: number
           cliente_id?: string
           destino?: string | null
           estado?: string
@@ -889,6 +892,7 @@ export type Database = {
       }
       crear_reserva_cliente: {
         Args: {
+          p_cantidad_asientos?: number
           p_destino: string
           p_fecha_hora_viaje?: string
           p_latitud?: number
@@ -1033,6 +1037,17 @@ export type Database = {
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      obtener_paradero: {
+        Args: { p_paradero_id: string }
+        Returns: {
+          foto_url: string
+          id: string
+          latitud: number
+          longitud: number
+          nombre: string
+          referencia: string
+        }[]
+      }
       obtener_paraderos_cercanos: {
         Args: { p_latitud: number; p_limite?: number; p_longitud: number }
         Returns: {
@@ -1045,6 +1060,7 @@ export type Database = {
       obtener_reservas_taxista: {
         Args: never
         Returns: {
+          cantidad_asientos: number
           destino: string
           estado: string
           fecha_hora_reserva: string
@@ -1054,9 +1070,29 @@ export type Database = {
           nombre_cliente: string
           notas: string
           numero_asiento: number
+          numeros_asientos: number[]
           origen: string
           precio: number
           telefono_cliente: string
+        }[]
+      }
+      obtener_seguimiento_reserva: {
+        Args: { p_reserva_id: string }
+        Returns: {
+          en_servicio: boolean
+          estado: string
+          paradero_latitud: number
+          paradero_longitud: number
+          paradero_nombre: string
+          punto_latitud: number
+          punto_longitud: number
+          punto_nombre: string
+          punto_tipo: string
+          taxi_latitud: number
+          taxi_longitud: number
+          taxista_id: string
+          ubicacion_actualizada_en: string
+          velocidad_kmh: number
         }[]
       }
       obtener_taxis_cercanos: {
@@ -1066,6 +1102,18 @@ export type Database = {
           distancia_metros: number
           matricula: string
           nombre_taxista: string
+          vehiculo_id: string
+        }[]
+      }
+      obtener_taxis_disponibles: {
+        Args: { p_latitud?: number; p_longitud?: number }
+        Returns: {
+          asientos_disponibles: number
+          distancia_metros: number
+          matricula: string
+          nombre_taxista: string
+          precio: number
+          ruta: string
           vehiculo_id: string
         }[]
       }

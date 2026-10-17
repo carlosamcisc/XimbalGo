@@ -5,12 +5,12 @@ import {
 } from "../../infrastructure/supabase/repositories/cliente.repository";
 import { obtenerPuntosRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
 import { obtenerTaxisCercanos } from "../../infrastructure/supabase/repositories/vehiculos.repository";
-import { crearReserva } from "../../infrastructure/supabase/repositories/reservas.repository";
 import {
   obtenerDireccionActual,
   obtenerUbicacionActual,
 } from "../../infrastructure/location/location.service";
 import { normalizarTexto } from "../../modules/cliente/rutas";
+import { etiquetaOrigen } from "../../modules/cliente/reservas";
 import type {
   Coordenadas,
   ParaderoCercano,
@@ -65,9 +65,6 @@ function nombreOrigen(origen: OrigenViaje | null): string | null {
 const mismoPunto = (a: string | null, b: string | null) =>
   a !== null && b !== null && normalizarTexto(a) === normalizarTexto(b);
 
-const formatearCoordenadas = ({ latitud, longitud }: Coordenadas) =>
-  `${latitud.toFixed(5)}, ${longitud.toFixed(5)}`;
-
 export function useClienteInicio() {
   const [opciones, setOpciones] = useState<Record<TipoPuntoViaje, string[]>>({
     origen: [],
@@ -85,7 +82,6 @@ export function useClienteInicio() {
   const [destino, setDestino] = useState<string | null>(null);
   const [obteniendoUbicacion, setObteniendoUbicacion] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
-  const [reservando, setReservando] = useState(false);
 
   // Cada contador descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitudOpciones = useRef(0);
@@ -267,42 +263,6 @@ export function useClienteInicio() {
     [origen]
   );
 
-  /** Devuelve un mensaje de error para el usuario, o null si se reservó. */
-  const reservar = useCallback(
-    async (taxi: TaxiCercano): Promise<string | null> => {
-      if (!destino) {
-        return "Selecciona tu destino antes de reservar.";
-      }
-      if (!origen) {
-        return "Selecciona tu origen antes de reservar.";
-      }
-
-      setReservando(true);
-      try {
-        await crearReserva({
-          vehiculoId: taxi.id,
-          destino,
-          origen:
-            origen.tipo === "ruta"
-              ? origen.nombre
-              : origen.tipo === "ubicacion"
-                ? origen.direccion ?? `Ubicación actual (${formatearCoordenadas(origen.coordenadas)})`
-                : null,
-          paraderoOrigenId: origen.tipo === "paradero" ? origen.paradero.id : null,
-          ubicacionOrigen: origen.tipo === "ubicacion" ? origen.coordenadas : null,
-          notas: null,
-        });
-        void buscarCercanos();
-        return null;
-      } catch (error: unknown) {
-        return mensajeError(error, "No se pudo crear la reservación.");
-      } finally {
-        setReservando(false);
-      }
-    },
-    [origen, destino, buscarCercanos]
-  );
-
   // Al entrar se pide el permiso de ubicación; si se concede, el GPS queda
   // como origen y se buscan los taxis y paraderos cercanos.
   useEffect(() => {
@@ -314,12 +274,6 @@ export function useClienteInicio() {
       solicitudOrigen.current += 1;
     };
   }, [usarUbicacionActual]);
-
-  const etiquetaOrigen = !origen
-    ? ""
-    : origen.tipo === "ubicacion"
-      ? origen.direccion ?? "Mi ubicación actual"
-      : nombreOrigen(origen) ?? "";
 
   return {
     saludo: obtenerSaludo(),
@@ -333,7 +287,7 @@ export function useClienteInicio() {
     errorCercanos,
     buscarCercanos,
     origen,
-    etiquetaOrigen,
+    etiquetaOrigen: etiquetaOrigen(origen),
     destino,
     obteniendoUbicacion,
     usarUbicacionActual,
@@ -342,7 +296,5 @@ export function useClienteInicio() {
     seleccionarDestino,
     refrescando,
     refrescar,
-    reservando,
-    reservar,
   };
 }

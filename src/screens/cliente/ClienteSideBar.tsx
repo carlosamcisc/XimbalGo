@@ -22,7 +22,10 @@ type OpcionMenu =
   | "cerrarSesion";
 
 // Pantallas que se abren sin parámetros obligatorios.
-type PantallaMenu = Exclude<keyof ClienteStackParamList, "ClienteParadero">;
+type PantallaMenu = Exclude<
+  keyof ClienteStackParamList,
+  "ClienteParadero" | "ClienteReservar" | "ClienteReserva"
+>;
 
 const PANTALLA_OPCION: Record<Exclude<OpcionMenu, "cerrarSesion">, PantallaMenu> = {
   perfil: "ClientePerfil",

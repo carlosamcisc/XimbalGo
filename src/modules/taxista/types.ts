@@ -70,6 +70,8 @@ export interface ReservaTaxista {
   destino: string | null;
   matricula: string | null;
   numeroAsiento: number | null;
+  cantidadAsientos: number;
+  numerosAsientos: number[];
   nombreCliente: string;
   /** Solo llega mientras la reserva está pendiente o aceptada. */
   telefonoCliente: string | null;

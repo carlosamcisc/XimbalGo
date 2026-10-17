@@ -221,6 +221,8 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
     destino: reserva.destino,
     matricula: reserva.matricula,
     numeroAsiento: reserva.numero_asiento,
+    cantidadAsientos: reserva.cantidad_asientos,
+    numerosAsientos: reserva.numeros_asientos,
     nombreCliente: reserva.nombre_cliente.trim() || "Cliente",
     telefonoCliente: reserva.telefono_cliente,
   }));
