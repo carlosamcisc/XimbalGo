@@ -5,6 +5,7 @@ import {
   escucharReserva,
   obtenerReservaCliente,
   obtenerSeguimientoReserva,
+  responderOfertaAsientos,
 } from "../../infrastructure/supabase/repositories/reservas.repository";
 import { esReservaActiva, type ReservaCliente } from "../../modules/cliente/reservas";
 import { estimarLlegada, type SeguimientoReserva } from "../../modules/cliente/seguimiento";
@@ -24,6 +25,8 @@ export function useClienteReserva(reservaId: string) {
   const [error, setError] = useState<string | null>(null);
   const [errorSeguimiento, setErrorSeguimiento] = useState<string | null>(null);
   const [cancelando, setCancelando] = useState(false);
+  // Respuesta a la oferta de asientos en curso: true acepta, false no.
+  const [respondiendo, setRespondiendo] = useState<boolean | null>(null);
   const [ahora, setAhora] = useState(Date.now());
 
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
@@ -78,6 +81,25 @@ export function useClienteReserva(reservaId: string) {
       setCancelando(false);
     }
   }, [reservaId, cargar]);
+
+  /** Devuelve un mensaje de error para el usuario, o null si se guardó. */
+  const responderOferta = useCallback(
+    async (acepta: boolean): Promise<string | null> => {
+      setRespondiendo(acepta);
+      try {
+        await responderOfertaAsientos(reservaId, acepta);
+        await cargar();
+        return null;
+      } catch (e: unknown) {
+        // El taxista pudo rechazar la solicitud mientras tanto.
+        void cargar();
+        return mensajeError(e, "No se pudo enviar tu respuesta.");
+      } finally {
+        setRespondiendo(null);
+      }
+    },
+    [reservaId, cargar]
+  );
 
   useEffect(() => {
     void cargar();
@@ -135,5 +157,7 @@ export function useClienteReserva(reservaId: string) {
     refrescar,
     cancelar,
     cancelando,
+    responderOferta,
+    respondiendo,
   };
 }

@@ -8,6 +8,7 @@ import {
   formatearFecha,
   formatearPrecio,
   textoAsientos,
+  tieneOfertaAsientos,
   type ReservaCliente,
 } from "../modules/cliente/reservas";
 
@@ -60,6 +61,21 @@ const ReservaCard: React.FC<ReservaCardProps> = ({ reserva, onPress }) => {
           </AppText>
         </View>
       </View>
+
+      {tieneOfertaAsientos(reserva) && (
+        <View style={[styles.aviso, styles.avisoOferta]}>
+          <Icono nombre="eventSeat" tamanio={16} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.textoAviso}>
+            El taxista solo tiene {textoAsientos(reserva.asientosOfrecidos!)}. Toca para responder.
+          </AppText>
+        </View>
+      )}
+      {reserva.motivoTaxista && (
+        <View style={[styles.aviso, styles.avisoMotivo]}>
+          <Icono nombre="info" tamanio={16} color={Colors.error} />
+          <AppText style={styles.textoAviso} numberOfLines={2}>Motivo: {reserva.motivoTaxista}</AppText>
+        </View>
+      )}
 
       <View style={styles.pie}>
         <Icono nombre="localTaxi" tamanio={16} color={Colors.onSurfaceVariant} />
@@ -149,6 +165,24 @@ const styles = StyleSheet.create({
   },
   paradero: {
     fontSize: 14,
+    color: Colors.brandText,
+  },
+  aviso: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 14,
+  },
+  avisoOferta: {
+    backgroundColor: Colors.primaryContainer,
+  },
+  avisoMotivo: {
+    backgroundColor: Colors.errorContainerSoft,
+  },
+  textoAviso: {
+    flex: 1,
+    fontSize: 12,
     color: Colors.brandText,
   },
   pie: {

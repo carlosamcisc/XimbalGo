@@ -22,6 +22,7 @@ const PRESENTACION_TIPO: Record<TipoNotificacion, { icono: NombreIcono; color: s
   reserva_cancelada: { icono: "cancel", color: Colors.error, fondo: Colors.errorContainerSoft },
   van_llegando: { icono: "localTaxi", color: Colors.primary, fondo: Colors.primaryContainer },
   viaje_completado: { icono: "doneAll", color: Colors.brandAccentBright, fondo: Colors.brandAccentContainer },
+  asientos_ofrecidos: { icono: "eventSeat", color: Colors.primary, fondo: Colors.primaryContainer },
 };
 
 const ClienteNotificacionesScreen = ({ navigation }: Props) => {

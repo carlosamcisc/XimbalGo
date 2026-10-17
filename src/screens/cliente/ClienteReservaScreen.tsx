@@ -18,7 +18,11 @@ import {
   formatearFecha,
   formatearHora,
   formatearPrecio,
+  precioOferta,
   puedeCancelarse,
+  textoAsientos,
+  tieneOfertaAsientos,
+  type ReservaCliente,
 } from "../../modules/cliente/reservas";
 import {
   distanciaEntre,
@@ -70,6 +74,86 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
   const detalle = useClienteReserva(reservaId);
   const { reserva, seguimiento, estimacion, ahora } = detalle;
   const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
+  const [confirmandoRechazoOferta, setConfirmandoRechazoOferta] = useState(false);
+
+  const responderOferta = async (acepta: boolean) => {
+    const error = await detalle.responderOferta(acepta);
+    setConfirmandoRechazoOferta(false);
+    if (error) {
+      ToastMessage.show(error, "long");
+      return;
+    }
+    ToastMessage.show(acepta ? "¡Listo! Tu reservación quedó aceptada." : "Solicitud cancelada");
+  };
+
+  const renderOferta = (oferta: ReservaCliente) => {
+    const ofrecidos = oferta.asientosOfrecidos!;
+    const total = formatearPrecio(precioOferta(oferta));
+    const anterior = formatearPrecio(oferta.precio);
+    const respondiendo = detalle.respondiendo !== null;
+    return (
+      <Card>
+        <View style={styles.encabezadoOferta}>
+          <Icono nombre="eventSeat" tamanio={22} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>
+            El taxista solo tiene {textoAsientos(ofrecidos)}
+          </AppText>
+        </View>
+        <AppText style={styles.textoOferta}>
+          Pediste {textoAsientos(oferta.cantidadAsientos)}, pero al taxista solo le{" "}
+          {ofrecidos === 1 ? "queda 1 disponible" : `quedan ${ofrecidos} disponibles`}. ¿Quieres reservar{" "}
+          {ofrecidos === 1 ? "ese asiento" : `esos ${ofrecidos}`}? Tú decides.
+        </AppText>
+        {total && (
+          <View style={styles.totalOferta}>
+            <AppText style={styles.detalleEtiqueta}>Nuevo total</AppText>
+            <View style={styles.preciosOferta}>
+              {anterior && <AppText style={styles.precioAnterior}>{anterior}</AppText>}
+              <AppText weight="bold" style={styles.precioNuevo}>{total}</AppText>
+            </View>
+          </View>
+        )}
+        {confirmandoRechazoOferta ? (
+          <View style={styles.confirmacion}>
+            <AppText style={styles.textoConfirmacion}>
+              Si no aceptas, tu solicitud se cancelará y podrás buscar otro taxi.
+            </AppText>
+            <Button
+              titulo={detalle.respondiendo === false ? "Cancelando..." : "Sí, cancelar solicitud"}
+              color={Colors.danger}
+              borderColor={Colors.danger}
+              disabled={respondiendo}
+              onPress={() => void responderOferta(false)}
+            />
+            <Pressable
+              onPress={() => setConfirmandoRechazoOferta(false)}
+              disabled={respondiendo}
+              accessibilityRole="button"
+              style={styles.botonSecundario}
+            >
+              <AppText weight="semibold" style={styles.enlace}>Volver</AppText>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <Button
+              titulo={detalle.respondiendo === true ? "Aceptando..." : `Aceptar ${textoAsientos(ofrecidos)}`}
+              disabled={respondiendo}
+              onPress={() => void responderOferta(true)}
+            />
+            <Pressable
+              onPress={() => setConfirmandoRechazoOferta(true)}
+              disabled={respondiendo}
+              accessibilityRole="button"
+              style={styles.botonSecundario}
+            >
+              <AppText weight="semibold" style={styles.textoRechazarOferta}>No acepto, cancelar solicitud</AppText>
+            </Pressable>
+          </>
+        )}
+      </Card>
+    );
+  };
 
   const llamar = async (telefono: string) => {
     try {
@@ -205,6 +289,7 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
 
     const estado = PRESENTACION_ESTADO[reserva.estado];
     const precio = formatearPrecio(reserva.precio);
+    const oferta = tieneOfertaAsientos(reserva);
 
     return (
       <>
@@ -217,8 +302,21 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
               </AppText>
             </View>
           </View>
-          <AppText style={styles.descripcionEstado}>{estado.descripcion}</AppText>
+          <AppText style={styles.descripcionEstado}>
+            {oferta ? "El taxista respondió a tu solicitud. Revisa su oferta." : estado.descripcion}
+          </AppText>
+          {reserva.motivoTaxista && (
+            <View style={styles.motivo}>
+              <Icono nombre="info" tamanio={20} color={Colors.error} />
+              <View style={styles.detalleTexto}>
+                <AppText style={styles.detalleEtiqueta}>Motivo del taxista</AppText>
+                <AppText weight="medium" style={styles.detalleValor}>{reserva.motivoTaxista}</AppText>
+              </View>
+            </View>
+          )}
         </Card>
+
+        {oferta && renderOferta(reserva)}
 
         {renderSeguimiento()}
 
@@ -262,7 +360,8 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
           <DetalleFila icono="schedule" etiqueta="Solicitada" valor={formatearFecha(reserva.fechaReserva)} />
           {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
 
-          {puedeCancelarse(reserva.estado) && (
+          {/* Con una oferta pendiente, «No acepto» ya cancela la solicitud. */}
+          {puedeCancelarse(reserva.estado) && !oferta && (
             confirmandoCancelacion ? (
               <View style={styles.confirmacion}>
                 <AppText style={styles.textoConfirmacion}>
@@ -379,6 +478,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.onSurfaceVariant,
     marginTop: 6,
+  },
+  motivo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 10,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: Colors.errorContainerSoft,
+  },
+  encabezadoOferta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  textoOferta: {
+    fontSize: 14,
+    color: Colors.brandText,
+    marginTop: 8,
+  },
+  totalOferta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
+  },
+  preciosOferta: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  precioAnterior: {
+    fontSize: 13,
+    color: Colors.outline,
+    textDecorationLine: "line-through",
+  },
+  precioNuevo: {
+    fontSize: 17,
+    color: Colors.brandDeep,
+  },
+  textoRechazarOferta: {
+    fontSize: 14,
+    color: Colors.danger,
   },
   encabezadoSeguimiento: {
     flexDirection: "row",

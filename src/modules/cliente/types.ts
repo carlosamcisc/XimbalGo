@@ -32,7 +32,8 @@ export type TipoNotificacion =
   | "reserva_rechazada"
   | "reserva_cancelada"
   | "van_llegando"
-  | "viaje_completado";
+  | "viaje_completado"
+  | "asientos_ofrecidos";
 
 export interface NotificacionCliente {
   id: string;
