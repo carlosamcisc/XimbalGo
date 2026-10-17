@@ -7,6 +7,7 @@ import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
 import {
   PRESENTACION_ESTADO,
+  formatearAsientos,
   formatearFecha,
   formatearPrecio,
 } from "../../modules/cliente/reservas";
@@ -84,17 +85,23 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
             valor={reserva.origen ?? "Ubicación del cliente (ver notas)"}
           />
           <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
-          {reserva.numeroAsiento !== null && (
-            <DetalleFila
-              icono="eventSeat"
-              etiqueta="Asiento"
-              valor={[`Número ${reserva.numeroAsiento}`, reserva.matricula].filter(Boolean).join(" · ")}
-            />
-          )}
+          <DetalleFila
+            icono="eventSeat"
+            etiqueta={reserva.cantidadAsientos === 1 ? "Asiento" : "Asientos"}
+            valor={[
+              formatearAsientos(reserva.cantidadAsientos, reserva.numerosAsientos),
+              reserva.matricula,
+            ].filter(Boolean).join(" · ")}
+          />
+          <DetalleFila
+            icono="calendar"
+            etiqueta="Viaje"
+            valor={reserva.fechaViaje ? formatearFecha(reserva.fechaViaje) : "En cuanto pases"}
+          />
           <DetalleFila
             icono="schedule"
-            etiqueta={reserva.fechaViaje ? "Fecha del viaje" : "Solicitada"}
-            valor={formatearFecha(reserva.fechaViaje ?? reserva.fechaReserva)}
+            etiqueta="Solicitada"
+            valor={formatearFecha(reserva.fechaReserva)}
           />
           {precio && <DetalleFila icono="payments" etiqueta="Precio" valor={precio} />}
           {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}

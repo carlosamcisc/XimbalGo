@@ -6,69 +6,24 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
 import Colors from "../../theme/colors";
 import Card from "../../components/Card";
-import Button from "../../components/Button";
-import BottomSheet from "../../components/BottomSheet";
 import ReservaCard from "../../components/ReservaCard";
-import { ToastMessage } from "../../components/ToastMessaje";
 import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
-import { Icono, type NombreIcono } from "../../components/Icono";
+import { Icono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 import ClienteSideBar, { BotonMenuCliente } from "./ClienteSideBar";
-import {
-    PRESENTACION_ESTADO,
-    formatearFecha,
-    formatearPrecio,
-    puedeCancelarse,
-    type ReservaCliente,
-} from "../../modules/cliente/reservas";
 import { useClienteReservaciones } from "./useClienteReservaciones";
 
 type Filtro = "activas" | "historial";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteReservaciones">;
 
-const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta: string; valor: string }) => (
-    <View style={styles.detalleFila}>
-        <Icono nombre={icono} tamanio={20} color={Colors.primary} />
-        <View style={styles.detalleTexto}>
-            <AppText style={styles.detalleEtiqueta}>{etiqueta}</AppText>
-            <AppText weight="medium" style={styles.detalleValor}>{valor}</AppText>
-        </View>
-    </View>
-);
-
 const ClienteReservacionesScreen = ({ navigation }: Props) => {
     const [menuVisible, setMenuVisible] = useState(false);
     const reservaciones = useClienteReservaciones();
     const [filtro, setFiltro] = useState<Filtro>("activas");
-    const [seleccionadaId, setSeleccionadaId] = useState<string | null>(null);
-    const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
 
     const lista = filtro === "activas" ? reservaciones.activas : reservaciones.historial;
-    // Se busca por id para que el detalle refleje los cambios en tiempo real.
-    const seleccionada: ReservaCliente | undefined = [...reservaciones.activas, ...reservaciones.historial]
-        .find((reserva) => reserva.id === seleccionadaId);
-    const cancelando = seleccionada !== undefined && reservaciones.cancelandoId === seleccionada.id;
-
-    const cerrarDetalle = () => {
-        setSeleccionadaId(null);
-        setConfirmandoCancelacion(false);
-    };
-
-    const confirmarCancelacion = async () => {
-        if (!seleccionada) {
-            return;
-        }
-        const error = await reservaciones.cancelar(seleccionada.id);
-        setConfirmandoCancelacion(false);
-        if (error) {
-            ToastMessage.show(error);
-            return;
-        }
-        cerrarDetalle();
-        ToastMessage.show("Reservación cancelada");
-    };
 
     const handlePressTab = (tab: BottomTabId) => {
         switch (tab) {
@@ -124,12 +79,13 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
             );
         }
         return lista.map((reserva) => (
-            <ReservaCard key={reserva.id} reserva={reserva} onPress={() => setSeleccionadaId(reserva.id)} />
+            <ReservaCard
+                key={reserva.id}
+                reserva={reserva}
+                onPress={() => navigation.navigate("ClienteReserva", { reservaId: reserva.id })}
+            />
         ));
     };
-
-    const estadoSeleccionada = seleccionada ? PRESENTACION_ESTADO[seleccionada.estado] : null;
-    const precioSeleccionada = seleccionada ? formatearPrecio(seleccionada.precio) : null;
 
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
@@ -180,83 +136,6 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
                     {renderContenido()}
                 </ScrollView>
             </View>
-
-            <BottomSheet visible={seleccionada !== undefined} onClose={cerrarDetalle}>
-                {seleccionada && estadoSeleccionada && (
-                    <View>
-                        <View style={styles.detalleEncabezado}>
-                            <AppText weight="semibold" style={styles.tituloDetalle}>Detalle de la reservación</AppText>
-                            <View style={[styles.estado, { backgroundColor: estadoSeleccionada.fondo }]}>
-                                <AppText weight="semibold" style={[styles.textoEstadoDetalle, { color: estadoSeleccionada.color }]}>
-                                    {estadoSeleccionada.etiqueta}
-                                </AppText>
-                            </View>
-                        </View>
-                        <AppText style={styles.descripcionEstado}>{estadoSeleccionada.descripcion}</AppText>
-
-                        <DetalleFila icono="locationHistory" etiqueta="Origen" valor={seleccionada.origen ?? "Mi ubicación"} />
-                        <DetalleFila icono="locationOn" etiqueta="Destino" valor={seleccionada.destino ?? "Paradero no disponible"} />
-                        <DetalleFila
-                            icono="localTaxi"
-                            etiqueta="Taxi"
-                            valor={[seleccionada.matricula, seleccionada.vehiculo].filter(Boolean).join(" · ") || "No disponible"}
-                        />
-                        {seleccionada.nombreTaxista && (
-                            <DetalleFila
-                                icono="phone"
-                                etiqueta="Taxista"
-                                valor={[seleccionada.nombreTaxista, seleccionada.telefonoTaxista].filter(Boolean).join(" · ")}
-                            />
-                        )}
-                        {seleccionada.numeroAsiento !== null && (
-                            <DetalleFila icono="eventSeat" etiqueta="Asiento" valor={`Número ${seleccionada.numeroAsiento}`} />
-                        )}
-                        <DetalleFila
-                            icono="schedule"
-                            etiqueta={seleccionada.fechaViaje ? "Fecha del viaje" : "Solicitada"}
-                            valor={formatearFecha(seleccionada.fechaViaje ?? seleccionada.fechaReserva)}
-                        />
-                        {precioSeleccionada && (
-                            <DetalleFila icono="payments" etiqueta="Precio" valor={precioSeleccionada} />
-                        )}
-                        {seleccionada.notas && (
-                            <DetalleFila icono="notes" etiqueta="Notas" valor={seleccionada.notas} />
-                        )}
-
-                        {puedeCancelarse(seleccionada.estado) && (
-                            confirmandoCancelacion ? (
-                                <View style={styles.confirmacion}>
-                                    <AppText style={styles.textoConfirmacion}>
-                                        ¿Seguro que quieres cancelar? Tu asiento quedará libre para otro pasajero.
-                                    </AppText>
-                                    <Button
-                                        titulo={cancelando ? "Cancelando..." : "Sí, cancelar reservación"}
-                                        color={Colors.danger}
-                                        borderColor={Colors.danger}
-                                        disabled={cancelando}
-                                        onPress={() => void confirmarCancelacion()}
-                                    />
-                                    <Pressable
-                                        onPress={() => setConfirmandoCancelacion(false)}
-                                        disabled={cancelando}
-                                        accessibilityRole="button"
-                                        style={styles.botonSecundario}
-                                    >
-                                        <AppText weight="semibold" style={styles.textoReintentar}>Conservar reservación</AppText>
-                                    </Pressable>
-                                </View>
-                            ) : (
-                                <Button
-                                    titulo="Cancelar reservación"
-                                    color={Colors.danger}
-                                    borderColor={Colors.danger}
-                                    onPress={() => setConfirmandoCancelacion(true)}
-                                />
-                            )
-                        )}
-                    </View>
-                )}
-            </BottomSheet>
 
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="reservaciones" onPressTab={handlePressTab} />
             <ClienteSideBar visible={menuVisible} onClose={() => setMenuVisible(false)} />
@@ -321,61 +200,6 @@ const styles = StyleSheet.create({
     textoReintentar: {
         fontSize: 14,
         color: Colors.primary,
-    },
-    detalleEncabezado: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 8,
-    },
-    tituloDetalle: {
-        fontSize: 18,
-        flexShrink: 1,
-    },
-    estado: {
-        borderRadius: 10,
-        paddingHorizontal: 9,
-        paddingVertical: 5,
-    },
-    textoEstadoDetalle: {
-        fontSize: 12,
-    },
-    descripcionEstado: {
-        fontSize: 13,
-        color: Colors.onSurfaceVariant,
-        marginTop: 6,
-        marginBottom: 8,
-    },
-    detalleFila: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.divider,
-    },
-    detalleTexto: {
-        flex: 1,
-    },
-    detalleEtiqueta: {
-        fontSize: 12,
-        color: Colors.outline,
-    },
-    detalleValor: {
-        fontSize: 14,
-        color: Colors.brandText,
-    },
-    confirmacion: {
-        marginTop: 12,
-    },
-    textoConfirmacion: {
-        fontSize: 14,
-        textAlign: "center",
-        color: Colors.onSurface,
-    },
-    botonSecundario: {
-        alignItems: "center",
-        paddingVertical: 8,
     },
 });
 

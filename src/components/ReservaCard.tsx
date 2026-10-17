@@ -7,6 +7,7 @@ import {
   PRESENTACION_ESTADO,
   formatearFecha,
   formatearPrecio,
+  textoAsientos,
   type ReservaCliente,
 } from "../modules/cliente/reservas";
 
@@ -33,6 +34,15 @@ const ReservaCard: React.FC<ReservaCardProps> = ({ reserva, onPress }) => {
           </AppText>
         </View>
         <AppText style={styles.fecha}>{formatearFecha(reserva.fechaReserva)}</AppText>
+      </View>
+
+      <View style={styles.datosViaje}>
+        <Icono nombre="eventSeat" tamanio={16} color={Colors.onSurfaceVariant} />
+        <AppText style={styles.textoPie}>{textoAsientos(reserva.cantidadAsientos)}</AppText>
+        <Icono nombre="calendar" tamanio={16} color={Colors.onSurfaceVariant} />
+        <AppText style={styles.textoPie} numberOfLines={1}>
+          {reserva.fechaViaje ? formatearFecha(reserva.fechaViaje) : "Lo antes posible"}
+        </AppText>
       </View>
 
       <View style={styles.ruta}>
@@ -104,6 +114,11 @@ const styles = StyleSheet.create({
   ruta: {
     flexDirection: "row",
     gap: 10,
+  },
+  datosViaje: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   lineaRuta: {
     alignItems: "center",

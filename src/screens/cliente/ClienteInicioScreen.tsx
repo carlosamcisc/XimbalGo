@@ -76,7 +76,6 @@ type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteInicio'>;
 
 const ClienteInicioScreen = ({ navigation, route }: Props) => {
     const [selectorActivo, setSelectorActivo] = useState<SelectorActivo>(null);
-    const [taxiPorReservar, setTaxiPorReservar] = useState<TaxiCercano | null>(null);
     const [menuVisible, setMenuVisible] = useState(false);
     const inicio = useClienteInicio();
     const cliente = useCliente();
@@ -99,21 +98,19 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
             ToastMessage.show("Elige tu origen y destino para reservar en este taxi.");
             return;
         }
-        setTaxiPorReservar(taxi);
+        navigation.navigate("ClienteReservar", {
+            vehiculoId: taxi.id,
+            origen: inicio.origen,
+            destino: inicio.destino,
+            distanciaMetros: taxi.distanciaMetros,
+        });
     };
 
-    const confirmarReserva = async () => {
-        if (!taxiPorReservar) {
-            return;
-        }
-        const error = await inicio.reservar(taxiPorReservar);
-        if (error) {
-            ToastMessage.show(error);
-            return;
-        }
-        setTaxiPorReservar(null);
-        ToastMessage.show("Reservación enviada al taxista");
-        navigation.navigate("ClienteReservaciones");
+    const verTodosLosTaxis = () => {
+        navigation.navigate("ClienteTaxis", {
+            origen: inicio.origen ?? undefined,
+            destino: inicio.destino ?? undefined,
+        });
     };
 
     const abrirSelector = (tipo: TipoPuntoViaje) => {
@@ -275,10 +272,15 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                     <View style={styles.conteTaxisCerca}>
                         <Icono nombre="locationHistory" tamanio={25} color={Colors.primary} />
                         <AppText style={styles.textTaxis}> Taxis cerca de ti</AppText>
-                        <Pressable onPress={() => ToastMessage.show("Ver todo")}>
-                            <AppText style={styles.textVerTaxis}>Ver todo</AppText>
+                        <Pressable
+                            style={styles.verParaderos}
+                            onPress={verTodosLosTaxis}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ver todos los taxis disponibles"
+                        >
+                            <AppText style={styles.textVerParaderos}>Ver todo</AppText>
+                            <Icono nombre="ArrowRight" tamanio={25} color={Colors.outlineVariant} />
                         </Pressable>
-                        <Icono nombre="ArrowRight" tamanio={25} color={Colors.outlineVariant} />
                     </View>
                     <Card>
                         <EstadoLista
@@ -301,42 +303,6 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                             ))}
                         </EstadoLista>
                     </Card>
-                    {/**ButtomSheet para confirmar la reservación */}
-                    <BottomSheet
-                        visible={taxiPorReservar !== null}
-                        onClose={() => !inicio.reservando && setTaxiPorReservar(null)}
-                    >
-                        {taxiPorReservar && (
-                            <View>
-                                <AppText style={styles.tituloItems}>Confirma tu reservación</AppText>
-                                <View style={styles.filaResumen}>
-                                    <Icono nombre="locationHistory" tamanio={20} color={Colors.primary} />
-                                    <AppText style={styles.textoResumen} numberOfLines={2}>
-                                        <AppText weight="semibold">Origen: </AppText>{inicio.etiquetaOrigen}
-                                    </AppText>
-                                </View>
-                                <View style={styles.filaResumen}>
-                                    <Icono nombre="locationOn" tamanio={20} color={Colors.primary} />
-                                    <AppText style={styles.textoResumen} numberOfLines={2}>
-                                        <AppText weight="semibold">Destino: </AppText>{inicio.destino}
-                                    </AppText>
-                                </View>
-                                <TaxiCard
-                                    nombre={`${taxiPorReservar.matricula} · ${taxiPorReservar.nombreTaxista}`}
-                                    distancia={formatearDistancia(taxiPorReservar.distanciaMetros)}
-                                    asientos={taxiPorReservar.asientosDisponibles}
-                                />
-                                <AppText style={styles.textoEstado}>
-                                    Apartaremos un asiento y el taxista recibirá tu solicitud.
-                                </AppText>
-                                <Button
-                                    titulo={inicio.reservando ? "Reservando..." : "Reservar asiento"}
-                                    disabled={inicio.reservando}
-                                    onPress={() => void confirmarReserva()}
-                                />
-                            </View>
-                        )}
-                    </BottomSheet>
                     <View style={styles.conteParaderoCerca}>
                         <Icono nombre="business" tamanio={22} color={Colors.primary} />
                         <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
@@ -430,16 +396,12 @@ const styles = StyleSheet.create({
     },
     conteTaxisCerca: {
         flexDirection: "row",
+        alignItems: "center",
         margin: 10,
     },
     textTaxis: {
+        flex: 1,
         fontSize: 15,
-    },
-    textVerTaxis: {
-        color: Colors.primary,
-        marginLeft: 150,
-        fontSize: 15,
-
     },
     conteParaderoCerca: {
         flexDirection: "row",
@@ -474,17 +436,6 @@ const styles = StyleSheet.create({
     textoReintentar: {
         fontSize: 14,
         color: Colors.primary,
-    },
-    filaResumen: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 10,
-        paddingVertical: 6,
-    },
-    textoResumen: {
-        flex: 1,
-        fontSize: 14,
-        color: Colors.brandText,
     },
 });
 

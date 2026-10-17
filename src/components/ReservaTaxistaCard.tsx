@@ -7,6 +7,7 @@ import {
   PRESENTACION_ESTADO,
   formatearFecha,
   formatearPrecio,
+  textoAsientos,
 } from "../modules/cliente/reservas";
 import type { AccionReserva, ReservaTaxista } from "../modules/taxista/types";
 
@@ -53,10 +54,18 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
         <AppText weight="semibold" style={styles.nombreCliente} numberOfLines={1}>
           {reserva.nombreCliente}
         </AppText>
-        {reserva.numeroAsiento !== null && (
-          <AppText style={styles.asiento}>Asiento {reserva.numeroAsiento}</AppText>
-        )}
+        <AppText style={styles.asiento}>
+          {reserva.cantidadAsientos > 1
+            ? textoAsientos(reserva.cantidadAsientos)
+            : reserva.numeroAsiento !== null ? `Asiento ${reserva.numeroAsiento}` : textoAsientos(1)}
+        </AppText>
       </View>
+      {reserva.fechaViaje && (
+        <View style={styles.cliente}>
+          <Icono nombre="calendar" tamanio={16} color={Colors.onSurfaceVariant} />
+          <AppText style={styles.asiento}>Programado: {formatearFecha(reserva.fechaViaje)}</AppText>
+        </View>
+      )}
 
       <View style={styles.ruta}>
         <View style={styles.lineaRuta}>

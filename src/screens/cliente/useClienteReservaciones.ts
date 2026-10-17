@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  cancelarReserva,
   escucharReservasCliente,
   obtenerReservasCliente,
 } from "../../infrastructure/supabase/repositories/reservas.repository";
@@ -19,7 +18,6 @@ export function useClienteReservaciones() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
 
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
@@ -56,23 +54,6 @@ export function useClienteReservaciones() {
     setRefrescando(false);
   }, [cargar]);
 
-  /** Devuelve un mensaje de error para el usuario, o null si se canceló. */
-  const cancelar = useCallback(
-    async (reservaId: string): Promise<string | null> => {
-      setCancelandoId(reservaId);
-      try {
-        await cancelarReserva(reservaId);
-        await cargar();
-        return null;
-      } catch (e: unknown) {
-        return mensajeError(e, "No se pudo cancelar la reservación.");
-      } finally {
-        setCancelandoId(null);
-      }
-    },
-    [cargar]
-  );
-
   useEffect(() => {
     void cargar();
     if (!usuarioId) {
@@ -98,7 +79,5 @@ export function useClienteReservaciones() {
     error,
     cargar,
     refrescar,
-    cancelar,
-    cancelandoId,
   };
 }
