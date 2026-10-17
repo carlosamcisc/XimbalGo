@@ -59,6 +59,12 @@ const ICONOS = {
     doneAll: 'done-all',
     checkCircle: 'check-circle',
     cancel: 'cancel',
+    //iconos para reservar asientos y el seguimiento
+    add: 'add',
+    remove: 'remove',
+    event: 'event',
+    pinDrop: 'pin-drop',
+    route: 'route',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;
