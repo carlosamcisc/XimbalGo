@@ -4,25 +4,72 @@ import type {
   NuevaReserva,
   ReservaCliente,
 } from "../../../modules/cliente/reservas";
+import type {
+  PuntoMapa,
+  SeguimientoReserva,
+  TipoPuntoAbordaje,
+} from "../../../modules/cliente/seguimiento";
 
 // `reservas` tiene dos relaciones hacia paraderos y otra hacia la vista de
 // asientos, por eso cada embebido indica la llave foránea. Las reservas
 // anteriores a `reservas.origen` y `reservas.destino` los toman del paradero.
+// `apartados` son todos los asientos que la reserva tiene (`asientos.reserva_id`).
 const SELECT_RESERVA = `
   id, estado, fecha_hora_reserva, fecha_hora_viaje, precio, notas, origen, destino,
+  cantidad_asientos,
   paradero_origen:paraderos!reservas_paradero_origen_id_fkey(nombre),
   paradero_destino:paraderos!reservas_paradero_destino_id_fkey(nombre),
   vehiculo:vehiculos!reservas_vehiculo_id_fkey(matricula, marca, modelo),
   taxista:taxistas!reservas_taxista_id_fkey(nombres, apellidos, telefono),
-  asiento:asientos!reservas_asiento_id_fkey(numero_asiento)
+  asiento:asientos!reservas_asiento_id_fkey(numero_asiento),
+  apartados:asientos!fk_asientos_reserva(numero_asiento)
 `;
+
+function consultarReservas() {
+  return supabase.from("reservas").select(SELECT_RESERVA);
+}
+
+type FilaReserva = NonNullable<
+  Awaited<ReturnType<typeof consultarReservas>>["data"]
+>[number];
+
+function aReservaCliente(reserva: FilaReserva): ReservaCliente {
+  // Las políticas RLS ocultan paraderos y vehículos desactivados.
+  const vehiculo = reserva.vehiculo
+    ? [reserva.vehiculo.marca, reserva.vehiculo.modelo].filter(Boolean).join(" ")
+    : "";
+  const numerosAsientos = reserva.apartados
+    .map((asiento) => asiento.numero_asiento)
+    .sort((a, b) => a - b);
+  const numeroAsiento = reserva.asiento?.numero_asiento ?? null;
+
+  return {
+    id: reserva.id,
+    estado: reserva.estado as EstadoReserva,
+    fechaReserva: reserva.fecha_hora_reserva,
+    fechaViaje: reserva.fecha_hora_viaje,
+    precio: reserva.precio,
+    notas: reserva.notas,
+    origen: reserva.origen ?? reserva.paradero_origen?.nombre ?? null,
+    destino: reserva.destino ?? reserva.paradero_destino?.nombre ?? null,
+    matricula: reserva.vehiculo?.matricula ?? null,
+    vehiculo: vehiculo || null,
+    nombreTaxista: reserva.taxista
+      ? `${reserva.taxista.nombres} ${reserva.taxista.apellidos}`.trim()
+      : null,
+    telefonoTaxista: reserva.taxista?.telefono ?? null,
+    numeroAsiento,
+    cantidadAsientos: reserva.cantidad_asientos,
+    // Al cerrarse la reserva los asientos se liberan; queda el primero.
+    numerosAsientos:
+      numerosAsientos.length > 0 ? numerosAsientos : numeroAsiento !== null ? [numeroAsiento] : [],
+  };
+}
 
 export async function obtenerReservasCliente(
   clienteId: string
 ): Promise<ReservaCliente[]> {
-  const { data, error } = await supabase
-    .from("reservas")
-    .select(SELECT_RESERVA)
+  const { data, error } = await consultarReservas()
     .eq("cliente_id", clienteId)
     .order("fecha_hora_reserva", { ascending: false });
 
@@ -30,30 +77,60 @@ export async function obtenerReservasCliente(
     throw error;
   }
 
-  return data.map((reserva) => {
-    // Las políticas RLS ocultan paraderos y vehículos desactivados.
-    const vehiculo = reserva.vehiculo
-      ? [reserva.vehiculo.marca, reserva.vehiculo.modelo].filter(Boolean).join(" ")
-      : "";
+  return data.map(aReservaCliente);
+}
 
-    return {
-      id: reserva.id,
-      estado: reserva.estado as EstadoReserva,
-      fechaReserva: reserva.fecha_hora_reserva,
-      fechaViaje: reserva.fecha_hora_viaje,
-      precio: reserva.precio,
-      notas: reserva.notas,
-      origen: reserva.origen ?? reserva.paradero_origen?.nombre ?? null,
-      destino: reserva.destino ?? reserva.paradero_destino?.nombre ?? null,
-      matricula: reserva.vehiculo?.matricula ?? null,
-      vehiculo: vehiculo || null,
-      nombreTaxista: reserva.taxista
-        ? `${reserva.taxista.nombres} ${reserva.taxista.apellidos}`.trim()
-        : null,
-      telefonoTaxista: reserva.taxista?.telefono ?? null,
-      numeroAsiento: reserva.asiento?.numero_asiento ?? null,
-    };
+/** La política `reservas_cliente_ver` solo deja leer las reservas propias. */
+export async function obtenerReservaCliente(reservaId: string): Promise<ReservaCliente> {
+  const { data, error } = await consultarReservas().eq("id", reservaId).maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  if (!data) {
+    throw new Error("No se encontró la reservación.");
+  }
+
+  return aReservaCliente(data);
+}
+
+const aPunto = (
+  nombre: string | null,
+  latitud: number | null,
+  longitud: number | null
+): PuntoMapa | null =>
+  latitud === null || longitud === null
+    ? null
+    : { nombre: nombre ?? "Punto de abordaje", coordenadas: { latitud, longitud } };
+
+export async function obtenerSeguimientoReserva(
+  reservaId: string
+): Promise<SeguimientoReserva> {
+  const { data, error } = await supabase.rpc("obtener_seguimiento_reserva", {
+    p_reserva_id: reservaId,
   });
+
+  if (error) {
+    throw error;
+  }
+  const [fila] = data;
+  if (!fila) {
+    throw new Error("No se encontró al taxista de esta reservación.");
+  }
+
+  return {
+    taxistaId: fila.taxista_id,
+    enServicio: fila.en_servicio,
+    taxi:
+      fila.taxi_latitud === null || fila.taxi_longitud === null
+        ? null
+        : { latitud: fila.taxi_latitud, longitud: fila.taxi_longitud },
+    ubicacionActualizadaEn: fila.ubicacion_actualizada_en,
+    tipoPunto: fila.punto_tipo as TipoPuntoAbordaje | null,
+    punto: aPunto(fila.punto_nombre, fila.punto_latitud, fila.punto_longitud),
+    paraderoCercano: aPunto(fila.paradero_nombre, fila.paradero_latitud, fila.paradero_longitud),
+    velocidadKmh: fila.velocidad_kmh,
+  };
 }
 
 export async function crearReserva(reserva: NuevaReserva): Promise<string> {
@@ -64,7 +141,9 @@ export async function crearReserva(reserva: NuevaReserva): Promise<string> {
     p_paradero_origen_id: reserva.paraderoOrigenId,
     p_latitud: reserva.ubicacionOrigen?.latitud ?? null,
     p_longitud: reserva.ubicacionOrigen?.longitud ?? null,
+    p_fecha_hora_viaje: reserva.fechaViaje,
     p_notas: reserva.notas,
+    p_cantidad_asientos: reserva.cantidadAsientos,
   });
 
   if (error) {
@@ -109,5 +188,38 @@ export function escucharReservasCliente(
 
   return () => {
     void supabase.removeChannel(channel);
+  };
+}
+
+/**
+ * Avisa cuando cambia la reserva (el taxista la acepta o la cierra) o cuando
+ * el taxista envía una ubicación nueva.
+ */
+export function escucharReserva(
+  reservaId: string,
+  taxistaId: string | null,
+  onChange: () => void
+) {
+  // Nombre único por suscripción: ver `escucharReservasCliente`.
+  let canal = supabase
+    .channel(`reserva-${reservaId}-${++suscripciones}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "reservas", filter: `id=eq.${reservaId}` },
+      onChange
+    );
+
+  if (taxistaId) {
+    canal = canal.on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "taxistas", filter: `id=eq.${taxistaId}` },
+      onChange
+    );
+  }
+
+  const suscrito = canal.subscribe();
+
+  return () => {
+    void supabase.removeChannel(suscrito);
   };
 }
