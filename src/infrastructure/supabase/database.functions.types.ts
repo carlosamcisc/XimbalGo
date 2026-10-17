@@ -114,7 +114,17 @@ type NearbyFunctions = {
       numeros_asientos: number[];
       nombre_cliente: string;
       telefono_cliente: string | null;
+      motivo_taxista: string | null;
+      asientos_ofrecidos: number | null;
     }[];
+  };
+  actualizar_reserva_taxista: {
+    Args: {
+      p_reserva_id: string;
+      p_estado: string;
+      p_motivo?: string | null;
+    };
+    Returns: undefined;
   };
 };
 
