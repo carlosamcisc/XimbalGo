@@ -8,7 +8,8 @@ Este documento describe el trabajo de la rama `feature/XG-0013-Reservar-numero-a
 
 - En Inicio, tocar un taxi de **Taxis cerca de ti** abre `ClienteReservarScreen`. Antes abría un panel que reservaba un solo asiento.
 - **Ver todo**, junto a ese título, abre `ClienteTaxisScreen` con todos los taxis en servicio con asientos libres, no solo los cinco más cercanos. Si hay GPS se ordenan por distancia; si no, por matrícula y sin distancia. Tiene buscador por matrícula, taxista o ruta, muestra la ruta y el precio por asiento, y se actualiza en tiempo real.
-- Para reservar hay que haber elegido origen y destino en Inicio; si faltan, se avisa y se regresa a Inicio.
+- `ClienteTaxisScreen` tiene arriba su propia sección **Tu viaje** con los mismos campos de origen y destino que Inicio: orígenes y destinos del catálogo de rutas, **Mi ubicación actual** y la regla de que sean distintos. Empieza con lo elegido en Inicio y se puede cambiar ahí mismo, sin volver. Elegir **Mi ubicación actual** recalcula las distancias de la lista desde ese punto.
+- Para reservar hay que tener origen y destino; si falta alguno, se avisa al tocar el taxi.
 
 ### Reservar (`ClienteReservarScreen`)
 
@@ -89,7 +90,11 @@ El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas
 | --- | --- |
 | `src/screens/cliente/ClienteReservarScreen.tsx`, `useClienteReservar.ts` | Elegir asientos, fecha, hora y notas; crear la reserva. |
 | `src/screens/cliente/ClienteReservaScreen.tsx`, `useClienteReserva.ts` | Detalle, seguimiento, mapa, tiempo real y cancelación. |
-| `src/screens/cliente/ClienteTaxisScreen.tsx`, `useClienteTaxis.ts` | Todos los taxis disponibles. |
+| `src/screens/cliente/ClienteTaxisScreen.tsx`, `useClienteTaxis.ts` | Todos los taxis disponibles, con su propia selección de origen y destino. |
+| `src/screens/cliente/useSeleccionViaje.ts` | Origen y destino del viaje: opciones del catálogo, GPS, paradero y validaciones. Lo usan Inicio y la lista de taxis. |
+| `src/screens/cliente/SelectorViaje.tsx` | Campos de origen y destino con sus paneles de opciones. |
+| `src/components/EstadoLista.tsx` | Carga, error o vacío de una lista (antes dentro de Inicio). |
+| `src/screens/cliente/mensajeError.ts` | `mensajeError`; `useClienteInicio` lo reexporta para no cambiar las importaciones existentes. |
 | `src/components/SelectorAsientos.tsx` | Botones − y + para la cantidad. |
 | `src/components/SelectorFechaViaje.tsx` | «Lo antes posible» o día y hora. |
 | `src/components/MapaSeguimiento.tsx` | Mapa Leaflet en WebView. |
