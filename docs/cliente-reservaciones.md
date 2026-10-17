@@ -108,6 +108,8 @@ cannot add `postgres_changes` callbacks for realtime:reservas-cliente-<id> after
 
 ## Límites actuales y pendientes
 
+> Desde XG-0013 la reserva se crea en `ClienteReservarScreen` con varios asientos, fecha y hora, y el detalle es una pantalla con seguimiento del taxi. Ver `cliente-reservar-asientos.md`.
+
 - **Una reserva en curso por cliente.** Es una regla de negocio elegida para que nadie acapare asientos; si el negocio necesita reservar para varias personas, hay que cambiarla en `crear_reserva_cliente`.
 - **El precio sale de `taxistas.precio_ruta`.** La tabla `rutas` tiene origen y destino como texto, sin relación con `paraderos`, así que `ruta_id` queda vacío.
 - **El origen GPS se guarda en `notas`**, no en una columna estructurada.
