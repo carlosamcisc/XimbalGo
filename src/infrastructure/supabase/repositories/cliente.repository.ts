@@ -5,7 +5,9 @@ import type {
 } from "../../../modules/cliente/ubicacion";
 import type {
   DatosPerfilCliente,
+  DetalleParadero,
   NotificacionCliente,
+  ParaderoResumen,
   PerfilCliente,
   ResumenViajesCliente,
   TipoNotificacion,
@@ -198,4 +200,51 @@ export async function obtenerParaderosCercanos(
     referencia: paradero.referencia,
     distanciaMetros: paradero.distancia_metros,
   }));
+}
+
+// La política RLS de `paraderos` solo devuelve los activos; el filtro deja
+// explícita la regla.
+export async function obtenerParaderos(): Promise<ParaderoResumen[]> {
+  const { data, error } = await supabase
+    .from("paraderos")
+    .select("id, nombre, referencia, foto_url")
+    .eq("activo", true)
+    .order("nombre");
+
+  if (error) {
+    throw error;
+  }
+
+  return data.map((paradero) => ({
+    id: paradero.id,
+    nombre: paradero.nombre,
+    referencia: paradero.referencia,
+    fotoUrl: paradero.foto_url,
+  }));
+}
+
+export async function obtenerParadero(paraderoId: string): Promise<DetalleParadero> {
+  const { data, error } = await supabase.rpc("obtener_paradero", {
+    p_paradero_id: paraderoId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const paradero = data[0];
+  if (!paradero) {
+    throw new Error("Este paradero ya no está disponible.");
+  }
+
+  return {
+    id: paradero.id,
+    nombre: paradero.nombre,
+    referencia: paradero.referencia,
+    fotoUrl: paradero.foto_url,
+    coordenadas:
+      paradero.latitud !== null && paradero.longitud !== null
+        ? { latitud: paradero.latitud, longitud: paradero.longitud }
+        : null,
+  };
 }
