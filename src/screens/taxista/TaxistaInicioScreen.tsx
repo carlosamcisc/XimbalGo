@@ -19,6 +19,7 @@ import { useTaxista } from "./TaxistaContext";
 import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
+import PanelesReservaTaxista from "./PanelesReservaTaxista";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaInicio">;
 
@@ -41,7 +42,7 @@ const Requisito = ({ cumplido, texto, accion, onPress }: {
 
 const TaxistaInicioScreen = ({ navigation }: Props) => {
     const taxista = useTaxista();
-    const ejecutarAccion = useAccionReserva();
+    const acciones = useAccionReserva();
     const [reservaId, setReservaId] = useState<string | null>(null);
 
     const { perfil, vehiculo } = taxista;
@@ -192,6 +193,18 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                                 </View>
                             </View>
                         )}
+                        {vehiculo && asientos.length > 0 && (
+                            <Pressable
+                                onPress={() => navigation.navigate("TaxistaVehiculo")}
+                                accessibilityRole="button"
+                                style={styles.enlaceAsientos}
+                            >
+                                <Icono nombre="eventSeat" tamanio={18} color={Colors.primary} />
+                                <AppText weight="semibold" style={styles.enlace}>
+                                    ¿Subió alguien sin reservar? Marca sus asientos
+                                </AppText>
+                            </Pressable>
+                        )}
                     </Card>
                 )}
 
@@ -218,8 +231,9 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                             reserva={reserva}
                             accionProcesando={taxista.procesandoReservaId === reserva.id ? taxista.procesandoAccion : null}
                             onPress={() => setReservaId(reserva.id)}
-                            onAceptar={() => ejecutarAccion(reserva.id, "aceptada")}
-                            onRechazar={() => ejecutarAccion(reserva.id, "rechazada")}
+                            onAceptar={() => acciones.ejecutar(reserva.id, "aceptada")}
+                            onRechazar={() => acciones.ejecutar(reserva.id, "rechazada")}
+                            onOfrecer={() => acciones.ofrecer(reserva.id)}
                         />
                     ))
                 )}
@@ -269,7 +283,8 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     {renderContenido()}
                 </ScrollView>
             </View>
-            <DetalleReservaTaxista reservaId={reservaId} onClose={() => setReservaId(null)} />
+            <DetalleReservaTaxista reservaId={reservaId} onClose={() => setReservaId(null)} acciones={acciones} />
+            <PanelesReservaTaxista acciones={acciones} />
             <BottomTabBar
                 tabs={TABS_TAXISTA}
                 activeTab="inicio"
@@ -405,6 +420,16 @@ const styles = StyleSheet.create({
     enlace: {
         fontSize: 14,
         color: Colors.primary,
+    },
+    enlaceAsientos: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: Colors.divider,
     },
     enlaceViajes: {
         flexDirection: "row",

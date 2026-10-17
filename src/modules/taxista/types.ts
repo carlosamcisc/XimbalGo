@@ -37,7 +37,13 @@ export interface AsientoTaxista {
   id: string;
   numero: number;
   estado: EstadoAsiento;
+  /** Apartado u ocupado por una reservación; se libera al cerrar ese viaje. */
+  conReserva: boolean;
 }
+
+/** Solo los asientos sin reservación se marcan a mano (`marcar_asientos_taxista`). */
+export const asientoEditable = (asiento: AsientoTaxista) =>
+  !asiento.conReserva && asiento.estado !== "reservado";
 
 export interface VehiculoTaxista {
   id: string;
@@ -75,7 +81,21 @@ export interface ReservaTaxista {
   nombreCliente: string;
   /** Solo llega mientras la reserva está pendiente o aceptada. */
   telefonoCliente: string | null;
+  /** Motivo con el que el taxista rechazó la solicitud o canceló el viaje. */
+  motivoTaxista: string | null;
+  /** Asientos que el taxista ofreció cuando no tenía todos los pedidos. */
+  asientosOfrecidos: number | null;
 }
+
+/** Ofreció menos asientos y el cliente aún no responde. */
+export const esperaRespuestaOferta = (reserva: ReservaTaxista) =>
+  reserva.estado === "pendiente" && reserva.asientosOfrecidos !== null;
+
+/** Se pueden ofrecer de 1 a `cantidadAsientos - 1` asientos (`ofrecer_asientos_taxista`). */
+export const puedeOfrecerAsientos = (reserva: ReservaTaxista) =>
+  reserva.estado === "pendiente" &&
+  reserva.asientosOfrecidos === null &&
+  reserva.cantidadAsientos > 1;
 
 // Coincide con las transiciones de `actualizar_reserva_taxista`.
 export type AccionReserva =
@@ -90,14 +110,19 @@ export const ACCIONES_POR_ESTADO: Partial<Record<EstadoReserva, AccionReserva[]>
   aceptada: ["completada", "no_show", "cancelada_taxista"],
 };
 
-export const accionesDisponibles = (estado: EstadoReserva): AccionReserva[] =>
-  ACCIONES_POR_ESTADO[estado] ?? [];
+/** Con una oferta sin responder solo se puede rechazar. */
+export const accionesDisponibles = (reserva: ReservaTaxista): AccionReserva[] =>
+  esperaRespuestaOferta(reserva)
+    ? ["rechazada"]
+    : ACCIONES_POR_ESTADO[reserva.estado] ?? [];
 
 interface PresentacionAccion {
   etiqueta: string;
   confirmacion: string | null;
   exito: string;
   peligrosa: boolean;
+  /** Pide el motivo para el cliente; `obligatorio` coincide con la base. */
+  motivo: { titulo: string; obligatorio: boolean } | null;
 }
 
 export const PRESENTACION_ACCION: Record<AccionReserva, PresentacionAccion> = {
@@ -106,32 +131,54 @@ export const PRESENTACION_ACCION: Record<AccionReserva, PresentacionAccion> = {
     confirmacion: null,
     exito: "Reservación aceptada",
     peligrosa: false,
+    motivo: null,
   },
   rechazada: {
     etiqueta: "Rechazar",
-    confirmacion: "¿Rechazar esta solicitud? El asiento quedará libre.",
+    confirmacion: null,
     exito: "Solicitud rechazada",
     peligrosa: true,
+    motivo: { titulo: "¿Por qué rechazas la solicitud?", obligatorio: true },
   },
   completada: {
     etiqueta: "Viaje completado",
     confirmacion: null,
     exito: "Viaje completado",
     peligrosa: false,
+    motivo: null,
   },
   no_show: {
     etiqueta: "No se presentó",
     confirmacion: "¿Marcar que el cliente no se presentó? El asiento quedará libre.",
     exito: "Reservación cerrada",
     peligrosa: true,
+    motivo: null,
   },
   cancelada_taxista: {
     etiqueta: "Cancelar viaje",
-    confirmacion: "¿Cancelar este viaje? Se avisará al cliente y el asiento quedará libre.",
+    confirmacion: null,
     exito: "Viaje cancelado",
     peligrosa: true,
+    motivo: { titulo: "¿Por qué cancelas el viaje?", obligatorio: false },
   },
 };
+
+/** Límite de `reservas_motivo_taxista_check`. */
+export const MAXIMO_MOTIVO = 200;
+
+export const MOTIVOS_RECHAZO = [
+  "Ya no tengo asientos disponibles",
+  "No paso por tu punto de abordaje",
+  "No puedo a la hora que pediste",
+  "Estoy por terminar mi servicio",
+];
+
+export const MOTIVOS_CANCELACION = [
+  "Tuve una falla con la unidad",
+  "Hubo un cambio en mi ruta",
+  "Tuve una emergencia",
+  "No encontré al cliente en el punto de abordaje",
+];
 
 // Descripciones desde el punto de vista del taxista; etiqueta y colores se
 // comparten con el cliente (`PRESENTACION_ESTADO`).

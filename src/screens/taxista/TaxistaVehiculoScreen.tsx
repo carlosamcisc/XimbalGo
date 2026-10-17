@@ -12,8 +12,11 @@ import { BottomTabBar, TABS_TAXISTA } from "../../components/BottomTabBar";
 import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
 import type { TaxistaStackParamList } from "../../navigation/types";
+import { Icono } from "../../components/Icono";
 import {
   ETIQUETA_ASIENTO,
+  asientoEditable,
+  type AsientoTaxista,
   type DatosVehiculo,
   type EstadoAsiento,
   type VehiculoTaxista,
@@ -30,6 +33,13 @@ const COLOR_ASIENTO: Record<EstadoAsiento, { fondo: string; texto: string }> = {
   reservado: { fondo: Colors.primaryContainer, texto: Colors.primary },
   ocupado: { fondo: Colors.surfaceContainerHigh, texto: Colors.brandText },
 };
+
+// Ocupado por una reservación aceptada: se libera al cerrar ese viaje.
+const etiquetaAsiento = (asiento: AsientoTaxista) =>
+  asiento.estado === "ocupado" && asiento.conReserva ? "En viaje" : ETIQUETA_ASIENTO[asiento.estado];
+
+const textoCantidad = (cantidad: number) =>
+  cantidad === 1 ? "1 asiento" : `${cantidad} asientos`;
 
 interface Formulario {
   matricula: string;
@@ -83,6 +93,42 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
   const { vehiculo } = taxista;
   const [formulario, setFormulario] = useState<Formulario>(() => formularioDesde(vehiculo));
   const [guardando, setGuardando] = useState(false);
+  const [seleccion, setSeleccion] = useState<string[]>([]);
+
+  // Un asiento seleccionado deja de serlo si un cliente lo reserva mientras tanto.
+  const seleccionados = (vehiculo?.asientos ?? []).filter(
+    (asiento) => seleccion.includes(asiento.id) && asientoEditable(asiento)
+  );
+  const porOcupar = seleccionados.filter((asiento) => asiento.estado === "disponible");
+  const porLiberar = seleccionados.filter((asiento) => asiento.estado === "ocupado");
+
+  const tocarAsiento = (asiento: AsientoTaxista) => {
+    if (!asientoEditable(asiento)) {
+      ToastMessage.show(
+        `El asiento ${asiento.numero} es de una reservación; se libera al cerrar ese viaje.`,
+        "long"
+      );
+      return;
+    }
+    setSeleccion((actual) =>
+      actual.includes(asiento.id) ? actual.filter((id) => id !== asiento.id) : [...actual, asiento.id]
+    );
+  };
+
+  const marcar = async (asientos: AsientoTaxista[], ocupados: boolean) => {
+    const error = await taxista.marcarAsientos(asientos.map((asiento) => asiento.id), ocupados);
+    if (error) {
+      ToastMessage.show(error, "long");
+      return;
+    }
+    setSeleccion([]);
+    const varios = asientos.length > 1;
+    ToastMessage.show(
+      ocupados
+        ? varios ? `${asientos.length} asientos marcados como ocupados` : "Asiento marcado como ocupado"
+        : varios ? `${asientos.length} asientos liberados` : "Asiento liberado"
+    );
+  };
 
   // Rellena el formulario cuando el vehículo termina de cargar o se guarda.
   useEffect(() => {
@@ -127,6 +173,78 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
     }
     return (
       <>
+        {vehiculo && vehiculo.asientos.length > 0 && (
+          <Card style={styles.tarjeta}>
+            <AppText weight="semibold" style={styles.tituloTarjeta}>Asientos</AppText>
+            <AppText style={styles.ayuda}>
+              ¿Subió alguien sin reservar? Toca los asientos libres que ocupó y márcalos como ocupados.
+              Cuando se bajen, tócalos de nuevo para liberarlos. Los asientos de las reservaciones se
+              actualizan solos.
+            </AppText>
+            <View style={styles.rejilla}>
+              {vehiculo.asientos.map((asiento) => {
+                const color = COLOR_ASIENTO[asiento.estado];
+                const seleccionado = seleccionados.some((item) => item.id === asiento.id);
+                const editable = asientoEditable(asiento);
+                return (
+                  <Pressable
+                    key={asiento.id}
+                    onPress={() => tocarAsiento(asiento)}
+                    disabled={taxista.marcandoAsientos}
+                    style={[
+                      styles.asiento,
+                      { backgroundColor: color.fondo },
+                      seleccionado && styles.asientoSeleccionado,
+                      !editable && styles.asientoBloqueado,
+                    ]}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: seleccionado, disabled: !editable }}
+                    accessibilityLabel={`Asiento ${asiento.numero}, ${etiquetaAsiento(asiento)}`}
+                  >
+                    {seleccionado && (
+                      <View style={styles.marcaSeleccion}>
+                        <Icono nombre="checkCircle" tamanio={16} color={Colors.primary} />
+                      </View>
+                    )}
+                    <AppText weight="bold" style={[styles.numeroAsiento, { color: color.texto }]}>
+                      {asiento.numero}
+                    </AppText>
+                    <AppText style={[styles.estadoAsiento, { color: color.texto }]}>
+                      {etiquetaAsiento(asiento)}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {porOcupar.length > 0 && (
+              <Button
+                titulo={taxista.marcandoAsientos ? "Guardando..." : `Marcar ${textoCantidad(porOcupar.length)} como ocupado`}
+                disabled={taxista.marcandoAsientos}
+                onPress={() => void marcar(porOcupar, true)}
+              />
+            )}
+            {porLiberar.length > 0 && (
+              <Button
+                titulo={taxista.marcandoAsientos ? "Guardando..." : `Liberar ${textoCantidad(porLiberar.length)}`}
+                color={Colors.success}
+                borderColor={Colors.success}
+                disabled={taxista.marcandoAsientos}
+                onPress={() => void marcar(porLiberar, false)}
+              />
+            )}
+            {seleccionados.length > 0 && (
+              <Pressable
+                onPress={() => setSeleccion([])}
+                disabled={taxista.marcandoAsientos}
+                accessibilityRole="button"
+                style={styles.botonSecundario}
+              >
+                <AppText weight="semibold" style={styles.enlace}>Quitar selección</AppText>
+              </Pressable>
+            )}
+          </Card>
+        )}
+
         <Card style={styles.tarjeta}>
           <AppText weight="semibold" style={styles.tituloTarjeta}>
             {vehiculo ? "Datos del vehículo" : "Registra tu vehículo"}
@@ -192,34 +310,6 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
             onPress={() => void guardar()}
           />
         </Card>
-
-        {vehiculo && vehiculo.asientos.length > 0 && (
-          <Card style={styles.tarjeta}>
-            <AppText weight="semibold" style={styles.tituloTarjeta}>Asientos</AppText>
-            <AppText style={styles.ayuda}>
-              Se actualizan solos cuando un cliente reserva o cuando aceptas o cierras un viaje.
-            </AppText>
-            <View style={styles.rejilla}>
-              {vehiculo.asientos.map((asiento) => {
-                const color = COLOR_ASIENTO[asiento.estado];
-                return (
-                  <View
-                    key={asiento.id}
-                    style={[styles.asiento, { backgroundColor: color.fondo }]}
-                    accessibilityLabel={`Asiento ${asiento.numero}, ${ETIQUETA_ASIENTO[asiento.estado]}`}
-                  >
-                    <AppText weight="bold" style={[styles.numeroAsiento, { color: color.texto }]}>
-                      {asiento.numero}
-                    </AppText>
-                    <AppText style={[styles.estadoAsiento, { color: color.texto }]}>
-                      {ETIQUETA_ASIENTO[asiento.estado]}
-                    </AppText>
-                  </View>
-                );
-              })}
-            </View>
-          </Card>
-        )}
       </>
     );
   };
@@ -315,9 +405,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  asientoSeleccionado: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
+  asientoBloqueado: {
+    opacity: 0.75,
+  },
+  marcaSeleccion: {
+    position: "absolute",
+    top: 3,
+    right: 3,
   },
   numeroAsiento: {
     fontSize: 18,
+  },
+  botonSecundario: {
+    alignItems: "center",
+    paddingVertical: 6,
   },
   estadoAsiento: {
     fontSize: 11,
