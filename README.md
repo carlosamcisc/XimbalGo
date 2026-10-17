@@ -154,3 +154,4 @@ Reglas a seguir:
 - [Información de paradero](./docs/cliente-paraderos.md): detalle y lista completa de paraderos.
 - [Reservar asientos y seguimiento del taxi](./docs/cliente-reservar-asientos.md): varios asientos, viajes programados y seguimiento en tiempo real.
 - [Pantallas del taxista](./docs/taxista.md): servicio, ubicación, viajes, vehículo y perfil.
+- [Opciones del taxista sobre solicitudes y asientos](./docs/taxista-opciones-solicitudes.md): asientos ocupados sin reserva, motivo de rechazo y oferta de los asientos que quedan.
