@@ -14,6 +14,19 @@ type NearbyFunctions = {
       distancia_metros: number;
     }[];
   };
+  obtener_paradero: {
+    Args: {
+      p_paradero_id: string;
+    };
+    Returns: {
+      id: string;
+      nombre: string;
+      referencia: string | null;
+      foto_url: string | null;
+      latitud: number | null;
+      longitud: number | null;
+    }[];
+  };
   obtener_taxis_cercanos: {
     Args: {
       p_latitud: number;

@@ -29,7 +29,7 @@ El perfil alimenta el nombre y la inicial del encabezado. Los paraderos activos 
 - Elegir esa opción solicita permiso de ubicación mientras se usa la aplicación, comprueba que los servicios de ubicación estén habilitados y obtiene una posición con precisión balanceada mediante `expo-location`.
 - Después de obtener el GPS, el selector de origen muestra la dirección obtenida mediante geocodificación inversa. Si no hay una dirección disponible o falla esa consulta, se muestra «Mi ubicación actual» y el origen GPS se conserva.
 - Al abrir la pantalla se obtiene el GPS y se consultan hasta cinco resultados de cada tipo: taxis disponibles y paraderos activos. No hace falta haber elegido origen y destino. Los resultados se ordenan por distancia en metros al GPS del cliente y se presentan como metros o kilómetros. Elegir «Mi ubicación actual» o deslizar hacia abajo repite la búsqueda con una posición nueva.
-- Tocar un paradero cercano lo selecciona como origen.
+- Tocar un paradero cercano abre su detalle, desde donde se puede seleccionar como origen (ver `cliente-paraderos.md`).
 - Solo se listan taxis con taxista activo, vehículo activo y asientos disponibles mayores que cero.
 - Las búsquedas se ejecutan en Supabase mediante PostGIS. La app envía latitud y longitud y recibe las filas cercanas ya ordenadas; no descarga la ubicación de todos los taxistas para calcular distancias en el dispositivo.
 - Si el usuario escoge un paradero como origen en vez del GPS, el paradero se usa como selección del viaje, pero la búsqueda de proximidad sigue tomando el GPS actual del dispositivo.

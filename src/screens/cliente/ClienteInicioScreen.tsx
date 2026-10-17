@@ -7,7 +7,7 @@ import UserHeader from "../../components/UserHeader";
 import { ToastMessage } from "../../components/ToastMessaje";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import SelectInput from "../../components/SelectInput";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import BottomSheet from "../../components/BottomSheet";
 import Button from "../../components/Button";
 import OptionList from "../../components/OptionList";
@@ -74,7 +74,7 @@ const EstadoLista = ({ cargando, error, vacio, textoCargando, textoVacio, onRein
 
 type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteInicio'>;
 
-const ClienteInicioScreen = ({ navigation }: Props) => {
+const ClienteInicioScreen = ({ navigation, route }: Props) => {
     const [selectorActivo, setSelectorActivo] = useState<SelectorActivo>(null);
     const [taxiPorReservar, setTaxiPorReservar] = useState<TaxiCercano | null>(null);
     const [menuVisible, setMenuVisible] = useState(false);
@@ -141,10 +141,21 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
         mostrarAviso(await inicio.usarUbicacionActual());
     };
 
-    const seleccionarParaderoCercano = (paradero: ParaderoViaje) => {
+    const seleccionarParaderoOrigen = (paradero: ParaderoViaje) => {
         const aviso = inicio.seleccionarOrigenParadero(paradero);
         mostrarAviso(aviso ?? `${paradero.nombre} seleccionado como origen`);
     };
+
+    // El detalle del paradero regresa aquí con el paradero elegido como origen.
+    const paraderoOrigen = route.params?.paraderoOrigen;
+    useEffect(() => {
+        if (!paraderoOrigen) {
+            return;
+        }
+        seleccionarParaderoOrigen(paraderoOrigen);
+        navigation.setParams({ paraderoOrigen: undefined });
+        // Solo debe reaccionar a un paradero nuevo en los parámetros.
+    }, [paraderoOrigen]);
 
     return (
         <SafeAreaView style={styles.statusBar} edges={['top', 'bottom']}>
@@ -329,6 +340,15 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                     <View style={styles.conteParaderoCerca}>
                         <Icono nombre="business" tamanio={22} color={Colors.primary} />
                         <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
+                        <Pressable
+                            style={styles.verParaderos}
+                            onPress={() => navigation.navigate("ClienteParaderos")}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ver todos los paraderos"
+                        >
+                            <AppText style={styles.textVerParaderos}>Ver todo</AppText>
+                            <Icono nombre="ArrowRight" tamanio={25} color={Colors.outlineVariant} />
+                        </Pressable>
                     </View>
                     <Card>
                         <EstadoLista
@@ -347,7 +367,10 @@ const ClienteInicioScreen = ({ navigation }: Props) => {
                                         paradero.referencia,
                                         formatearDistancia(paradero.distanciaMetros),
                                     ].filter(Boolean).join(" · ")}
-                                    onPress={() => seleccionarParaderoCercano(paradero)}
+                                    onPress={() => navigation.navigate("ClienteParadero", {
+                                        paraderoId: paradero.id,
+                                        distanciaMetros: paradero.distanciaMetros,
+                                    })}
                                 />
                             ))}
                         </EstadoLista>
@@ -420,9 +443,19 @@ const styles = StyleSheet.create({
     },
     conteParaderoCerca: {
         flexDirection: "row",
+        alignItems: "center",
         margin: 10,
     },
     textParadero: {
+        flex: 1,
+        fontSize: 15,
+    },
+    verParaderos: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    textVerParaderos: {
+        color: Colors.primary,
         fontSize: 15,
     },
     listaOpciones: {

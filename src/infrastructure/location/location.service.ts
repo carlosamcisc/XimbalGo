@@ -1,4 +1,6 @@
 import * as Location from "expo-location";
+import * as Linking from "expo-linking";
+import { Platform } from "react-native";
 import type { Coordenadas } from "../../modules/cliente/ubicacion";
 
 const MENSAJE_PERMISO_CERCANOS =
@@ -88,4 +90,33 @@ export async function obtenerDireccionActual(
   ].filter((parte): parte is string => Boolean(parte?.trim()));
 
   return [...new Set(partes)].join(", ") || null;
+}
+
+/**
+ * Abre el punto en la app de mapas del dispositivo. Si no hay una app que
+ * acepte el enlace nativo, lo abre en Google Maps desde el navegador.
+ */
+export async function abrirEnMapa(
+  { latitud, longitud }: Coordenadas,
+  etiqueta: string
+): Promise<void> {
+  const punto = `${latitud},${longitud}`;
+  const nombre = encodeURIComponent(etiqueta);
+  const enlaceNativo = Platform.select({
+    android: `geo:${punto}?q=${punto}(${nombre})`,
+    ios: `maps:?q=${nombre}&ll=${punto}`,
+  });
+
+  if (enlaceNativo) {
+    try {
+      await Linking.openURL(enlaceNativo);
+      return;
+    } catch {
+      // Sin app de mapas: se intenta con el navegador.
+    }
+  }
+
+  await Linking.openURL(
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(punto)}`
+  );
 }

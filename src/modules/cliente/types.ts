@@ -50,6 +50,16 @@ export interface ParaderoViaje {
   referencia: string | null;
 }
 
+/** Paradero de la lista completa, sin ubicación. */
+export interface ParaderoResumen extends ParaderoViaje {
+  fotoUrl: string | null;
+}
+
+export interface DetalleParadero extends ParaderoResumen {
+  /** Null si el paradero no tiene ubicación registrada. */
+  coordenadas: Coordenadas | null;
+}
+
 /** Origen o destino del catálogo de rutas. */
 export type TipoPuntoViaje = "origen" | "destino";
 
