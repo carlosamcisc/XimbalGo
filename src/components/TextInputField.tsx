@@ -14,6 +14,7 @@ interface Prop{
     icono?: NombreIcono;
     keyboardType?: TextInputProps["keyboardType"];
     autoCapitalize?: TextInputProps["autoCapitalize"];
+    maxLength?: number;
 }
 
 const TextInputField: React.FC<Prop> = ({
@@ -25,6 +26,7 @@ const TextInputField: React.FC<Prop> = ({
     icono,
     keyboardType,
     autoCapitalize,
+    maxLength,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [mostrarContrasenia, setMostrarContrasenia] = useState(false);
@@ -46,6 +48,7 @@ const TextInputField: React.FC<Prop> = ({
                      secureTextEntry={esContrasenia && !mostrarContrasenia}
                      keyboardType={keyboardType}
                      autoCapitalize={autoCapitalize}
+                     maxLength={maxLength}
                      onFocus={() => setIsFocused(true)}
                      onBlur={() => setIsFocused(false)}
 
