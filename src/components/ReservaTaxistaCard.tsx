@@ -9,7 +9,12 @@ import {
   formatearPrecio,
   textoAsientos,
 } from "../modules/cliente/reservas";
-import type { AccionReserva, ReservaTaxista } from "../modules/taxista/types";
+import {
+  esperaRespuestaOferta,
+  puedeOfrecerAsientos,
+  type AccionReserva,
+  type ReservaTaxista,
+} from "../modules/taxista/types";
 
 interface ReservaTaxistaCardProps {
   reserva: ReservaTaxista;
@@ -17,8 +22,10 @@ interface ReservaTaxistaCardProps {
   /** Botones rápidos para una solicitud pendiente. */
   onAceptar?: () => void;
   onRechazar?: () => void;
-  /** Acción en curso sobre esta reserva; desactiva ambos botones. */
-  accionProcesando?: AccionReserva | null;
+  /** Ofrecer menos asientos de los pedidos. */
+  onOfrecer?: () => void;
+  /** Acción en curso sobre esta reserva; desactiva los botones. */
+  accionProcesando?: AccionReserva | "oferta" | null;
 }
 
 const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
@@ -26,12 +33,14 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
   onPress,
   onAceptar,
   onRechazar,
+  onOfrecer,
   accionProcesando = null,
 }) => {
   const procesando = accionProcesando !== null;
   const estado = PRESENTACION_ESTADO[reserva.estado];
   const precio = formatearPrecio(reserva.precio);
   const mostrarAcciones = reserva.estado === "pendiente" && onAceptar && onRechazar;
+  const esperandoCliente = esperaRespuestaOferta(reserva);
 
   return (
     <Pressable
@@ -84,32 +93,64 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
         {precio && <AppText weight="semibold" style={styles.precio}>{precio}</AppText>}
       </View>
 
+      {esperandoCliente && (
+        <View style={styles.aviso}>
+          <Icono nombre="schedule" tamanio={16} color={Colors.primary} />
+          <AppText style={styles.textoAviso}>
+            Ofreciste {textoAsientos(reserva.asientosOfrecidos!)} de {reserva.cantidadAsientos}. Esperando respuesta del cliente.
+          </AppText>
+        </View>
+      )}
+      {reserva.motivoTaxista && (
+        <View style={styles.aviso}>
+          <Icono nombre="info" tamanio={16} color={Colors.onSurfaceVariant} />
+          <AppText style={styles.textoAviso} numberOfLines={2}>Motivo: {reserva.motivoTaxista}</AppText>
+        </View>
+      )}
+
       {mostrarAcciones ? (
-        <View style={styles.acciones}>
-          <Pressable
-            onPress={onRechazar}
-            disabled={procesando}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.boton, styles.botonRechazar, pressed && styles.pressed]}
-          >
-            <AppText weight="semibold" style={styles.textoRechazar}>
-              {accionProcesando === "rechazada" ? "Procesando..." : "Rechazar"}
-            </AppText>
-          </Pressable>
-          <Pressable
-            onPress={onAceptar}
-            disabled={procesando}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.boton,
-              styles.botonAceptar,
-              (pressed || accionProcesando === "aceptada") && styles.botonAceptarPresionado,
-            ]}
-          >
-            <AppText weight="semibold" style={styles.textoAceptar}>
-              {accionProcesando === "aceptada" ? "Procesando..." : "Aceptar"}
-            </AppText>
-          </Pressable>
+        <View style={styles.contenedorAcciones}>
+          <View style={styles.acciones}>
+            <Pressable
+              onPress={onRechazar}
+              disabled={procesando}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.boton, styles.botonRechazar, pressed && styles.pressed]}
+            >
+              <AppText weight="semibold" style={styles.textoRechazar}>
+                {accionProcesando === "rechazada" ? "Procesando..." : "Rechazar"}
+              </AppText>
+            </Pressable>
+            {!esperandoCliente && (
+              <Pressable
+                onPress={onAceptar}
+                disabled={procesando}
+                accessibilityRole="button"
+                style={({ pressed }) => [
+                  styles.boton,
+                  styles.botonAceptar,
+                  (pressed || accionProcesando === "aceptada") && styles.botonAceptarPresionado,
+                ]}
+              >
+                <AppText weight="semibold" style={styles.textoAceptar}>
+                  {accionProcesando === "aceptada" ? "Procesando..." : "Aceptar"}
+                </AppText>
+              </Pressable>
+            )}
+          </View>
+          {onOfrecer && puedeOfrecerAsientos(reserva) && (
+            <Pressable
+              onPress={onOfrecer}
+              disabled={procesando}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.botonOfrecer, pressed && styles.pressed]}
+            >
+              <Icono nombre="eventSeat" tamanio={18} color={Colors.primary} />
+              <AppText weight="semibold" style={styles.textoOfrecer}>
+                {accionProcesando === "oferta" ? "Procesando..." : "No tengo todos: ofrecer menos asientos"}
+              </AppText>
+            </Pressable>
+          )}
         </View>
       ) : (
         <View style={styles.pie}>
@@ -211,9 +252,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.brandText,
   },
+  aviso: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceSoft,
+  },
+  textoAviso: {
+    flex: 1,
+    fontSize: 12,
+    color: Colors.brandText,
+  },
+  contenedorAcciones: {
+    gap: 8,
+  },
   acciones: {
     flexDirection: "row",
     gap: 10,
+  },
+  botonOfrecer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  textoOfrecer: {
+    fontSize: 13,
+    color: Colors.primary,
   },
   boton: {
     flex: 1,

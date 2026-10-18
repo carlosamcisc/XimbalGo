@@ -341,6 +341,7 @@ export type Database = {
       reservas: {
         Row: {
           asiento_id: string | null
+          asientos_ofrecidos: number | null
           cantidad_asientos: number
           cliente_id: string
           destino: string | null
@@ -348,6 +349,7 @@ export type Database = {
           fecha_hora_reserva: string
           fecha_hora_viaje: string | null
           id: string
+          motivo_taxista: string | null
           notas: string | null
           origen: string | null
           paradero_destino_id: string | null
@@ -360,6 +362,7 @@ export type Database = {
         }
         Insert: {
           asiento_id?: string | null
+          asientos_ofrecidos?: number | null
           cantidad_asientos?: number
           cliente_id: string
           destino?: string | null
@@ -367,6 +370,7 @@ export type Database = {
           fecha_hora_reserva?: string
           fecha_hora_viaje?: string | null
           id?: string
+          motivo_taxista?: string | null
           notas?: string | null
           origen?: string | null
           paradero_destino_id?: string | null
@@ -379,6 +383,7 @@ export type Database = {
         }
         Update: {
           asiento_id?: string | null
+          asientos_ofrecidos?: number | null
           cantidad_asientos?: number
           cliente_id?: string
           destino?: string | null
@@ -386,6 +391,7 @@ export type Database = {
           fecha_hora_reserva?: string
           fecha_hora_viaje?: string | null
           id?: string
+          motivo_taxista?: string | null
           notas?: string | null
           origen?: string | null
           paradero_destino_id?: string | null
@@ -829,7 +835,7 @@ export type Database = {
       }
       _st_within: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       actualizar_reserva_taxista: {
-        Args: { p_estado: string; p_reserva_id: string }
+        Args: { p_estado: string; p_motivo?: string; p_reserva_id: string }
         Returns: undefined
       }
       actualizar_ubicacion_cliente: {
@@ -1037,6 +1043,10 @@ export type Database = {
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      marcar_asientos_taxista: {
+        Args: { p_asiento_ids: string[]; p_ocupado: boolean }
+        Returns: number
+      }
       obtener_paradero: {
         Args: { p_paradero_id: string }
         Returns: {
@@ -1060,6 +1070,7 @@ export type Database = {
       obtener_reservas_taxista: {
         Args: never
         Returns: {
+          asientos_ofrecidos: number
           cantidad_asientos: number
           destino: string
           estado: string
@@ -1067,6 +1078,7 @@ export type Database = {
           fecha_hora_viaje: string
           id: string
           matricula: string
+          motivo_taxista: string
           nombre_cliente: string
           notas: string
           numero_asiento: number
@@ -1117,6 +1129,10 @@ export type Database = {
           vehiculo_id: string
         }[]
       }
+      ofrecer_asientos_taxista: {
+        Args: { p_cantidad: number; p_reserva_id: string }
+        Returns: undefined
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1157,6 +1173,10 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      responder_oferta_asientos_cliente: {
+        Args: { p_acepta: boolean; p_reserva_id: string }
+        Returns: undefined
+      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown

@@ -15,9 +15,11 @@ import {
   cambiarServicio,
   escucharTaxista,
   guardarPerfilTaxista,
+  marcarAsientos,
   obtenerPerfilTaxista,
   obtenerReservasTaxista,
   obtenerVehiculoTaxista,
+  ofrecerAsientos,
   registrarVehiculo,
 } from "../../infrastructure/supabase/repositories/taxista.repository";
 import {
@@ -60,7 +62,8 @@ function useTaxistaEstado() {
   const [errorUbicacion, setErrorUbicacion] = useState<string | null>(null);
   const [procesandoReservaId, setProcesandoReservaId] = useState<string | null>(null);
   // Para mostrar «Procesando...» solo en el botón que se tocó.
-  const [procesandoAccion, setProcesandoAccion] = useState<AccionReserva | null>(null);
+  const [procesandoAccion, setProcesandoAccion] = useState<AccionReserva | "oferta" | null>(null);
+  const [marcandoAsientos, setMarcandoAsientos] = useState(false);
 
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
@@ -125,9 +128,18 @@ function useTaxistaEstado() {
     [cargar]
   );
 
-  /** Devuelve un mensaje de error para el usuario, o null si funcionó. */
-  const responderReserva = useCallback(
-    async (reservaId: string, accion: AccionReserva): Promise<string | null> => {
+  /**
+   * Ejecuta una operación sobre una reserva, una a la vez, y muestra el
+   * cambio de inmediato. Devuelve un mensaje de error para el usuario, o null
+   * si funcionó.
+   */
+  const operarReserva = useCallback(
+    async (
+      reservaId: string,
+      accion: AccionReserva | "oferta",
+      operacion: () => Promise<void>,
+      cambio: Partial<ReservaTaxista>
+    ): Promise<string | null> => {
       // Un segundo toque antes de re-renderizar enviaría la acción dos veces.
       if (procesandoReserva.current) {
         return "Espera a que termine de procesarse la reservación.";
@@ -136,7 +148,7 @@ function useTaxistaEstado() {
       setProcesandoReservaId(reservaId);
       setProcesandoAccion(accion);
       try {
-        await actualizarReserva(reservaId, accion);
+        await operacion();
       } catch (e: unknown) {
         return mensajeError(e, "No se pudo actualizar la reservación.");
       } finally {
@@ -152,11 +164,54 @@ function useTaxistaEstado() {
       // estado anterior.
       setReservas((actuales) =>
         actuales.map((reserva) =>
-          reserva.id === reservaId ? { ...reserva, estado: accion } : reserva
+          reserva.id === reservaId ? { ...reserva, ...cambio } : reserva
         )
       );
       void cargar();
       return null;
+    },
+    [cargar]
+  );
+
+  /** `motivo` se envía al cliente al rechazar o cancelar. */
+  const responderReserva = useCallback(
+    (reservaId: string, accion: AccionReserva, motivo: string | null = null) =>
+      operarReserva(
+        reservaId,
+        accion,
+        () => actualizarReserva(reservaId, accion, motivo),
+        { estado: accion, ...(motivo !== null && { motivoTaxista: motivo }) }
+      ),
+    [operarReserva]
+  );
+
+  const ofrecerAsientosReserva = useCallback(
+    (reservaId: string, cantidad: number) =>
+      operarReserva(
+        reservaId,
+        "oferta",
+        () => ofrecerAsientos(reservaId, cantidad),
+        { asientosOfrecidos: cantidad }
+      ),
+    [operarReserva]
+  );
+
+  /** Devuelve un mensaje de error para el usuario, o null si funcionó. */
+  const marcarAsientosVehiculo = useCallback(
+    async (asientoIds: string[], ocupados: boolean): Promise<string | null> => {
+      setMarcandoAsientos(true);
+      try {
+        await marcarAsientos(asientoIds, ocupados);
+        await cargar();
+        return null;
+      } catch (e: unknown) {
+        // Otro cliente pudo reservar alguno mientras tanto: se muestra el
+        // estado actual.
+        void cargar();
+        return mensajeError(e, "No se pudieron actualizar los asientos.");
+      } finally {
+        setMarcandoAsientos(false);
+      }
     },
     [cargar]
   );
@@ -321,6 +376,9 @@ function useTaxistaEstado() {
     procesandoReservaId,
     procesandoAccion,
     responderReserva,
+    ofrecerAsientos: ofrecerAsientosReserva,
+    marcandoAsientos,
+    marcarAsientos: marcarAsientosVehiculo,
     guardarPerfil,
     guardarVehiculo,
   };

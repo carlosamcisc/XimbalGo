@@ -15,10 +15,13 @@ import {
   DESCRIPCION_ESTADO_TAXISTA,
   PRESENTACION_ACCION,
   accionesDisponibles,
+  esperaRespuestaOferta,
+  puedeOfrecerAsientos,
   type ReservaTaxista,
 } from "../../modules/taxista/types";
+import { textoAsientos } from "../../modules/cliente/reservas";
 import { useTaxista } from "./TaxistaContext";
-import { useAccionReserva } from "./useAccionReserva";
+import type { AccionesReserva } from "./useAccionReserva";
 
 const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta: string; valor: string }) => (
   <View style={styles.detalleFila}>
@@ -34,13 +37,11 @@ interface Props {
   /** Se busca por id para reflejar los cambios en tiempo real. */
   reservaId: string | null;
   onClose: () => void;
+  acciones: AccionesReserva;
 }
 
-export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
+export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: Props) {
   const { reservas, procesandoReservaId, procesandoAccion } = useTaxista();
-  // Al terminar la acción se cierra el detalle para volver a la lista ya
-  // actualizada.
-  const ejecutarAccion = useAccionReserva(onClose);
   const reserva: ReservaTaxista | undefined = reservas.find((item) => item.id === reservaId);
   const procesando = reserva !== undefined && procesandoReservaId === reserva.id;
 
@@ -68,6 +69,14 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
             </View>
           </View>
           <AppText style={styles.descripcion}>{DESCRIPCION_ESTADO_TAXISTA[reserva.estado]}</AppText>
+          {esperaRespuestaOferta(reserva) && (
+            <View style={styles.aviso}>
+              <AppText style={styles.textoAviso}>
+                Ofreciste {textoAsientos(reserva.asientosOfrecidos!)} de los {reserva.cantidadAsientos} que pidió.
+                Esperando a que el cliente acepte o cancele.
+              </AppText>
+            </View>
+          )}
 
           <DetalleFila icono="person" etiqueta="Cliente" valor={reserva.nombreCliente} />
           {reserva.telefonoCliente && (
@@ -105,9 +114,12 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
           />
           {precio && <DetalleFila icono="payments" etiqueta="Precio" valor={precio} />}
           {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
+          {reserva.motivoTaxista && (
+            <DetalleFila icono="info" etiqueta="Motivo que le diste al cliente" valor={reserva.motivoTaxista} />
+          )}
 
           <View style={styles.acciones}>
-            {accionesDisponibles(reserva.estado).map((accion) => {
+            {accionesDisponibles(reserva).map((accion) => {
               const presentacion = PRESENTACION_ACCION[accion];
               return (
                 <Button
@@ -117,17 +129,33 @@ export default function DetalleReservaTaxista({ reservaId, onClose }: Props) {
                   color={presentacion.peligrosa ? Colors.danger : Colors.primary}
                   borderColor={presentacion.peligrosa ? Colors.danger : Colors.primary}
                   onPress={() => {
-                    // La confirmación se muestra sin el panel abierto: un
-                    // `Alert` encima de un `Modal` puede dejar la pantalla sin
-                    // responder a toques en Android.
-                    if (presentacion.confirmacion) {
+                    // La confirmación y el motivo se muestran sin el detalle
+                    // abierto: un `Alert` encima de un `Modal` puede dejar la
+                    // pantalla sin responder a toques en Android.
+                    if (presentacion.confirmacion || presentacion.motivo) {
                       onClose();
+                      acciones.ejecutar(reserva.id, accion, { desdePanel: true });
+                      return;
                     }
-                    ejecutarAccion(reserva.id, accion);
+                    // Al terminar se cierra el detalle para volver a la lista
+                    // ya actualizada.
+                    acciones.ejecutar(reserva.id, accion, { onExito: onClose });
                   }}
                 />
               );
             })}
+            {puedeOfrecerAsientos(reserva) && (
+              <Button
+                titulo="Ofrecer menos asientos"
+                color={Colors.brandDeep}
+                borderColor={Colors.brandDeep}
+                disabled={procesando}
+                onPress={() => {
+                  onClose();
+                  acciones.ofrecer(reserva.id, true);
+                }}
+              />
+            )}
           </View>
         </View>
       )}
@@ -177,6 +205,16 @@ const styles = StyleSheet.create({
   },
   detalleValor: {
     fontSize: 14,
+    color: Colors.brandText,
+  },
+  aviso: {
+    padding: 12,
+    marginBottom: 8,
+    borderRadius: 14,
+    backgroundColor: Colors.primaryContainer,
+  },
+  textoAviso: {
+    fontSize: 13,
     color: Colors.brandText,
   },
   acciones: {

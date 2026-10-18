@@ -29,6 +29,22 @@ export interface ReservaCliente {
   cantidadAsientos: number;
   /** Solo se conocen mientras la reserva tiene los asientos apartados. */
   numerosAsientos: number[];
+  /** Motivo del taxista al rechazar la solicitud o cancelar el viaje. */
+  motivoTaxista: string | null;
+  /** Asientos que el taxista ofreció porque no tenía todos los pedidos. */
+  asientosOfrecidos: number | null;
+}
+
+/** El taxista ofreció menos asientos y espera la respuesta del cliente. */
+export const tieneOfertaAsientos = (reserva: ReservaCliente) =>
+  reserva.estado === "pendiente" && reserva.asientosOfrecidos !== null;
+
+/** Precio con los asientos ofrecidos, al mismo precio por asiento. */
+export function precioOferta(reserva: ReservaCliente): number | null {
+  if (reserva.precio === null || reserva.asientosOfrecidos === null) {
+    return null;
+  }
+  return (reserva.precio / reserva.cantidadAsientos) * reserva.asientosOfrecidos;
 }
 
 export interface NuevaReserva {

@@ -14,6 +14,7 @@ import { useTaxista } from "./TaxistaContext";
 import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
+import PanelesReservaTaxista from "./PanelesReservaTaxista";
 
 type Filtro = "activas" | "historial";
 
@@ -21,7 +22,7 @@ type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaViajes">;
 
 const TaxistaViajesScreen = ({ navigation }: Props) => {
     const taxista = useTaxista();
-    const ejecutarAccion = useAccionReserva();
+    const acciones = useAccionReserva();
     const [filtro, setFiltro] = useState<Filtro>("activas");
     const [reservaId, setReservaId] = useState<string | null>(null);
 
@@ -70,8 +71,9 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
                 reserva={reserva}
                 accionProcesando={taxista.procesandoReservaId === reserva.id ? taxista.procesandoAccion : null}
                 onPress={() => setReservaId(reserva.id)}
-                onAceptar={() => ejecutarAccion(reserva.id, "aceptada")}
-                onRechazar={() => ejecutarAccion(reserva.id, "rechazada")}
+                onAceptar={() => acciones.ejecutar(reserva.id, "aceptada")}
+                onRechazar={() => acciones.ejecutar(reserva.id, "rechazada")}
+                onOfrecer={() => acciones.ofrecer(reserva.id)}
             />
         ));
     };
@@ -123,7 +125,8 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
                 </ScrollView>
             </View>
 
-            <DetalleReservaTaxista reservaId={reservaId} onClose={() => setReservaId(null)} />
+            <DetalleReservaTaxista reservaId={reservaId} onClose={() => setReservaId(null)} acciones={acciones} />
+            <PanelesReservaTaxista acciones={acciones} />
             <BottomTabBar
                 tabs={TABS_TAXISTA}
                 activeTab="viajes"

@@ -93,7 +93,7 @@ export async function obtenerVehiculoTaxista(
     .from("vehiculos")
     .select(`
       id, matricula, marca, modelo, anio, capacidad_total_asientos, activo,
-      asientos!asientos_vehiculo_id_fkey(id, numero_asiento, estado)
+      asientos!asientos_vehiculo_id_fkey(id, numero_asiento, estado, reserva_id)
     `)
     .eq("taxista_id", taxistaId)
     .order("activo", { ascending: false })
@@ -121,6 +121,7 @@ export async function obtenerVehiculoTaxista(
         id: asiento.id,
         numero: asiento.numero_asiento,
         estado: asiento.estado as EstadoAsiento,
+        conReserva: asiento.reserva_id !== null,
       }))
       .sort((a, b) => a.numero - b.numero),
   };
@@ -225,16 +226,48 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
     numerosAsientos: reserva.numeros_asientos,
     nombreCliente: reserva.nombre_cliente.trim() || "Cliente",
     telefonoCliente: reserva.telefono_cliente,
+    motivoTaxista: reserva.motivo_taxista,
+    asientosOfrecidos: reserva.asientos_ofrecidos,
   }));
 }
 
+/** `motivo` llega al cliente al rechazar o cancelar. */
 export async function actualizarReserva(
   reservaId: string,
-  accion: AccionReserva
+  accion: AccionReserva,
+  motivo: string | null = null
 ): Promise<void> {
   const { error } = await supabase.rpc("actualizar_reserva_taxista", {
     p_reserva_id: reservaId,
     p_estado: accion,
+    p_motivo: motivo,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Ofrece al cliente menos asientos de los que pidió. Los que no ofrece quedan
+ * ocupados sin reservación.
+ */
+export async function ofrecerAsientos(reservaId: string, cantidad: number): Promise<void> {
+  const { error } = await supabase.rpc("ofrecer_asientos_taxista", {
+    p_reserva_id: reservaId,
+    p_cantidad: cantidad,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+/** Marca como ocupados, o vuelve a dejar libres, asientos sin reservación. */
+export async function marcarAsientos(asientoIds: string[], ocupados: boolean): Promise<void> {
+  const { error } = await supabase.rpc("marcar_asientos_taxista", {
+    p_asiento_ids: asientoIds,
+    p_ocupado: ocupados,
   });
 
   if (error) {

@@ -16,7 +16,7 @@ import type {
 // `apartados` son todos los asientos que la reserva tiene (`asientos.reserva_id`).
 const SELECT_RESERVA = `
   id, estado, fecha_hora_reserva, fecha_hora_viaje, precio, notas, origen, destino,
-  cantidad_asientos,
+  cantidad_asientos, motivo_taxista, asientos_ofrecidos,
   paradero_origen:paraderos!reservas_paradero_origen_id_fkey(nombre),
   paradero_destino:paraderos!reservas_paradero_destino_id_fkey(nombre),
   vehiculo:vehiculos!reservas_vehiculo_id_fkey(matricula, marca, modelo),
@@ -63,6 +63,8 @@ function aReservaCliente(reserva: FilaReserva): ReservaCliente {
     // Al cerrarse la reserva los asientos se liberan; queda el primero.
     numerosAsientos:
       numerosAsientos.length > 0 ? numerosAsientos : numeroAsiento !== null ? [numeroAsiento] : [],
+    motivoTaxista: reserva.motivo_taxista,
+    asientosOfrecidos: reserva.asientos_ofrecidos,
   };
 }
 
@@ -156,6 +158,24 @@ export async function crearReserva(reserva: NuevaReserva): Promise<string> {
 export async function cancelarReserva(reservaId: string): Promise<void> {
   const { error } = await supabase.rpc("cancelar_reserva_cliente", {
     p_reserva_id: reservaId,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Responde a la oferta de asientos del taxista: si acepta, la reserva queda
+ * aceptada con esos asientos; si no, la solicitud se cancela.
+ */
+export async function responderOfertaAsientos(
+  reservaId: string,
+  acepta: boolean
+): Promise<void> {
+  const { error } = await supabase.rpc("responder_oferta_asientos_cliente", {
+    p_reserva_id: reservaId,
+    p_acepta: acepta,
   });
 
   if (error) {
