@@ -42,7 +42,7 @@ Este documento describe el trabajo de la rama `feature/XG-0015-Correccion-regist
 - Usa `rutas.precio_base` cuando el taxista no indica precio.
 - Ya no lee `punto_partida` ni `punto_destino` de la metadata: `trigger_sincronizar_ruta_taxista` los copia de la ruta.
 
-La migración también asigna la tarifa base a los taxistas que ya tenían ruta y no tenían precio.
+La migración también asigna la tarifa base a los taxistas que ya tenían ruta y no tenían precio. Ya está aplicada en la base remota y registrada en `supabase_migrations.schema_migrations`.
 
 ## Validación realizada
 
