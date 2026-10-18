@@ -19,5 +19,6 @@ export interface DatosRegistro {
   /** `handle_new_user` copia el origen y destino de la ruta al taxista. */
   rutaId?: string;
   horarioTrabajo?: string;
+  /** Sin precio, `handle_new_user` usa la tarifa base de la ruta. */
   precioRuta?: number;
 }

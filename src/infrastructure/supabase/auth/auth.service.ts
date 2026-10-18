@@ -29,6 +29,19 @@ export async function iniciarSesion(
 // REGISTRAR USUARIO
 // =====================================================
 
+// Supabase devuelve estos errores en inglés. "unexpected_failure" es el de
+// `handle_new_user`: si falla, no se crea la cuenta.
+const ERRORES_REGISTRO: Record<string, string> = {
+  user_already_exists: "Ya existe una cuenta con este correo.",
+  email_exists: "Ya existe una cuenta con este correo.",
+  email_address_invalid: "Ingresa un correo electrónico válido.",
+  weak_password: "La contraseña es muy débil. Usa al menos 6 caracteres.",
+  signup_disabled: "El registro de cuentas está desactivado.",
+  over_email_send_rate_limit: "Demasiados intentos. Espera unos minutos.",
+  over_request_rate_limit: "Demasiados intentos. Espera unos minutos.",
+  unexpected_failure: "No se pudieron guardar tus datos. Revísalos e intenta de nuevo.",
+};
+
 export async function registrarUsuario(
   datos: DatosRegistro
 ) {
@@ -73,7 +86,14 @@ export async function registrarUsuario(
     });
 
   if (error) {
-    throw error;
+    const mensaje = error.code ? ERRORES_REGISTRO[error.code] : undefined;
+    throw mensaje ? new Error(mensaje) : error;
+  }
+
+  // Con confirmación de correo activa, un correo repetido no da error: llega
+  // un usuario sin identidades y no se guarda nada.
+  if (data.user && data.user.identities?.length === 0) {
+    throw new Error(ERRORES_REGISTRO.user_already_exists);
   }
 
   return data;

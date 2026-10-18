@@ -15,6 +15,7 @@ import AppText from "../../components/AppText";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import type { AuthStackParamList, Rol } from "../../navigation/types";
 import { registrarUsuario } from "../../infrastructure/supabase/auth/auth.service";
+import type { DatosRegistro, RolRegistrable } from "../../infrastructure/supabase/auth/auth.types";
 import { obtenerCatalogoRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
 import SelectInput from "../../components/SelectInput";
 import BottomSheet from "../../components/BottomSheet";
@@ -29,6 +30,102 @@ const ROL_LABELS: Record<Rol, string> = {
     taxista: "Taxista",
     administrador: "Administrador",
 };
+
+// Límites de las columnas en Supabase: si un dato no cabe, `handle_new_user`
+// falla y no se crea la cuenta.
+const LARGO_NOMBRE = 100; // nombres, apellidos: varchar(100)
+const LARGO_TELEFONO = 20; // telefono, numero_telefono: varchar(20)
+const LARGO_HORARIO = 100; // taxistas.horario_trabajo: varchar(100)
+const LARGO_MINIMO_CONTRASENIA = 6; // auth.minimum_password_length
+const EDAD_MAXIMA = 120;
+
+interface Formulario {
+    rol: RolRegistrable;
+    nombres: string;
+    apellidos: string;
+    correo: string;
+    telefono: string;
+    contrasenia: string;
+    confirmarContrasenia: string;
+    edad: string;
+    direccion: string;
+    ruta: RutaCatalogo | null;
+    horarioTrabajo: string;
+    precioRuta: string;
+}
+
+/** Devuelve los datos listos para registrar, o un mensaje de error. */
+function validar(formulario: Formulario): DatosRegistro | string {
+    const { rol, contrasenia } = formulario;
+    const nombres = formulario.nombres.trim();
+    const apellidos = formulario.apellidos.trim();
+    const correo = formulario.correo.trim();
+    const telefono = formulario.telefono.trim();
+
+    if (!nombres || !apellidos || !correo || !telefono || !contrasenia) {
+        return "Completa todos los campos obligatorios.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+        return "Ingresa un correo electrónico válido.";
+    }
+    if (!/^\+?[\d\s-]{7,19}$/.test(telefono)) {
+        return "Escribe un teléfono válido (solo números, espacios o guiones).";
+    }
+    // El inicio de sesión quita los espacios de los extremos de la contraseña.
+    if (contrasenia !== contrasenia.trim()) {
+        return "La contraseña no puede empezar ni terminar con espacios.";
+    }
+    if (contrasenia.length < LARGO_MINIMO_CONTRASENIA) {
+        return `La contraseña debe tener al menos ${LARGO_MINIMO_CONTRASENIA} caracteres.`;
+    }
+    if (contrasenia !== formulario.confirmarContrasenia) {
+        return "Las contraseñas no coinciden.";
+    }
+
+    const datos: DatosRegistro = {
+        correo,
+        password: contrasenia,
+        nombres,
+        apellidos,
+        telefono,
+        rol,
+        ...(formulario.direccion.trim() ? { direccion: formulario.direccion.trim() } : {}),
+    };
+
+    if (rol === "cliente") {
+        const edadTexto = formulario.edad.trim();
+        if (edadTexto) {
+            const edad = Number(edadTexto);
+            if (!/^\d{1,3}$/.test(edadTexto) || edad < 1 || edad > EDAD_MAXIMA) {
+                return "Escribe una edad válida.";
+            }
+            datos.edad = edad;
+        }
+        return datos;
+    }
+
+    // Sin ruta el taxista no aparece a los clientes ni puede iniciar servicio.
+    if (!formulario.ruta) {
+        return "Selecciona la ruta en la que trabajas.";
+    }
+    datos.rutaId = formulario.ruta.id;
+
+    if (formulario.horarioTrabajo.trim()) {
+        datos.horarioTrabajo = formulario.horarioTrabajo.trim();
+    }
+
+    // Algunos teclados escriben la coma como separador decimal.
+    const precioTexto = formulario.precioRuta.trim().replace(",", ".");
+    if (precioTexto) {
+        // Igual que `taxistas.precio_ruta` en `handle_new_user`: decimal(10, 2).
+        if (!/^\d{1,8}(\.\d{1,2})?$/.test(precioTexto)) {
+            return "Escribe un precio válido, con hasta 2 decimales.";
+        }
+        datos.precioRuta = Number(precioTexto);
+    }
+
+    return datos;
+}
 
 const RegistroScreen = ({ navigation, route }: Props) => {
     const { rol } = route.params;
@@ -86,70 +183,28 @@ const RegistroScreen = ({ navigation, route }: Props) => {
             : "Todavía no hay rutas registradas.";
 
     const handleRegistro = async () => {
-        const correoLimpio = correo.trim();
-        if (
-            !nombres.trim() ||
-            !apellidos.trim() ||
-            !correoLimpio ||
-            !telefono.trim() ||
-            !contrasenia ||
-            !confirmarContrasenia
-        ) {
-            Alert.alert("Completa todos los campos obligatorios");
-            return;
-        }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoLimpio)) {
-            Alert.alert("Correo inválido", "Ingresa un correo electrónico válido.");
-            return;
-        }
-
-        if (contrasenia !== confirmarContrasenia) {
-            Alert.alert("Las contraseñas no coinciden");
-            return;
-        }
-
-        const edadNumero = edad.trim() ? Number(edad) : undefined;
-        if (
-            rol === "cliente" &&
-            edadNumero !== undefined &&
-            (!Number.isInteger(edadNumero) || edadNumero < 1)
-        ) {
-            Alert.alert("Edad inválida", "Ingresa una edad válida.");
-            return;
-        }
-
-        const precioNumero = precioRuta.trim() ? Number(precioRuta) : undefined;
-        if (
-            rol === "taxista" &&
-            precioNumero !== undefined &&
-            (!Number.isFinite(precioNumero) || precioNumero < 0)
-        ) {
-            Alert.alert("Precio inválido", "Ingresa un precio válido.");
+        const datos = validar({
+            rol,
+            nombres,
+            apellidos,
+            correo,
+            telefono,
+            contrasenia,
+            confirmarContrasenia,
+            edad,
+            direccion,
+            ruta,
+            horarioTrabajo,
+            precioRuta,
+        });
+        if (typeof datos === "string") {
+            Alert.alert("Revisa tus datos", datos);
             return;
         }
 
         setCargando(true);
         try {
-            await registrarUsuario({
-                correo: correoLimpio,
-                password: contrasenia,
-                nombres: nombres.trim(),
-                apellidos: apellidos.trim(),
-                telefono: telefono.trim(),
-                rol,
-                ...(rol === "cliente" && edadNumero !== undefined
-                    ? { edad: edadNumero }
-                    : {}),
-                ...(direccion.trim() ? { direccion: direccion.trim() } : {}),
-                ...(rol === "taxista" && ruta ? { rutaId: ruta.id } : {}),
-                ...(rol === "taxista" && horarioTrabajo.trim()
-                    ? { horarioTrabajo: horarioTrabajo.trim() }
-                    : {}),
-                ...(rol === "taxista" && precioNumero !== undefined
-                    ? { precioRuta: precioNumero }
-                    : {}),
-            });
+            await registrarUsuario(datos);
 
             Alert.alert(
                 "Cuenta creada",
@@ -206,6 +261,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                         placeholder="Escribe tu nombre..."
                         onChangeText={setNombres}
                         autoCapitalize="words"
+                        maxLength={LARGO_NOMBRE}
                     />
                     <TextInputField
                         label="Apellidos *"
@@ -213,6 +269,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                         placeholder="Escribe tus apellidos..."
                         onChangeText={setApellidos}
                         autoCapitalize="words"
+                        maxLength={LARGO_NOMBRE}
                     />
                     <TextInputField
                         label="Correo electrónico *"
@@ -228,6 +285,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                         placeholder="Escribe tu teléfono..."
                         onChangeText={setTelefono}
                         keyboardType="phone-pad"
+                        maxLength={LARGO_TELEFONO}
                     />
 
                     {rol === "cliente" && (
@@ -237,6 +295,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             placeholder="Escribe tu edad..."
                             onChangeText={setEdad}
                             keyboardType="number-pad"
+                            maxLength={3}
                         />
                     )}
 
@@ -254,7 +313,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                                 Datos de tu servicio
                             </AppText>
                             <SelectInput
-                                label="Ruta"
+                                label="Ruta *"
                                 value={ruta ? `${ruta.origen} → ${ruta.destino}` : ""}
                                 placeholder={cargandoRutas ? "Cargando rutas..." : "Selecciona tu ruta"}
                                 onPress={() => setSelectorRutaVisible(true)}
@@ -296,11 +355,12 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                                 placeholder="Ej. Lunes a viernes, 8:00 a 17:00"
                                 onChangeText={setHorarioTrabajo}
                                 autoCapitalize="sentences"
+                                maxLength={LARGO_HORARIO}
                             />
                             <TextInputField
-                                label="Precio de la ruta"
+                                label="Precio por pasajero"
                                 value={precioRuta}
-                                placeholder="Escribe el precio..."
+                                placeholder={ruta ? `Tarifa base: ${ruta.precioBase}` : "Escribe el precio..."}
                                 onChangeText={setPrecioRuta}
                                 keyboardType="decimal-pad"
                             />
