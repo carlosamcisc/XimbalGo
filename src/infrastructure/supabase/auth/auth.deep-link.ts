@@ -1,5 +1,9 @@
 import * as Linking from "expo-linking";
 import { supabase } from "../client";
+import {
+  cancelarRecuperacionContrasena,
+  iniciarRecuperacionContrasena,
+} from "../../../store/autenticacionStore";
 
 const recoveryRedirect = "ximbalgo://recuperar-contrasena";
 const recoveryScreenUrl =
@@ -40,10 +44,14 @@ export async function prepararEnlaceAutenticacion(
       throw new Error("El enlace recibido no corresponde a una recuperación.");
     }
 
+    // Se marca antes de abrir la sesión para que la app no entre a la
+    // cuenta del usuario con la sesión de recuperación.
+    iniciarRecuperacionContrasena();
     const { error: exchangeError } =
       await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      cancelarRecuperacionContrasena();
       throw exchangeError;
     }
 
@@ -61,12 +69,14 @@ export async function prepararEnlaceAutenticacion(
     throw new Error("El enlace de recuperación no es válido o ya venció.");
   }
 
+  iniciarRecuperacionContrasena();
   const { error } = await supabase.auth.setSession({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
 
   if (error) {
+    cancelarRecuperacionContrasena();
     throw error;
   }
 

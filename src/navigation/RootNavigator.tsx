@@ -16,6 +16,7 @@ export default function RootNavigator() {
         bienvenidaCompletada,
         errorInicializacion,
         inicializando,
+        recuperandoContrasena,
         rol,
         usuario,
     } = useAutenticacionStore();
@@ -44,6 +45,12 @@ export default function RootNavigator() {
                     </AppText>
                 </Pressable>
             </View>
+        );
+    }
+
+    if (recuperandoContrasena) {
+        return (
+            <AutenticacionNavigator initialRouteName="RestablecerContrasenia" />
         );
     }
 
