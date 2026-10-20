@@ -9,12 +9,16 @@ import { supabase } from "../infrastructure/supabase/client";
 import type { RolUsuario } from "../modules/usuarios/types";
 
 const BIENVENIDA_COMPLETADA_KEY = "@ximbalgo/bienvenida-completada";
+const RECUPERACION_PENDIENTE_KEY = "@ximbalgo/recuperacion-pendiente";
 
 export interface AutenticacionState {
   usuario: User | null;
   sesion: Session | null;
   rol: RolUsuario | null;
   bienvenidaCompletada: boolean;
+  // La sesión abierta por un enlace de recuperación solo sirve para
+  // cambiar la contraseña; mientras esté activa no se entra a la cuenta.
+  recuperandoContrasena: boolean;
   inicializando: boolean;
   errorInicializacion: string | null;
 }
@@ -24,6 +28,7 @@ const initialState: AutenticacionState = {
   sesion: null,
   rol: null,
   bienvenidaCompletada: false,
+  recuperandoContrasena: false,
   inicializando: true,
   errorInicializacion: null,
 };
@@ -61,6 +66,9 @@ export function inicializarAutenticacion(): Promise<void> {
   authEventReceived = false;
   authSubscription = supabase.auth.onAuthStateChange((event, session) => {
     authEventReceived = true;
+    if (event === "PASSWORD_RECOVERY") {
+      iniciarRecuperacionContrasena();
+    }
     updateState({
       sesion: session,
       usuario: session?.user ?? null,
@@ -75,10 +83,12 @@ export function inicializarAutenticacion(): Promise<void> {
 
   initialization = (async () => {
     try {
-      const [bienvenidaCompletada, sessionResult] = await Promise.all([
-        AsyncStorage.getItem(BIENVENIDA_COMPLETADA_KEY),
-        supabase.auth.getSession(),
-      ]);
+      const [bienvenidaCompletada, recuperacionPendiente, sessionResult] =
+        await Promise.all([
+          AsyncStorage.getItem(BIENVENIDA_COMPLETADA_KEY),
+          AsyncStorage.getItem(RECUPERACION_PENDIENTE_KEY),
+          supabase.auth.getSession(),
+        ]);
 
       if (sessionResult.error) {
         throw sessionResult.error;
@@ -95,7 +105,18 @@ export function inicializarAutenticacion(): Promise<void> {
       const session = authEventReceived
         ? state.sesion
         : sessionResult.data.session;
-      if (session) {
+
+      // Si la app se cerró a mitad de una recuperación, la sesión guardada
+      // sigue siendo de recuperación: se retoma el cambio de contraseña.
+      if (recuperacionPendiente === "true") {
+        if (session) {
+          updateState({ recuperandoContrasena: true });
+        } else {
+          await AsyncStorage.removeItem(RECUPERACION_PENDIENTE_KEY);
+        }
+      }
+
+      if (session && !state.recuperandoContrasena) {
         const rol = await obtenerRolUsuario(session.user.id);
         if (state.sesion?.user.id === session.user.id) {
           updateState({ rol });
@@ -131,6 +152,41 @@ export async function marcarBienvenidaCompletada(): Promise<void> {
 
 export function asignarRolUsuario(rol: RolUsuario): void {
   updateState({ rol });
+}
+
+export function iniciarRecuperacionContrasena(): void {
+  updateState({ recuperandoContrasena: true });
+  void AsyncStorage.setItem(RECUPERACION_PENDIENTE_KEY, "true").catch(
+    () => undefined
+  );
+}
+
+export function cancelarRecuperacionContrasena(): void {
+  updateState({ recuperandoContrasena: false });
+  void AsyncStorage.removeItem(RECUPERACION_PENDIENTE_KEY).catch(
+    () => undefined
+  );
+}
+
+// Cierra la sesión de recuperación para que el usuario entre con su
+// contraseña nueva. Si el servidor no responde, la borra del dispositivo.
+export async function finalizarRecuperacionContrasena(): Promise<void> {
+  if (!state.recuperandoContrasena) {
+    return;
+  }
+
+  try {
+    await cerrarSesionSupabase();
+  } catch {
+    await supabase.auth.signOut({ scope: "local" });
+  }
+
+  updateState({
+    sesion: null,
+    usuario: null,
+    rol: null,
+  });
+  cancelarRecuperacionContrasena();
 }
 
 export async function cerrarSesionUsuario(): Promise<void> {

@@ -18,6 +18,10 @@ import {
     cambiarContrasena,
     obtenerSesion,
 } from "../../infrastructure/supabase/auth/auth.service";
+import {
+    finalizarRecuperacionContrasena,
+    useAutenticacionStore,
+} from "../../store/autenticacionStore";
 import Colors from "../../theme/colors";
 
 type Props = NativeStackScreenProps<
@@ -31,12 +35,25 @@ const RestablecerContraseniaScreen = ({ navigation, route }: Props) => {
     const [cargando, setCargando] = useState(true);
     const [enlaceValido, setEnlaceValido] = useState(false);
     const [enviando, setEnviando] = useState(false);
+    const { recuperandoContrasena } = useAutenticacionStore();
+    const recuperacionVerificada =
+        route.params?.recovery === "verified" || recuperandoContrasena;
+
+    // Al salir de la pantalla (atrás, gesto o botón del sistema) se cierra
+    // la sesión de recuperación para no dejar la cuenta abierta.
+    useEffect(
+        () =>
+            navigation.addListener("beforeRemove", () => {
+                void finalizarRecuperacionContrasena().catch(() => undefined);
+            }),
+        [navigation]
+    );
 
     useEffect(() => {
         let activo = true;
 
         const validarEnlace = async () => {
-            if (route.params?.recovery !== "verified") {
+            if (!recuperacionVerificada) {
                 setCargando(false);
                 return;
             }
@@ -66,7 +83,7 @@ const RestablecerContraseniaScreen = ({ navigation, route }: Props) => {
         return () => {
             activo = false;
         };
-    }, [route.params?.recovery]);
+    }, [recuperacionVerificada]);
 
     const handleRestablecerContrasena = async () => {
         if (!contrasena || !confirmarContrasena) {
@@ -82,6 +99,7 @@ const RestablecerContraseniaScreen = ({ navigation, route }: Props) => {
         setEnviando(true);
         try {
             await cambiarContrasena(contrasena);
+            await finalizarRecuperacionContrasena();
             Alert.alert(
                 "Contraseña actualizada",
                 "Ya puedes iniciar sesión con tu nueva contraseña.",
