@@ -235,9 +235,9 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
                 {[
                   punto && `A ${formatearDistancia(distanciaEntre(paradero.coordenadas, punto.coordenadas))} de tu punto`,
                   estimacionParadero &&
-                    `El taxi pasa ${estimacionParadero.llegando
-                      ? "ya"
-                      : `a las ${formatearHora(estimacionParadero.llegada)} (${formatearMinutos(estimacionParadero.minutosRestantes)})`}`,
+                  `El taxi pasa ${estimacionParadero.llegando
+                    ? "ya"
+                    : `a las ${formatearHora(estimacionParadero.llegada)} (${formatearMinutos(estimacionParadero.minutosRestantes)})`}`,
                 ].filter(Boolean).join(" · ")}
               </AppText>
             </View>
@@ -320,8 +320,8 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
 
         {renderSeguimiento()}
 
+        <AppText weight="semibold" style={styles.tituloSeccion}>Detalles</AppText>
         <Card>
-          <AppText weight="semibold" style={styles.tituloSeccion}>Detalles</AppText>
           <DetalleFila icono="locationHistory" etiqueta="Origen" valor={reserva.origen ?? "Mi ubicación"} />
           <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
           <DetalleFila
@@ -456,6 +456,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   tituloSeccion: {
+    marginLeft: 10,
     fontSize: 16,
     color: Colors.brandDeep,
     flexShrink: 1,
