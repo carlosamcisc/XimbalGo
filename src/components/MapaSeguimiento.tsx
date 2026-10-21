@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import MapView, { Marker, PROVIDER_GOOGLE, type LatLng } from "react-native-maps";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 import { Icono } from "./Icono";
@@ -18,147 +18,93 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-// Leaflet con teselas de OpenStreetMap servidas por CARTO: no necesita API key
-// (Google Maps en Android sí). Sin internet, el script no carga y se avisa.
-const HTML_MAPA = `<!doctype html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-  html, body, #mapa { height: 100%; margin: 0; background: #ECEEF4; }
-  .marcador { display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; border: 3px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,.35);
-    font-size: 16px; }
-  .taxi { background: ${Colors.primary}; width: 34px; height: 34px; }
-  .punto { background: ${Colors.success}; width: 22px; height: 22px; }
-  .paradero { background: ${Colors.brandDeep}; width: 18px; height: 18px; }
-</style>
-</head>
-<body>
-<div id="mapa"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  onerror="window.ReactNativeWebView.postMessage('sin-mapa')"></script>
-<script>
-  (function () {
-    if (!window.L) { return; }
-    var mapa = L.map('mapa', { zoomControl: false, attributionControl: true })
-      .setView([20.97, -89.62], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
-    }).addTo(mapa);
+type TipoMarcador = "taxi" | "punto" | "paradero";
 
-    var marcadores = {};
-    var centrado = false;
-    var icono = function (clase, texto) {
-      var tamanio = clase === 'taxi' ? 34 : clase === 'punto' ? 22 : 18;
-      return L.divIcon({
-        className: '',
-        html: '<div class="marcador ' + clase + '">' + (texto || '') + '</div>',
-        iconSize: [tamanio, tamanio],
-        iconAnchor: [tamanio / 2, tamanio / 2]
-      });
-    };
+// Mérida, mientras no hay marcadores.
+const REGION_INICIAL = {
+  latitude: 20.97,
+  longitude: -89.62,
+  latitudeDelta: 0.15,
+  longitudeDelta: 0.15,
+};
+const ZOOM_UN_PUNTO = 16;
+const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-    var colocar = function (clave, dato, texto) {
-      if (!dato) {
-        if (marcadores[clave]) { mapa.removeLayer(marcadores[clave]); delete marcadores[clave]; }
-        return;
-      }
-      var posicion = [dato.coordenadas.latitud, dato.coordenadas.longitud];
-      if (marcadores[clave]) {
-        marcadores[clave].setLatLng(posicion);
-        marcadores[clave].setTooltipContent(dato.titulo);
-      } else {
-        marcadores[clave] = L.marker(posicion, { icon: icono(clave, texto), zIndexOffset: clave === 'taxi' ? 1000 : 0 })
-          .bindTooltip(dato.titulo, { direction: 'top', offset: [0, -14] })
-          .addTo(mapa);
-      }
-    };
+const aLatLng = ({ latitud, longitud }: Coordenadas): LatLng => ({
+  latitude: latitud,
+  longitude: longitud,
+});
 
-    window.centrarMapa = function () {
-      var puntos = Object.keys(marcadores).map(function (clave) { return marcadores[clave].getLatLng(); });
-      if (puntos.length === 1) { mapa.setView(puntos[0], 16); }
-      if (puntos.length > 1) { mapa.fitBounds(L.latLngBounds(puntos), { padding: [48, 48], maxZoom: 17 }); }
-    };
-
-    window.actualizarMapa = function (datos) {
-      colocar('paradero', datos.paradero, '');
-      colocar('punto', datos.punto, '');
-      colocar('taxi', datos.taxi, '&#128661;');
-      // Solo se encuadra la primera vez: después el cliente mueve el mapa.
-      if (!centrado && Object.keys(marcadores).length > 0) {
-        centrado = true;
-        window.centrarMapa();
-      }
-    };
-
-    window.ReactNativeWebView.postMessage('listo');
-  })();
-</script>
-</body>
-</html>`;
-
-/** Mapa con el taxi, el punto de abordaje y el paradero cercano. */
-export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props) {
-  const webView = useRef<WebView>(null);
-  const [listo, setListo] = useState(false);
-  const [sinMapa, setSinMapa] = useState(false);
-
-  // Se mueven los marcadores sin volver a cargar la página.
+/** Círculo de color con borde blanco, igual que en la leyenda. */
+function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
+  // Android dibuja la vista del marcador como imagen: se deja de redibujar
+  // cuando ya se pintó, para que mover el taxi no cueste.
+  const [redibujar, setRedibujar] = useState(true);
   useEffect(() => {
-    if (!listo) {
-      return;
-    }
-    const datos = JSON.stringify({ taxi, punto, paradero });
-    webView.current?.injectJavaScript(`window.actualizarMapa(${datos}); true;`);
-  }, [listo, taxi, punto, paradero]);
+    const temporizador = setTimeout(() => setRedibujar(false), 500);
+    return () => clearTimeout(temporizador);
+  }, []);
 
-  const recibirMensaje = (evento: WebViewMessageEvent) => {
-    if (evento.nativeEvent.data === "listo") {
-      setListo(true);
-    } else if (evento.nativeEvent.data === "sin-mapa") {
-      setSinMapa(true);
+  return (
+    <Marker
+      coordinate={aLatLng(dato.coordenadas)}
+      title={dato.titulo}
+      anchor={{ x: 0.5, y: 0.5 }}
+      zIndex={tipo === "taxi" ? 1000 : 0}
+      tracksViewChanges={redibujar}
+    >
+      <View style={[styles.marcador, styles[tipo]]}>
+        {tipo === "taxi" && <Icono nombre="localTaxi" tamanio={18} color={Colors.white} />}
+      </View>
+    </Marker>
+  );
+}
+
+/** Mapa de Google con el taxi, el punto de abordaje y el paradero cercano. */
+export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props) {
+  const mapa = useRef<MapView>(null);
+  const [mapaListo, setMapaListo] = useState(false);
+  const centrado = useRef(false);
+
+  const puntos = [paradero, punto, taxi]
+    .filter((dato): dato is MarcadorMapa => dato !== null)
+    .map((dato) => aLatLng(dato.coordenadas));
+
+  const centrar = () => {
+    if (puntos.length === 1) {
+      mapa.current?.animateCamera({ center: puntos[0], zoom: ZOOM_UN_PUNTO });
+    } else if (puntos.length > 1) {
+      mapa.current?.fitToCoordinates(puntos, { edgePadding: MARGEN_ENCUADRE, animated: true });
     }
   };
 
-  if (sinMapa) {
-    return (
-      <View style={[styles.contenedor, styles.sinMapa, style]}>
-        <Icono nombre="map" tamanio={36} color={Colors.outlineVariant} />
-        <AppText style={styles.textoSinMapa}>No se pudo cargar el mapa. Revisa tu conexión a internet.</AppText>
-        <Pressable
-          onPress={() => {
-            setSinMapa(false);
-            setListo(false);
-          }}
-          accessibilityRole="button"
-        >
-          <AppText weight="semibold" style={styles.enlace}>Reintentar</AppText>
-        </Pressable>
-      </View>
-    );
-  }
+  // Solo se encuadra la primera vez: después el cliente mueve el mapa.
+  useEffect(() => {
+    if (mapaListo && !centrado.current && puntos.length > 0) {
+      centrado.current = true;
+      centrar();
+    }
+  });
 
   return (
     <View style={[styles.contenedor, style]}>
-      <WebView
-        ref={webView}
-        originWhitelist={["*"]}
-        // El origen da a las solicitudes de teselas un `Referer` válido.
-        source={{ html: HTML_MAPA, baseUrl: "https://ximbalgo.app/" }}
-        onMessage={recibirMensaje}
-        onError={() => setSinMapa(true)}
-        javaScriptEnabled
-        domStorageEnabled
-        setSupportMultipleWindows={false}
-        nestedScrollEnabled
-        style={styles.webView}
-      />
+      <MapView
+        ref={mapa}
+        provider={PROVIDER_GOOGLE}
+        style={styles.mapa}
+        initialRegion={REGION_INICIAL}
+        onMapReady={() => setMapaListo(true)}
+        toolbarEnabled={false}
+        showsMyLocationButton={false}
+        rotateEnabled={false}
+        pitchEnabled={false}
+      >
+        {paradero && <Marcador tipo="paradero" dato={paradero} />}
+        {punto && <Marcador tipo="punto" dato={punto} />}
+        {taxi && <Marcador tipo="taxi" dato={taxi} />}
+      </MapView>
       <Pressable
-        onPress={() => webView.current?.injectJavaScript("window.centrarMapa && window.centrarMapa(); true;")}
+        onPress={centrar}
         accessibilityRole="button"
         accessibilityLabel="Centrar el mapa"
         style={({ pressed }) => [styles.centrar, pressed && styles.centrarPresionado]}
@@ -190,24 +136,32 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: Colors.surfaceContainer,
   },
-  webView: {
+  mapa: {
     flex: 1,
-    backgroundColor: Colors.surfaceContainer,
   },
-  sinMapa: {
+  marcador: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    padding: 16,
+    borderWidth: 3,
+    borderColor: Colors.white,
   },
-  textoSinMapa: {
-    fontSize: 14,
-    textAlign: "center",
-    color: Colors.onSurfaceVariant,
+  taxi: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.primary,
   },
-  enlace: {
-    fontSize: 14,
-    color: Colors.primary,
+  punto: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.success,
+  },
+  paradero: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.brandDeep,
   },
   centrar: {
     position: "absolute",

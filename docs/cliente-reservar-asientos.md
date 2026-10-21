@@ -80,9 +80,7 @@ Migración `20261020120000_reservar_varios_asientos.sql` (aplicada al proyecto e
 
 ## Mapa
 
-El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas de OpenStreetMap de CARTO. Se eligió así porque `react-native-maps` en Android necesita una API key de Google Maps, que el proyecto no tiene. Los marcadores se actualizan con `injectJavaScript`, sin recargar la página. La página se carga con `baseUrl` `https://ximbalgo.app/` para que las solicitudes de teselas lleven un `Referer`. Sin internet se muestra un aviso con «Reintentar».
-
-`react-native-webview` tiene código nativo: hay que **volver a compilar el cliente nativo** (`npm run android`) después de instalar las dependencias.
+El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGLE}`); antes era Leaflet en un WebView. Los marcadores son vistas propias con los colores de la leyenda y se mueven al cambiar las props, sin recargar el mapa. Se encuadra solo la primera vez que hay marcadores; el botón vuelve a encuadrar. La configuración de la API key está en [README.md](../README.md#google-maps).
 
 ## Arquitectura y archivos
 
@@ -97,7 +95,7 @@ El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas
 | `src/screens/cliente/mensajeError.ts` | `mensajeError`; `useClienteInicio` lo reexporta para no cambiar las importaciones existentes. |
 | `src/components/SelectorAsientos.tsx` | Botones − y + para la cantidad. |
 | `src/components/SelectorFechaViaje.tsx` | «Lo antes posible» o día y hora. |
-| `src/components/MapaSeguimiento.tsx` | Mapa Leaflet en WebView. |
+| `src/components/MapaSeguimiento.tsx` | Mapa de Google (`react-native-maps`). |
 | `src/components/TaxiCard.tsx` | Línea opcional `detalle`. |
 | `src/components/ReservaCard.tsx`, `ReservaTaxistaCard.tsx`, `src/screens/taxista/DetalleReservaTaxista.tsx` | Cantidad de asientos y fecha programada. |
 | `src/modules/cliente/seguimiento.ts` | Tipos del seguimiento, distancia y estimación de llegada. |
@@ -112,7 +110,7 @@ El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas
 
 ## Configuración y ejecución
 
-1. `npm install` (agrega `react-native-webview`).
+1. `npm install` y la key de Google Maps en `.env` (ver [README.md](../README.md#google-maps)).
 2. La migración ya está aplicada en el proyecto remoto. Para otro proyecto Supabase:
 
    ```powershell
@@ -129,7 +127,7 @@ El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas
 - **La ubicación del taxi solo se actualiza con su app abierta** (ver `taxista.md`).
 - **Una reserva en curso por cliente** (regla existente); para varias personas se reservan varios asientos en una sola reserva.
 - **Los números de asiento de las reservas cerradas** se pierden al liberarse los asientos; queda el primero (`reservas.asiento_id`) y la cantidad.
-- **El mapa necesita internet** para Leaflet y las teselas. Las teselas de CARTO son gratuitas con atribución y un uso moderado; para producción con mucho tráfico conviene un plan propio o un servidor de teselas.
+- **El mapa necesita internet** la primera vez que se ve una zona (Google Maps guarda en caché lo ya visto). Con una key inválida o sin restricción correcta, el mapa sale gris y el error aparece en `adb logcat` (`Google Android Maps SDK`).
 - El origen del catálogo de rutas no tiene coordenadas: el seguimiento usa la última ubicación guardada del cliente; si nunca se guardó, no hay estimación.
 
 ## Validación realizada
@@ -145,4 +143,4 @@ El mapa usa `react-native-webview` con Leaflet 1.9.4 (desde unpkg) y las teselas
   - `obtener_reservas_taxista` devuelve `cantidad_asientos = 2` y `numeros_asientos = {1,2}`.
   - Otro usuario no puede ver el seguimiento de la reserva.
 - Después se aplicó con `db push` y se regeneraron los tipos.
-- **No se probó en un dispositivo**: falta compilar el cliente nativo con `react-native-webview`.
+- **No se probó en un dispositivo**: falta compilar el cliente nativo con `react-native-maps` y la key de Google Maps.
