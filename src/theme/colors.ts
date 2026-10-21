@@ -10,7 +10,7 @@ export const Colors = {
   primaryContainer: '#E8F6FF', // Azul muy claro (fondos, tarjetas)
   onPrimaryContainer: '#0F2D5B',
 
-  secondary: '#00D1FF',        // Cian principal (bordes, acentos, detalles)
+  secondary: '#526070',         // Cian principal (bordes, acentos, detalles)
   onSecondary: '#FFFFFF',
   secondaryContainer: '#E5F6F9',
   onSecondaryContainer: '#0B263D',
