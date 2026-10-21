@@ -5,12 +5,12 @@
 
 export const Colors = {
   // Colores principales
-  primary: '#34618D',          // Azul principal (botones, acciones destacadas)
+  primary: '#123A8C',          // Azul principal (botones, acciones destacadas)
   onPrimary: '#FFFFFF',
   primaryContainer: '#E8F6FF', // Azul muy claro (fondos, tarjetas)
   onPrimaryContainer: '#0F2D5B',
 
-  secondary: '#526070',         // Cian principal (bordes, acentos, detalles)
+  secondary: '#2F80F7',         // Cian principal (bordes, acentos, detalles)
   onSecondary: '#FFFFFF',
   secondaryContainer: '#E5F6F9',
   onSecondaryContainer: '#0B263D',
