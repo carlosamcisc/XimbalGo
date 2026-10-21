@@ -39,7 +39,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
-| Mapa | Leaflet en `react-native-webview` con teselas de OpenStreetMap/CARTO (no requiere API key) |
+| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android) |
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
@@ -51,7 +51,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 - Android Studio con un emulador o un dispositivo Android con depuración USB.
 - Un proyecto de Supabase con las migraciones de [supabase/migrations/](./supabase/migrations/) aplicadas.
 
-El proyecto usa `expo-dev-client` y módulos nativos (ubicación, WebView, Lottie), por lo que **no funciona en Expo Go**: se ejecuta como build de desarrollo.
+El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie), por lo que **no funciona en Expo Go**: se ejecuta como build de desarrollo.
 
 ## Configuración
 
@@ -63,13 +63,28 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, WebView, Lotti
    ```env
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+   GOOGLE_MAPS_ANDROID_API_KEY=
    ```
-3. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
-4. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
+3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
+4. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
+5. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
    ```bash
    npx supabase migration list
    npx supabase db push
    ```
+
+### Google Maps
+
+El mapa usa Google Maps nativo con `react-native-maps` y solo se compila para Android.
+
+1. En Google Cloud, en el proyecto de la app, habilita **Maps SDK for Android**.
+2. En *Credenciales*, restringe la API key:
+   - **Restricción de aplicación**: *Apps para Android*, con el paquete `com.carlosmay.XimbalGo` y la huella SHA-1 de cada keystore que firme la app. La del keystore de debug (también firma el release mientras no haya uno propio) se obtiene con `cd android && ./gradlew signingReport`.
+   - **Restricción de API**: solo *Maps SDK for Android*.
+3. Pon la key en `GOOGLE_MAPS_ANDROID_API_KEY` del `.env`. [app.config.ts](./app.config.ts) la lee al compilar y el plugin de `react-native-maps` la escribe en el `AndroidManifest.xml`; no lleva el prefijo `EXPO_PUBLIC_` porque la app no la usa en JavaScript.
+4. Regenera la carpeta nativa y compila: `npx expo prebuild --platform android --clean` y `npm run android`.
+
+Si el mapa sale gris, revisa `adb logcat | grep -i "maps"`: casi siempre es la SHA-1 o el paquete de la restricción.
 
 ## Ejecución del proyecto
 
@@ -81,7 +96,7 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, WebView, Lotti
 | Verificar tipos | `npm run typecheck` |
 | Regenerar la carpeta nativa `android/` | `npx expo prebuild --platform android --clean` |
 
-Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos o en [app.json](./app.json). La carpeta `android/` no se versiona.
+Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). La carpeta `android/` no se versiona.
 
 ## Arquitectura del proyecto
 
