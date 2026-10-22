@@ -386,6 +386,12 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# El proyecto firma los tokens con llaves ES256 y `verify_jwt` solo valida
+# las llaves anteriores. La función valida la sesión al llamar la RPC con el
+# token del cliente.
+[functions.distancias-paraderos]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
