@@ -12,6 +12,8 @@ type NearbyFunctions = {
       nombre: string;
       referencia: string | null;
       distancia_metros: number;
+      latitud: number;
+      longitud: number;
     }[];
   };
   obtener_paradero: {

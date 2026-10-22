@@ -180,7 +180,51 @@ export async function guardarUbicacionCliente(
   }
 }
 
+interface TrayectoParadero {
+  metros: number;
+  segundos: number;
+}
+
+interface RespuestaDistanciasParaderos {
+  paraderos: {
+    id: string;
+    nombre: string;
+    referencia: string | null;
+    distanciaLineaRecta: number;
+    caminando: TrayectoParadero | null;
+    moto: TrayectoParadero | null;
+  }[];
+}
+
+/**
+ * Los cinco paraderos más cercanos con la distancia por calle y el tiempo
+ * caminando y en moto (Edge Function `distancias-paraderos`). Si la función
+ * falla, se usa la distancia en línea recta sin tiempos.
+ */
 export async function obtenerParaderosCercanos(
+  ubicacionCliente: Coordenadas
+): Promise<ParaderoCercano[]> {
+  const { data, error } = await supabase.functions.invoke<RespuestaDistanciasParaderos>(
+    "distancias-paraderos",
+    { body: ubicacionCliente }
+  );
+
+  if (error || !data) {
+    return obtenerParaderosCercanosLineaRecta(ubicacionCliente);
+  }
+
+  return data.paraderos.map((paradero) => ({
+    id: paradero.id,
+    nombre: paradero.nombre,
+    referencia: paradero.referencia,
+    distanciaMetros: paradero.caminando?.metros ?? paradero.distanciaLineaRecta,
+    segundosCaminando: paradero.caminando?.segundos ?? null,
+    distanciaMotoMetros: paradero.moto?.metros ?? null,
+    segundosMoto: paradero.moto?.segundos ?? null,
+  }));
+}
+
+async function obtenerParaderosCercanosLineaRecta(
   ubicacionCliente: Coordenadas,
   limite = 5
 ): Promise<ParaderoCercano[]> {
@@ -199,6 +243,9 @@ export async function obtenerParaderosCercanos(
     nombre: paradero.nombre,
     referencia: paradero.referencia,
     distanciaMetros: paradero.distancia_metros,
+    segundosCaminando: null,
+    distanciaMotoMetros: null,
+    segundosMoto: null,
   }));
 }
 

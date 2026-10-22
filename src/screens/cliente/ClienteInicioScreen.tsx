@@ -16,7 +16,11 @@ import { Icono, IconoFontAwesome6 } from "../../components/Icono";
 import TaxiCard from "../../components/TaxiCard";
 import Card from "../../components/Card";
 import ParadaItem from "../../components/ParadaItem";
-import { formatearDistancia, type TaxiCercano } from "../../modules/cliente/ubicacion";
+import {
+    formatearDistancia,
+    formatearTrayectoParadero,
+    type TaxiCercano,
+} from "../../modules/cliente/ubicacion";
 import type { ParaderoViaje } from "../../modules/cliente/types";
 import { useClienteInicio } from "./useClienteInicio";
 import SelectorViaje from "./SelectorViaje";
@@ -200,11 +204,14 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                                     nombre={paradero.nombre}
                                     descripcion={[
                                         paradero.referencia,
-                                        formatearDistancia(paradero.distanciaMetros),
+                                        formatearTrayectoParadero(paradero),
                                     ].filter(Boolean).join(" · ")}
                                     onPress={() => navigation.navigate("ClienteParadero", {
                                         paraderoId: paradero.id,
                                         distanciaMetros: paradero.distanciaMetros,
+                                        segundosCaminando: paradero.segundosCaminando,
+                                        distanciaMotoMetros: paradero.distanciaMotoMetros,
+                                        segundosMoto: paradero.segundosMoto,
                                     })}
                                 />
                             ))}
