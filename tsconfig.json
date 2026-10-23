@@ -2,5 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true
-  }
+  },
+  // Las Edge Functions corren en Deno y tienen sus propios tipos.
+  "exclude": ["node_modules", "supabase/functions"]
 }

@@ -1,11 +1,60 @@
 //roles disponibles para un usuario de XimbalGo
-export type Rol = 'cliente' | 'taxista' | 'administrador';
+import type { RolUsuario } from "../modules/usuarios/types";
+import type { OrigenViaje, ParaderoViaje } from "../modules/cliente/types";
+
+export type Rol = RolUsuario;
 
 //crear las rutas de las pantallas de Auntenticacion
 export type AuthStackParamList ={
     Bienvenida: undefined;
     InicioSesion: undefined;
     RecuperarContrasenia: undefined;
-    Registro: { rol: Rol };
+    RestablecerContrasenia: { recovery?: string } | undefined;
+    Registro: { rol: Exclude<Rol, 'administrador'> };
     SeleccionRol: undefined;
+};
+
+//crear las rutas de las pantallas de Cliente
+export type ClienteStackParamList ={
+    /** Desde el detalle de un paradero: lo selecciona como origen. */
+    ClienteInicio: { paraderoOrigen?: ParaderoViaje } | undefined;
+    ClienteReservaciones: undefined;
+    /** Todos los taxis disponibles; el origen y destino vienen de Inicio. */
+    ClienteTaxis: { origen?: OrigenViaje; destino?: string } | undefined;
+    /** Elegir asientos, fecha y hora en un taxi. */
+    ClienteReservar: {
+        vehiculoId: string;
+        origen: OrigenViaje;
+        destino: string;
+        distanciaMetros?: number;
+    };
+    /** Detalle de una reservación con el seguimiento del taxi. */
+    ClienteReserva: { reservaId: string };
+    /** Todos los paraderos activos. */
+    ClienteParaderos: undefined;
+    /** La distancia y los tiempos llegan desde los paraderos cercanos. */
+    ClienteParadero: {
+        paraderoId: string;
+        distanciaMetros?: number;
+        segundosCaminando?: number | null;
+        distanciaMotoMetros?: number | null;
+        segundosMoto?: number | null;
+    };
+    /** Desde «Buscar ruta»: muestra solo las rutas de ese origen y destino. */
+    ClienteRutas: { origen?: string; destino?: string } | undefined;
+    ClientePerfil: undefined;
+    ClienteNotificaciones: undefined;
+    ClienteSeguridad: undefined;
+    ClienteAyuda: undefined;
+};
+
+export type TaxistaStackParamList = {
+    TaxistaInicio: undefined;
+    TaxistaViajes: undefined;
+    TaxistaVehiculo: undefined;
+    TaxistaPerfil: undefined;
+};
+
+export type AdminStackParamList = {
+    AdminInicio: undefined;
 };

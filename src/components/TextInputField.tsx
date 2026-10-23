@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { TextInput, StyleSheet, View, Text, Pressable } from "react-native";
+import { TextInput, StyleSheet, View, Pressable } from "react-native";
+import type { TextInputProps } from "react-native";
 import Colors from "../theme/colors";
 import { Icono, NombreIcono } from "./Icono";
+import AppText from "./AppText";
 
 interface Prop{
     label?: string;
@@ -10,6 +12,9 @@ interface Prop{
     onChangeText?: (text: string) => void;
     secureTextEntry?: boolean;
     icono?: NombreIcono;
+    keyboardType?: TextInputProps["keyboardType"];
+    autoCapitalize?: TextInputProps["autoCapitalize"];
+    maxLength?: number;
 }
 
 const TextInputField: React.FC<Prop> = ({
@@ -19,6 +24,9 @@ const TextInputField: React.FC<Prop> = ({
     onChangeText,
     secureTextEntry,
     icono,
+    keyboardType,
+    autoCapitalize,
+    maxLength,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [mostrarContrasenia, setMostrarContrasenia] = useState(false);
@@ -27,7 +35,7 @@ const TextInputField: React.FC<Prop> = ({
 
     return(
         <View style={styles.contenedor}>
-            {label && <Text style={styles.label}>{label}</Text>}
+            {label && <AppText style={styles.label}>{label}</AppText>}
             <View style={[styles.input, isFocused && styles.inputFocused]}>
                 {icono && (
                     <Icono nombre={icono} tamanio={20} color={Colors.outline}/>
@@ -38,6 +46,9 @@ const TextInputField: React.FC<Prop> = ({
                      placeholder={placeholder}
                      onChangeText={onChangeText}
                      secureTextEntry={esContrasenia && !mostrarContrasenia}
+                     keyboardType={keyboardType}
+                     autoCapitalize={autoCapitalize}
+                     maxLength={maxLength}
                      onFocus={() => setIsFocused(true)}
                      onBlur={() => setIsFocused(false)}
 
@@ -46,7 +57,7 @@ const TextInputField: React.FC<Prop> = ({
                     <Pressable onPress={() => setMostrarContrasenia((anterior) => !anterior)}>
                         <Icono
                             nombre={mostrarContrasenia ? 'visibilityOff' : 'visibility'}
-                            tamanio={20}
+                            tamanio={24}
                             color={Colors.outline}
                         />
                     </Pressable>
@@ -62,9 +73,8 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     label:{
-        fontSize: 16,
+        fontSize: 17,
         marginBottom: 5,
-        color: Colors.dark,
     },
     input:{
         flexDirection: "row",
@@ -72,7 +82,7 @@ const styles = StyleSheet.create({
         gap: 8,
         borderWidth: 1,
         borderColor: Colors.outlineVariant,
-        borderRadius: 10,
+        borderRadius: 20,
         paddingHorizontal: 10,
         backgroundColor: Colors.onPrimary
     },
@@ -81,8 +91,9 @@ const styles = StyleSheet.create({
     },
     texto:{
         flex: 1,
-        fontSize: 12,
+        fontSize: 15,
         paddingVertical: 10,
+        color: Colors.onSurfaceVariant,
     },
 
 });

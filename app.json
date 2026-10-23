@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "XimbalGo",
+    "name": "Ximbal Go",
     "slug": "XimbalGo",
+    "scheme": "ximbalgo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,10 +13,10 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#000F20"
+        "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.XimbalGo"
+      "package": "com.carlosmay.XimbalGo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,7 +28,14 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 320,
           "resizeMode": "contain",
-          "backgroundColor": "#000F20"
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos."
         }
       ]
     ]
