@@ -32,8 +32,14 @@ export type ClienteStackParamList ={
     ClienteReserva: { reservaId: string };
     /** Todos los paraderos activos. */
     ClienteParaderos: undefined;
-    /** `distanciaMetros` llega desde los paraderos cercanos. */
-    ClienteParadero: { paraderoId: string; distanciaMetros?: number };
+    /** La distancia y los tiempos llegan desde los paraderos cercanos. */
+    ClienteParadero: {
+        paraderoId: string;
+        distanciaMetros?: number;
+        segundosCaminando?: number | null;
+        distanciaMotoMetros?: number | null;
+        segundosMoto?: number | null;
+    };
     /** Desde «Buscar ruta»: muestra solo las rutas de ese origen y destino. */
     ClienteRutas: { origen?: string; destino?: string } | undefined;
     ClientePerfil: undefined;

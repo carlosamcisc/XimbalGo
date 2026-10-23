@@ -12,7 +12,7 @@ import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
 import type { ClienteStackParamList } from "../../navigation/types";
 import { abrirEnMapa } from "../../infrastructure/location/location.service";
-import { formatearDistancia, type Coordenadas } from "../../modules/cliente/ubicacion";
+import { formatearTrayectoParadero, type Coordenadas } from "../../modules/cliente/ubicacion";
 import { useClienteParadero } from "./useClienteParaderos";
 import { mensajeError } from "./useClienteInicio";
 
@@ -42,7 +42,13 @@ const Fila = ({ icono, etiqueta, valor, detalle }: FilaProps) => (
 );
 
 const ClienteParaderoScreen = ({ navigation, route }: Props) => {
-  const { paraderoId, distanciaMetros } = route.params;
+  const {
+    paraderoId,
+    distanciaMetros,
+    segundosCaminando = null,
+    distanciaMotoMetros = null,
+    segundosMoto = null,
+  } = route.params;
   const { paradero, direccion, cargando, refrescando, error, cargar, refrescar } =
     useClienteParadero(paraderoId);
 
@@ -94,7 +100,12 @@ const ClienteParaderoScreen = ({ navigation, route }: Props) => {
 
     const { coordenadas } = paradero;
     const distancia = distanciaMetros !== undefined
-      ? `A ${formatearDistancia(distanciaMetros)} de ti`
+      ? `A ${formatearTrayectoParadero({
+          distanciaMetros,
+          segundosCaminando,
+          distanciaMotoMetros,
+          segundosMoto,
+        })} de ti`
       : null;
 
     return (

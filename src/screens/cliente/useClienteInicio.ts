@@ -49,7 +49,7 @@ export function useClienteInicio() {
 
       const [taxis, paraderosProximos] = await Promise.all([
         obtenerTaxisCercanos(punto, LIMITE_CERCANOS),
-        obtenerParaderosCercanos(punto, LIMITE_CERCANOS),
+        obtenerParaderosCercanos(punto),
       ]);
       if (solicitud !== solicitudCercanos.current) {
         return;
