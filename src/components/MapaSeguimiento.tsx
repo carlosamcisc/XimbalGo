@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, type LatLng } from "react-native-maps";
+import { WebView } from "react-native-webview";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 import { Icono } from "./Icono";
@@ -19,192 +19,49 @@ interface Props {
 }
 
 type TipoMarcador = "taxi" | "punto" | "paradero";
-
-// Mérida, mientras no hay marcadores.
-const REGION_INICIAL = {
-  latitude: 20.97,
-  longitude: -89.62,
-  latitudeDelta: 0.15,
-  longitudeDelta: 0.15,
+const COLORES: Record<TipoMarcador, string> = {
+  taxi: "#0066FF",
+  punto: "#16A34A",
+  paradero: "#0F2D5B",
 };
-const ZOOM_UN_PUNTO = 16;
-const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-const aLatLng = ({ latitud, longitud }: Coordenadas): LatLng => ({
-  latitude: latitud,
-  longitude: longitud,
-});
-
-/** Círculo de color con borde blanco, igual que en la leyenda. */
-function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
-  // Android dibuja la vista del marcador como imagen: se deja de redibujar
-  // cuando ya se pintó, para que mover el taxi no cueste.
-  const [redibujar, setRedibujar] = useState(true);
-  useEffect(() => {
-    const temporizador = setTimeout(() => setRedibujar(false), 500);
-    return () => clearTimeout(temporizador);
-  }, []);
-
-  return (
-    <Marker
-      coordinate={aLatLng(dato.coordenadas)}
-      title={dato.titulo}
-      anchor={{ x: 0.5, y: 0.5 }}
-      zIndex={tipo === "taxi" ? 1000 : 0}
-      tracksViewChanges={redibujar}
-    >
-      <View style={[styles.marcador, styles[tipo]]}>
-        {tipo === "taxi" && <Icono nombre="localTaxi" tamanio={18} color={Colors.white} />}
-      </View>
-    </Marker>
-  );
-}
-
-/** Mapa de Google con el taxi, el punto de abordaje y el paradero cercano. */
+/** Mapa Leaflet en WebView: funciona en Expo Go sin SDK cartográfico nativo. */
 export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props) {
-  const mapa = useRef<MapView>(null);
-  const [mapaListo, setMapaListo] = useState(false);
-  const centrado = useRef(false);
-
-  const puntos = [paradero, punto, taxi]
-    .filter((dato): dato is MarcadorMapa => dato !== null)
-    .map((dato) => aLatLng(dato.coordenadas));
-
-  const centrar = () => {
-    if (puntos.length === 1) {
-      mapa.current?.animateCamera({ center: puntos[0], zoom: ZOOM_UN_PUNTO });
-    } else if (puntos.length > 1) {
-      mapa.current?.fitToCoordinates(puntos, { edgePadding: MARGEN_ENCUADRE, animated: true });
-    }
-  };
-
-  // Solo se encuadra la primera vez: después el cliente mueve el mapa.
-  useEffect(() => {
-    if (mapaListo && !centrado.current && puntos.length > 0) {
-      centrado.current = true;
-      centrar();
-    }
-  });
+  const webView = useRef<WebView<{}>>(null);
+  const [listo, setListo] = useState(false);
+  const markers = useMemo(() => [
+    ...([paradero, punto, taxi] as const).flatMap((dato, index) => dato ? [{
+      lat: dato.coordenadas.latitud,
+      lon: dato.coordenadas.longitud,
+      title: dato.titulo.replace(/[&<>"']/g, ""),
+      color: COLORES[(["paradero", "punto", "taxi"] as const)[index]],
+      kind: (["paradero", "punto", "taxi"] as const)[index],
+    }] : []),
+  ], [taxi, punto, paradero]);
+  const mapHtml = useMemo(() => {
+    const data = JSON.stringify(markers);
+    return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}html,body,#map{height:100%;margin:0} .dot{border:3px solid white;border-radius:50%;box-shadow:0 2px 5px #5558}.taxi{width:34px;height:34px}.punto{width:22px;height:22px}.paradero{width:18px;height:18px}</style></head><body><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>const pts=${data};const map=L.map('map',{zoomControl:false}).setView([20.97,-89.62],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);const pins=pts.map(p=>L.marker([p.lat,p.lon],{icon:L.divIcon({className:'',html:'<div class="dot '+p.kind+'" style="background:'+p.color+'"></div>',iconSize:[p.kind==='taxi'?34:p.kind==='punto'?22:18,p.kind==='taxi'?34:p.kind==='punto'?22:18],iconAnchor:[p.kind==='taxi'?17:p.kind==='punto'?11:9,p.kind==='taxi'?17:p.kind==='punto'?11:9]})}).bindPopup(p.title).addTo(map));if(pins.length===1)map.setView(pins[0].getLatLng(),16);else if(pins.length>1)map.fitBounds(L.featureGroup(pins).getBounds().pad(.25));window.centerMap=()=>{if(pins.length===1)map.setView(pins[0].getLatLng(),16);else if(pins.length>1)map.fitBounds(L.featureGroup(pins).getBounds().pad(.25))};</script></body></html>`;
+  }, [markers]);
+  const centrar = () => webView.current?.injectJavaScript("window.centerMap&&window.centerMap();true;");
 
   return (
     <View style={[styles.contenedor, style]}>
-      <MapView
-        ref={mapa}
-        provider={PROVIDER_GOOGLE}
-        style={styles.mapa}
-        initialRegion={REGION_INICIAL}
-        onMapReady={() => setMapaListo(true)}
-        toolbarEnabled={false}
-        showsMyLocationButton={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
-      >
-        {paradero && <Marcador tipo="paradero" dato={paradero} />}
-        {punto && <Marcador tipo="punto" dato={punto} />}
-        {taxi && <Marcador tipo="taxi" dato={taxi} />}
-      </MapView>
-      <Pressable
-        onPress={centrar}
-        accessibilityRole="button"
-        accessibilityLabel="Centrar el mapa"
-        style={({ pressed }) => [styles.centrar, pressed && styles.centrarPresionado]}
-      >
-        <Icono nombre="myLocation" tamanio={22} color={Colors.primary} />
-      </Pressable>
+      <WebView ref={webView} source={{ html: mapHtml }} style={styles.mapa} originWhitelist={["*"]} javaScriptEnabled domStorageEnabled onLoadEnd={() => setListo(true)} />
+      {listo && <Pressable onPress={centrar} accessibilityRole="button" accessibilityLabel="Centrar el mapa" style={({ pressed }) => [styles.centrar, pressed && styles.centrarPresionado]}><Icono nombre="myLocation" tamanio={22} color={Colors.primary} /></Pressable>}
       <View style={styles.leyenda} pointerEvents="none">
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.primary }]} />
-          <AppText style={styles.textoLeyenda}>Taxi</AppText>
-        </View>
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.success }]} />
-          <AppText style={styles.textoLeyenda}>Abordaje</AppText>
-        </View>
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.brandDeep }]} />
-          <AppText style={styles.textoLeyenda}>Paradero</AppText>
-        </View>
+        {([[Colors.primary, "Taxi"], [Colors.success, "Abordaje"], [Colors.brandDeep, "Paradero"]] as const).map(([color, label]) => <View key={label} style={styles.itemLeyenda}><View style={[styles.puntoLeyenda, { backgroundColor: color }]} /><AppText style={styles.textoLeyenda}>{label}</AppText></View>)}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedor: {
-    height: 280,
-    borderRadius: 22,
-    overflow: "hidden",
-    backgroundColor: Colors.surfaceContainer,
-  },
-  mapa: {
-    flex: 1,
-  },
-  marcador: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: Colors.white,
-  },
-  taxi: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: Colors.primary,
-  },
-  punto: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: Colors.success,
-  },
-  paradero: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.brandDeep,
-  },
-  centrar: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.white,
-    elevation: 3,
-    shadowColor: Colors.black,
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  centrarPresionado: {
-    backgroundColor: Colors.primaryContainer,
-  },
-  leyenda: {
-    position: "absolute",
-    left: 10,
-    top: 10,
-    flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.92)",
-  },
-  itemLeyenda: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  puntoLeyenda: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  textoLeyenda: {
-    fontSize: 11,
-    color: Colors.brandText,
-  },
+  contenedor: { height: 280, borderRadius: 22, overflow: "hidden", backgroundColor: Colors.surfaceContainer },
+  mapa: { flex: 1 },
+  centrar: { position: "absolute", top: 10, right: 10, width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: Colors.white, elevation: 3, shadowColor: Colors.black, shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+  centrarPresionado: { backgroundColor: Colors.primaryContainer },
+  leyenda: { position: "absolute", left: 10, top: 10, flexDirection: "row", gap: 10, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.92)" },
+  itemLeyenda: { flexDirection: "row", alignItems: "center", gap: 4 },
+  puntoLeyenda: { width: 10, height: 10, borderRadius: 5 },
+  textoLeyenda: { fontSize: 11, color: Colors.brandText },
 });

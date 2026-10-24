@@ -10,14 +10,6 @@
     "ios": {
       "supportsTablet": true
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#FFFFFF"
-      },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.carlosmay.XimbalGo"
-    },
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -31,7 +23,6 @@
           "backgroundColor": "#FFFFFF"
         }
       ],
-      "expo-font",
       [
         "expo-location",
         {

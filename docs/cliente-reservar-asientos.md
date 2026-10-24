@@ -80,7 +80,7 @@ Migración `20261020120000_reservar_varios_asientos.sql` (aplicada al proyecto e
 
 ## Mapa
 
-El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGLE}`); antes era Leaflet en un WebView. Los marcadores son vistas propias con los colores de la leyenda y se mueven al cambiar las props, sin recargar el mapa. Se encuadra solo la primera vez que hay marcadores; el botón vuelve a encuadrar. La configuración de la API key está en [README.md](../README.md#google-maps).
+El mapa usa Leaflet y teselas de OpenStreetMap dentro de WebView para funcionar en Expo Go sin código nativo. Muestra taxi, abordaje y paradero; los marcadores se actualizan con los cambios recibidos y el botón vuelve a encuadrar. Requiere conexión a internet.
 
 ## Arquitectura y archivos
 
@@ -95,7 +95,7 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
 | `src/screens/cliente/mensajeError.ts` | `mensajeError`; `useClienteInicio` lo reexporta para no cambiar las importaciones existentes. |
 | `src/components/SelectorAsientos.tsx` | Botones − y + para la cantidad. |
 | `src/components/SelectorFechaViaje.tsx` | «Lo antes posible» o día y hora. |
-| `src/components/MapaSeguimiento.tsx` | Mapa de Google (`react-native-maps`). |
+| `src/components/MapaSeguimiento.tsx` | Mapa Leaflet en WebView (`react-native-webview`). |
 | `src/components/TaxiCard.tsx` | Línea opcional `detalle`. |
 | `src/components/ReservaCard.tsx`, `ReservaTaxistaCard.tsx`, `src/screens/taxista/DetalleReservaTaxista.tsx` | Cantidad de asientos y fecha programada. |
 | `src/modules/cliente/seguimiento.ts` | Tipos del seguimiento, distancia y estimación de llegada. |
@@ -143,4 +143,4 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
   - `obtener_reservas_taxista` devuelve `cantidad_asientos = 2` y `numeros_asientos = {1,2}`.
   - Otro usuario no puede ver el seguimiento de la reserva.
 - Después se aplicó con `db push` y se regeneraron los tipos.
-- **No se probó en un dispositivo**: falta compilar el cliente nativo con `react-native-maps` y la key de Google Maps.
+- **No se probó en un dispositivo**: validar el mapa y el permiso de ubicación desde Expo Go.

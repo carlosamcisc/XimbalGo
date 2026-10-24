@@ -96,7 +96,7 @@ La migración `20261008210000_busqueda_cercana_cliente.sql` se aplicó al proyec
 
    La migración de esta rama ya se aplicó al proyecto usado durante la implementación.
 4. Debido a que `expo-location` contiene código nativo, crea/actualiza el cliente nativo después de instalar o cambiar esta dependencia. Expo configura el permiso de iOS mediante el plugin y los permisos de primer plano de Android en la configuración de la aplicación.
-5. Inicia la aplicación con `npm run android` o `npx expo run:android`.
+5. Inicia la app con `npx expo start` y abre el proyecto desde Expo Go.
 
 ## Límites actuales
 

@@ -39,7 +39,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
-| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android) |
+| Mapa | Leaflet + OpenStreetMap dentro de `react-native-webview` (compatible con Expo Go) |
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
@@ -48,10 +48,11 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 ## Requisitos
 
 - Node.js y npm.
-- Android Studio con un emulador o un dispositivo Android con depuración USB.
+- Expo Go instalado en el iPhone o teléfono Android.
+- Node.js 22.13 o superior (requerido por Expo SDK 57).
 - Un proyecto de Supabase con las migraciones de [supabase/migrations/](./supabase/migrations/) aplicadas.
 
-El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie), por lo que **no funciona en Expo Go**: se ejecuta como build de desarrollo.
+El proyecto usa Expo Managed y está preparado para Expo Go. No requiere Xcode, macOS, Android Studio ni compilar código nativo.
 
 ## Configuración
 
@@ -63,40 +64,36 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    ```env
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-   GOOGLE_MAPS_ANDROID_API_KEY=
    ```
-3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
-4. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
-5. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
+3. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
+4. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
    ```bash
    npx supabase migration list
    npx supabase db push
    ```
 
-### Google Maps
+### Mapa y ubicación
 
-El mapa usa Google Maps nativo con `react-native-maps` y solo se compila para Android.
-
-1. En Google Cloud, en el proyecto de la app, habilita **Maps SDK for Android**.
-2. En *Credenciales*, restringe la API key:
-   - **Restricción de aplicación**: *Apps para Android*, con el paquete `com.carlosmay.XimbalGo` y la huella SHA-1 de cada keystore que firme la app. La del keystore de debug (también firma el release mientras no haya uno propio) se obtiene con `cd android && ./gradlew signingReport`.
-   - **Restricción de API**: solo *Maps SDK for Android*.
-3. Pon la key en `GOOGLE_MAPS_ANDROID_API_KEY` del `.env`. [app.config.ts](./app.config.ts) la lee al compilar y el plugin de `react-native-maps` la escribe en el `AndroidManifest.xml`; no lleva el prefijo `EXPO_PUBLIC_` porque la app no la usa en JavaScript.
-4. Regenera la carpeta nativa y compila: `npx expo prebuild --platform android --clean` y `npm run android`.
-
-Si el mapa sale gris, revisa `adb logcat | grep -i "maps"`: casi siempre es la SHA-1 o el paquete de la restricción.
+El mapa nativo de Google (`react-native-maps`) y su API key Android se reemplazaron por Leaflet y teselas de OpenStreetMap servidos dentro de `react-native-webview`, que Expo Go incluye para iOS y Android. Conserva taxi, abordaje, paradero, centrado y actualización de posiciones. Se requiere conexión a internet para cargar Leaflet y las teselas. `expo-location` sigue pidiendo permiso de ubicación en primer plano; el seguimiento del taxista continúa mientras la app está abierta. No se solicita ubicación en segundo plano.
 
 ## Ejecución del proyecto
 
 | Acción | Comando |
 |---|---|
-| Compilar e instalar el build de desarrollo en Android | `npm run android` (equivale a `npx expo run:android`) |
-| Iniciar solo el servidor de Metro (con el build ya instalado) | `npm start` |
-| Generar e instalar el APK de release | `npx expo run:android --variant release` |
+| Iniciar Expo Go | `npx expo start` |
+| Abrir Expo Go en Android conectado | `npx expo start --android` |
+| Abrir simulador iOS (requiere Mac) | `npx expo start --ios` |
 | Verificar tipos | `npm run typecheck` |
-| Regenerar la carpeta nativa `android/` | `npx expo prebuild --platform android --clean` |
 
-Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). La carpeta `android/` no se versiona.
+### Abrir en iPhone con Expo Go
+
+1. Instala Expo Go desde App Store en el iPhone y conecta el iPhone y la computadora a la misma red Wi-Fi.
+2. Instala dependencias (`npm install`) y configura `.env` con las variables de Supabase indicadas arriba.
+3. Ejecuta `npx expo start` en la carpeta del proyecto.
+4. Escanea con la cámara del iPhone el QR que muestra Expo. Confirma abrirlo en Expo Go y acepta el permiso de ubicación cuando la app lo solicite.
+5. Si la red local bloquea el QR, ejecuta `npx expo start --tunnel` y escanea el nuevo QR.
+
+En Android, instala Expo Go desde Google Play y sigue los mismos pasos; también puedes usar `npx expo start --android` para abrirlo en un dispositivo conectado.
 
 ## Arquitectura del proyecto
 
