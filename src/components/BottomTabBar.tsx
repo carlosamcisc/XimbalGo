@@ -11,12 +11,13 @@ export interface TabItem<T extends string> {
   icono: NombreIcono;
 }
 
-export type BottomTabId = 'inicio' | 'rutas' | 'reservaciones';
+export type BottomTabId = 'inicio' | 'rutas' | 'reservaciones' | 'yo';
 
 export const TABS_CLIENTE: readonly TabItem<BottomTabId>[] = [
   { id: 'inicio', label: 'Inicio', icono: 'home' },
   { id: 'rutas', label: 'Rutas', icono: 'map' },
-  { id: 'reservaciones', label: 'Reservaciones', icono: 'bookMarks' }
+  { id: 'reservaciones', label: 'Reservaciones', icono: 'bookMarks' },
+  { id: 'yo', label: 'Yo', icono: 'locationHistory' },
 ];
 
 export type TaxistaTabId = 'inicio' | 'viajes' | 'vehiculo' | 'perfil';

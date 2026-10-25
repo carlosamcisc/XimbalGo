@@ -23,6 +23,7 @@ import type {
   ResumenViajesCliente,
 } from "../../modules/cliente/types";
 import { mensajeError } from "./useClienteInicio";
+import { useCompartirUbicacion } from "./useCompartirUbicacion";
 
 // Una reserva y su notificación cambian casi al mismo tiempo.
 const ESPERA_TIEMPO_REAL_MS = 500;
@@ -38,6 +39,7 @@ function useClienteEstado() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ubicacionCompartida = useCompartirUbicacion(clienteId);
 
   // Descarta respuestas de solicitudes que ya fueron reemplazadas.
   const solicitud = useRef(0);
@@ -159,6 +161,7 @@ function useClienteEstado() {
     refrescar,
     guardarPerfil,
     marcarLeidas,
+    ubicacionCompartida,
   };
 }
 

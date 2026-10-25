@@ -46,6 +46,7 @@ export type ClienteStackParamList ={
     ClienteNotificaciones: undefined;
     ClienteSeguridad: undefined;
     ClienteAyuda: undefined;
+    ClienteYo: undefined;
 };
 
 export type TaxistaStackParamList = {

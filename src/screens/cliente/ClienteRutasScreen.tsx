@@ -127,6 +127,10 @@ const ClienteRutasScreen = ({ navigation, route }: Props) => {
             case "reservaciones":
                 navigation.navigate("ClienteReservaciones");
                 break;
+            case "yo":
+                navigation.navigate("ClienteYo");
+                break;
+
         }
     };
 
@@ -162,8 +166,8 @@ const ClienteRutasScreen = ({ navigation, route }: Props) => {
                 : textoTrayecto && filtro === "todas"
                     ? `No hay rutas para ${textoTrayecto}.`
                     : filtro === "enServicio"
-                    ? "Ahora no hay taxistas en servicio en ninguna ruta."
-                    : "Todavía no hay rutas disponibles.";
+                        ? "Ahora no hay taxistas en servicio en ninguna ruta."
+                        : "Todavía no hay rutas disponibles.";
             return (
                 <Card>
                     <View style={styles.estadoLista}>
