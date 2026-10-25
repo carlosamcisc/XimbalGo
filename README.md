@@ -35,7 +35,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 
 | Área | Herramienta |
 |---|---|
-| Framework | Expo SDK 57, React Native 0.86, React 19, TypeScript |
+| Framework | Expo SDK 58, React Native 0.88, React 19.3, TypeScript |
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
@@ -43,13 +43,13 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
-> Expo cambió en las versiones recientes. Antes de escribir código revisa la documentación de la versión usada: https://docs.expo.dev/versions/v57.0.0/
+> Expo cambió en las versiones recientes. Antes de escribir código revisa la documentación de la versión usada: https://docs.expo.dev/versions/v58.0.0/
 
 ## Requisitos
 
 - Node.js y npm.
 - Expo Go instalado en el iPhone o teléfono Android.
-- Node.js 22.13 o superior (requerido por Expo SDK 57).
+- Node.js 22.13 o superior (requerido por Expo SDK 58).
 - Un proyecto de Supabase con las migraciones de [supabase/migrations/](./supabase/migrations/) aplicadas.
 
 El proyecto usa Expo Managed y está preparado para Expo Go. No requiere Xcode, macOS, Android Studio ni compilar código nativo.

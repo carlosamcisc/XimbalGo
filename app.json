@@ -28,7 +28,9 @@
         {
           "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-status-bar"
     ]
   }
 }

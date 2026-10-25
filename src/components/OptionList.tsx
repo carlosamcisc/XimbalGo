@@ -23,7 +23,7 @@ function OptionList<T extends Option>({ data, onSelect, onClose, emptyText, styl
       style={style}
       keyExtractor={(item) => item.id}
       ListEmptyComponent={
-        emptyText ? <AppText style={styles.emptyText}>{emptyText}</AppText> : null
+        emptyText ? <AppText style={styles.emptyText}>{emptyText}</AppText> : undefined
       }
       renderItem={({ item }) => (
         <Pressable
