@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Ubicación compartida · Xímbal Go</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <style>
+    :root {
+      --primary: #123A8C;
+      --secondary: #2F80F7;
+      --brand-deep: #0F2D5B;
+      --brand-text: #263746;
+      --success: #2E9E5B;
+      --warning: #B26A00;
+      --error: #BA1A1A;
+      --surface: #FFFFFF;
+      --surface-muted: #F3F6F8;
+      --outline: #73777F;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--brand-text);
+      background: var(--surface-muted);
+    }
+    header {
+      background: var(--primary);
+      color: #FFFFFF;
+      padding: 14px 16px;
+    }
+    header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+    header p { margin: 2px 0 0; font-size: 13px; opacity: 0.85; }
+    #mapa { flex: 1; min-height: 240px; }
+    #panel {
+      background: var(--surface);
+      padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+      box-shadow: 0 -4px 12px rgba(15, 45, 91, 0.08);
+      display: grid;
+      gap: 6px;
+    }
+    #estado { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--brand-deep); }
+    #punto { width: 10px; height: 10px; border-radius: 50%; background: var(--outline); flex: none; }
+    #punto.vivo { background: var(--success); animation: latido 1.6s infinite; }
+    #punto.atrasado { background: var(--warning); }
+    #punto.terminado { background: var(--error); }
+    @keyframes latido { 50% { opacity: 0.35; } }
+    #detalle { margin: 0; font-size: 14px; line-height: 1.4; }
+    #abrir {
+      justify-self: start;
+      margin-top: 4px;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    #abrir[hidden] { display: none; }
+    .marcador {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--secondary);
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="titulo">Ubicación compartida</h1>
+    <p>Xímbal Go · se actualiza sola</p>
+  </header>
+  <div id="mapa" role="region" aria-label="Mapa"></div>
+  <section id="panel" aria-live="polite">
+    <div id="estado"><span id="punto"></span><span id="textoEstado">Cargando...</span></div>
+    <p id="detalle"></p>
+    <a id="abrir" target="_blank" rel="noopener" hidden>Abrir en Google Maps</a>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+    // El flujo de GitHub Pages reemplaza estos valores (ver
+    // docs/cliente-compartir-ubicacion.md). La key publicable puede ser
+    // pública: la RPC solo devuelve la ubicación con el id del enlace.
+    const SUPABASE_URL = "__SUPABASE_URL__";
+    const SUPABASE_PUBLISHABLE_KEY = "__SUPABASE_PUBLISHABLE_KEY__";
+
+    const INTERVALO_CONSULTA_MS = 10_000;
+    // La app reenvía la ubicación cada minuto aunque el cliente no se mueva.
+    const MINUTOS_ATRASADA = 3;
+    const ZOOM = 16;
+
+    const id = new URLSearchParams(location.search).get("id");
+    const $ = (selector) => document.querySelector(selector);
+
+    const mapa = L.map("mapa", { zoomControl: true }).setView([20.97, -89.62], 12);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapa);
+
+    let marcador = null;
+    // Se sigue a la persona hasta que el familiar mueve el mapa.
+    let seguir = true;
+    mapa.on("dragstart", () => { seguir = false; });
+
+    let temporizador = null;
+    let ultima = null;
+    // Enlace inválido, vencido o detenido: ya no se consulta.
+    let terminado = false;
+
+    const hora = (fecha) =>
+      new Date(fecha).toLocaleTimeString("es-MX", { hour: "numeric", minute: "2-digit" });
+
+    function antiguedad(fecha) {
+      const minutos = Math.floor((Date.now() - new Date(fecha).getTime()) / 60_000);
+      if (minutos < 1) return "hace un momento";
+      if (minutos < 60) return `hace ${minutos} min`;
+      return `hace ${Math.floor(minutos / 60)} h ${minutos % 60} min`;
+    }
+
+    function mostrarEstado(clase, texto, detalle) {
+      $("#punto").className = clase;
+      $("#textoEstado").textContent = texto;
+      $("#detalle").textContent = detalle;
+    }
+
+    function terminar(clase, texto, detalle) {
+      terminado = true;
+      clearTimeout(temporizador);
+      temporizador = null;
+      mostrarEstado(clase, texto, detalle);
+      $("#abrir").hidden = true;
+    }
+
+    function pintar(datos) {
+      ultima = datos;
+      const nombre = datos.nombre || "Tu familiar";
+      $("#titulo").textContent = `Ubicación de ${nombre}`;
+      document.title = `Ubicación de ${nombre} · Xímbal Go`;
+
+      if (!datos.activa) {
+        terminar("terminado", `${nombre} dejó de compartir su ubicación`,
+          `El enlace venció o se detuvo a las ${hora(datos.expira_en)}.`);
+        return false;
+      }
+
+      const posicion = [datos.latitud, datos.longitud];
+      if (!marcador) {
+        marcador = L.marker(posicion, {
+          icon: L.divIcon({ className: "", html: '<div class="marcador"></div>', iconSize: [22, 22] }),
+          title: nombre,
+        }).addTo(mapa);
+        mapa.setView(posicion, ZOOM);
+      } else {
+        marcador.setLatLng(posicion);
+        if (seguir) mapa.panTo(posicion);
+      }
+
+      const minutos = (Date.now() - new Date(datos.ubicacion_actualizada_en).getTime()) / 60_000;
+      const atrasada = minutos >= MINUTOS_ATRASADA;
+      mostrarEstado(
+        atrasada ? "atrasado" : "vivo",
+        atrasada ? "Sin señal reciente" : "En tiempo real",
+        `Actualizada ${antiguedad(datos.ubicacion_actualizada_en)} · comparte hasta las ${hora(datos.expira_en)}.` +
+          (atrasada ? ` Puede que ${nombre} haya cerrado la app o no tenga internet.` : "")
+      );
+      const abrir = $("#abrir");
+      abrir.href = `https://www.google.com/maps/search/?api=1&query=${datos.latitud},${datos.longitud}`;
+      abrir.hidden = false;
+      return true;
+    }
+
+    async function consultar() {
+      temporizador = null;
+      try {
+        const respuesta = await fetch(`${SUPABASE_URL}/rest/v1/rpc/obtener_ubicacion_compartida`, {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+            // El proyecto expone primero el esquema `api`: sin esto, la RPC no se encuentra.
+            "Content-Profile": "public",
+          },
+          body: JSON.stringify({ p_id: id }),
+        });
+        if (respuesta.status === 400 || respuesta.status === 404) {
+          // Un id que no es uuid llega como 400.
+          terminar("terminado", "Enlace no válido", "Pide a tu familiar que te envíe el enlace otra vez.");
+          return;
+        }
+        if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+        const [datos] = await respuesta.json();
+        if (!datos) {
+          terminar("terminado", "Enlace no válido", "Pide a tu familiar que te envíe el enlace otra vez.");
+          return;
+        }
+        if (!pintar(datos)) return;
+      } catch (error) {
+        console.error(error);
+        if (ultima?.activa) {
+          $("#detalle").textContent =
+            `Sin conexión. Última ubicación ${antiguedad(ultima.ubicacion_actualizada_en)}; reintentando...`;
+        } else {
+          mostrarEstado("", "Sin conexión", "Reintentando...");
+        }
+      }
+      programar();
+    }
+
+    function programar() {
+      if (!terminado && !document.hidden && temporizador === null) {
+        temporizador = setTimeout(consultar, INTERVALO_CONSULTA_MS);
+      }
+    }
+
+    // En otra pestaña no se consulta; al volver, de inmediato.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        clearTimeout(temporizador);
+        temporizador = null;
+      } else if (!terminado) {
+        clearTimeout(temporizador);
+        consultar();
+      }
+    });
+
+    if (!id) {
+      terminar("terminado", "Enlace no válido", "Abre el enlace completo que te enviaron.");
+    } else {
+      consultar();
+    }
+  </script>
+</body>
+</html>
