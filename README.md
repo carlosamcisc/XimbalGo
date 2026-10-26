@@ -40,7 +40,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
-| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android) |
+| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android e iOS; Apple Maps en iOS si no hay key) |
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
@@ -50,6 +50,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 
 - Node.js y npm.
 - Android Studio con un emulador o un dispositivo Android con depuración USB.
+- Para iOS: una Mac con Xcode, o una cuenta de Expo para compilar en la nube con EAS Build (ver [iOS](#ios)).
 - Un proyecto de Supabase con las migraciones de [supabase/migrations/](./supabase/migrations/) aplicadas.
 
 El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie), por lo que **no funciona en Expo Go**: se ejecuta como build de desarrollo.
@@ -65,6 +66,7 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
    GOOGLE_MAPS_ANDROID_API_KEY=
+   GOOGLE_MAPS_IOS_API_KEY=
    EXPO_PUBLIC_URL_UBICACION_COMPARTIDA=
    ```
 3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
@@ -77,7 +79,9 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
 
 ### Google Maps
 
-El mapa usa Google Maps nativo con `react-native-maps` y solo se compila para Android.
+El mapa usa Google Maps nativo con `react-native-maps`. Cada plataforma lleva su propia key porque Google las restringe distinto.
+
+#### Android
 
 1. En Google Cloud, en el proyecto de la app, habilita **Maps SDK for Android**.
 2. En *Credenciales*, restringe la API key:
@@ -88,17 +92,47 @@ El mapa usa Google Maps nativo con `react-native-maps` y solo se compila para An
 
 Si el mapa sale gris, revisa `adb logcat | grep -i "maps"`: casi siempre es la SHA-1 o el paquete de la restricción.
 
+#### iOS
+
+1. En el mismo proyecto de Google Cloud, habilita **Maps SDK for iOS**.
+2. Crea otra API key con:
+   - **Restricción de aplicación**: *Apps para iOS*, con el bundle identifier `com.carlosmay.XimbalGo`.
+   - **Restricción de API**: solo *Maps SDK for iOS*.
+3. Ponla en `GOOGLE_MAPS_IOS_API_KEY`. El plugin de `react-native-maps` la escribe en el `Info.plist` e instala el SDK de Google Maps en el `Podfile`.
+
+Sin `GOOGLE_MAPS_IOS_API_KEY` la app también compila: en iOS el mapa usa Apple Maps. [app.config.ts](./app.config.ts) avisa a [MapaSeguimiento.tsx](./src/components/MapaSeguimiento.tsx) con `extra.googleMapsIos` cuál proveedor quedó instalado, porque pedir Google Maps sin su SDK hace fallar el mapa.
+
+### iOS
+
+En Windows no se puede compilar para iOS de forma local (`npm run ios` requiere macOS y Xcode). Se compila en la nube con EAS Build usando los perfiles de [eas.json](./eas.json):
+
+1. Instala EAS CLI e inicia sesión con la cuenta de Expo: `npm install -g eas-cli` y `eas login`.
+2. Enlaza el proyecto la primera vez: `eas init`.
+3. Sube las variables del `.env` a EAS, porque el `.env` no se sube al repositorio ni a EAS. Para cada variable y cada ambiente (`development`, `preview`, `production`): `eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value ... --environment development`. Las `EXPO_PUBLIC_*` pueden ser visibilidad *plaintext*; las keys de Maps, *sensitive*.
+4. Compila para el simulador de iOS (no requiere cuenta de Apple Developer): `eas build -p ios --profile development`. El simulador solo corre en macOS: en una Mac, instálalo con `eas build:run -p ios` o arrastra el `.app` del `.tar.gz` descargado al simulador.
+
+Para instalar en un iPhone físico o publicar en App Store se necesita una cuenta de Apple Developer: se registra el dispositivo con `eas device:create` y se compila con un perfil sin `"simulator": true`.
+
+Detalles de iOS que ya resuelve el código:
+
+- **Toasts**: iOS no tiene `ToastAndroid`. [ToastMessaje.tsx](./src/components/ToastMessaje.tsx) dibuja su propio toast con `ToastHost` (montado en [App.tsx](./App.tsx)) dentro de un `FullWindowOverlay`, para que se vea aunque haya un `Modal` abierto. Usa siempre `ToastMessage.show`, nunca `ToastAndroid`.
+- **Sombras**: `elevation` solo funciona en Android. Junto a `elevation` van `shadowColor`, `shadowOpacity`, `shadowRadius` y `shadowOffset`.
+- **Fuentes**: con Inter el peso va en `fontFamily` (`InterMedium`, `InterSemiBold`, `InterBold`) o en la prop `weight` de `AppText`, nunca en `fontWeight`: iOS cambia a la fuente del sistema si se combinan.
+- **Ícono**: [assets/app-icon.png](./assets/app-icon.png) es cuadrado (1024×1024) y sin transparencia, como lo exige iOS.
+
 ## Ejecución del proyecto
 
 | Acción | Comando |
 |---|---|
 | Compilar e instalar el build de desarrollo en Android | `npm run android` (equivale a `npx expo run:android`) |
+| Compilar el build de desarrollo para el simulador de iOS (en la nube) | `eas build -p ios --profile development` |
+| Compilar e instalar en iOS desde una Mac | `npm run ios` (equivale a `npx expo run:ios`) |
 | Iniciar solo el servidor de Metro (con el build ya instalado) | `npm start` |
 | Generar e instalar el APK de release | `npx expo run:android --variant release` |
 | Verificar tipos | `npm run typecheck` |
 | Regenerar la carpeta nativa `android/` | `npx expo prebuild --platform android --clean` |
 
-Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). La carpeta `android/` no se versiona.
+Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). Las carpetas `android/` e `ios/` no se versionan.
 
 ## Arquitectura del proyecto
 
