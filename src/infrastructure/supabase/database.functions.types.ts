@@ -128,6 +128,38 @@ type NearbyFunctions = {
     };
     Returns: undefined;
   };
+  iniciar_ubicacion_compartida: {
+    Args: {
+      p_latitud: number;
+      p_longitud: number;
+      p_minutos: number;
+    };
+    Returns: {
+      id: string;
+      expira_en: string;
+    }[];
+  };
+  actualizar_ubicacion_compartida: {
+    Args: {
+      p_id: string;
+      p_latitud: number;
+      p_longitud: number;
+    };
+    Returns: boolean;
+  };
+  detener_ubicacion_compartida: {
+    Args: {
+      p_id: string;
+    };
+    Returns: undefined;
+  };
+  obtener_ubicacion_compartida_activa: {
+    Args: never;
+    Returns: {
+      id: string;
+      expira_en: string;
+    }[];
+  };
 };
 
 type PublicSchema = Database["public"];

@@ -11,14 +11,24 @@ export interface MarcadorMapa {
   titulo: string;
 }
 
+// La leyenda solo muestra los marcadores que la pantalla pasa, aunque sean null.
 interface Props {
-  taxi: MarcadorMapa | null;
-  punto: MarcadorMapa | null;
-  paradero: MarcadorMapa | null;
+  taxi?: MarcadorMapa | null;
+  punto?: MarcadorMapa | null;
+  paradero?: MarcadorMapa | null;
+  /** El propio cliente. */
+  cliente?: MarcadorMapa | null;
   style?: StyleProp<ViewStyle>;
 }
 
-type TipoMarcador = "taxi" | "punto" | "paradero";
+type TipoMarcador = "taxi" | "punto" | "paradero" | "cliente";
+
+const LEYENDA: { tipo: TipoMarcador; etiqueta: string; color: string }[] = [
+  { tipo: "taxi", etiqueta: "Taxi", color: Colors.primary },
+  { tipo: "punto", etiqueta: "Abordaje", color: Colors.success },
+  { tipo: "paradero", etiqueta: "Paradero", color: Colors.brandDeep },
+  { tipo: "cliente", etiqueta: "Tú", color: Colors.secondary },
+];
 
 // Mérida, mientras no hay marcadores.
 const REGION_INICIAL = {
@@ -60,14 +70,15 @@ function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
   );
 }
 
-/** Mapa de Google con el taxi, el punto de abordaje y el paradero cercano. */
-export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props) {
+/** Mapa de Google con el taxi, el punto de abordaje, el paradero y el cliente. */
+export default function MapaSeguimiento(props: Props) {
+  const { taxi, punto, paradero, cliente, style } = props;
   const mapa = useRef<MapView>(null);
   const [mapaListo, setMapaListo] = useState(false);
   const centrado = useRef(false);
 
-  const puntos = [paradero, punto, taxi]
-    .filter((dato): dato is MarcadorMapa => dato !== null)
+  const puntos = [paradero, punto, cliente, taxi]
+    .filter((dato): dato is MarcadorMapa => Boolean(dato))
     .map((dato) => aLatLng(dato.coordenadas));
 
   const centrar = () => {
@@ -101,6 +112,7 @@ export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props)
       >
         {paradero && <Marcador tipo="paradero" dato={paradero} />}
         {punto && <Marcador tipo="punto" dato={punto} />}
+        {cliente && <Marcador tipo="cliente" dato={cliente} />}
         {taxi && <Marcador tipo="taxi" dato={taxi} />}
       </MapView>
       <Pressable
@@ -112,18 +124,12 @@ export default function MapaSeguimiento({ taxi, punto, paradero, style }: Props)
         <Icono nombre="myLocation" tamanio={22} color={Colors.primary} />
       </Pressable>
       <View style={styles.leyenda} pointerEvents="none">
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.primary }]} />
-          <AppText style={styles.textoLeyenda}>Taxi</AppText>
-        </View>
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.success }]} />
-          <AppText style={styles.textoLeyenda}>Abordaje</AppText>
-        </View>
-        <View style={styles.itemLeyenda}>
-          <View style={[styles.puntoLeyenda, { backgroundColor: Colors.brandDeep }]} />
-          <AppText style={styles.textoLeyenda}>Paradero</AppText>
-        </View>
+        {LEYENDA.filter(({ tipo }) => props[tipo] !== undefined).map(({ tipo, etiqueta, color }) => (
+          <View key={tipo} style={styles.itemLeyenda}>
+            <View style={[styles.puntoLeyenda, { backgroundColor: color }]} />
+            <AppText style={styles.textoLeyenda}>{etiqueta}</AppText>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -162,6 +168,12 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     backgroundColor: Colors.brandDeep,
+  },
+  cliente: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.secondary,
   },
   centrar: {
     position: "absolute",

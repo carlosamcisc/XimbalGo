@@ -29,6 +29,7 @@ const ICONOS = {
     myLocation: 'my-location',
     ArrowRight: 'keyboard-arrow-right',
     ArrowDown: 'keyboard-arrow-down',
+    Share: 'share',
     //iconos para la pantalla de inicio
     home: 'home',
     map: 'map',

@@ -50,6 +50,9 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
             case 'reservaciones':
                 navigation.navigate("ClienteReservaciones");
                 break;
+            case 'yo':
+                navigation.navigate("ClienteYo");
+                break;
         }
     };
 

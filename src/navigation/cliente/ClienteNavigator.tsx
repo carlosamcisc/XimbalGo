@@ -11,6 +11,7 @@ import ClienteParaderoScreen from "../../screens/cliente/ClienteParaderoScreen";
 import ClienteTaxisScreen from "../../screens/cliente/ClienteTaxisScreen";
 import ClienteReservarScreen from "../../screens/cliente/ClienteReservarScreen";
 import ClienteReservaScreen from "../../screens/cliente/ClienteReservaScreen";
+import ClienteYoScreen from "../../screens/cliente/ClienteYoScreen";
 import { ClienteProvider } from "../../screens/cliente/ClienteContext";
 import type { ClienteStackParamList } from "../types";
 
@@ -45,6 +46,7 @@ export default function ClienteNavigator(){
                 <Stack.Screen name="ClienteTaxis" component={ClienteTaxisScreen}/>
                 <Stack.Screen name="ClienteReservar" component={ClienteReservarScreen}/>
                 <Stack.Screen name="ClienteReserva" component={ClienteReservaScreen}/>
+                <Stack.Screen name="ClienteYo" component={ClienteYoScreen}/>
             </Stack.Navigator>
         </ClienteProvider>
     );

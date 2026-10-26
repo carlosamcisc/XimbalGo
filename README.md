@@ -20,6 +20,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 - **Reservaciones**: en curso e historial, actualizadas en tiempo real.
 - **Rutas**: catálogo de rutas con precio, taxistas en servicio y asientos libres.
 - **Paraderos**: lista completa y detalle con foto, referencia y apertura en la app de mapas.
+- **Yo**: el cliente se ve en el mapa y comparte su ubicación en tiempo real con un familiar mediante un enlace web.
 - **Menú lateral**: perfil, notificaciones, seguridad (cambio de contraseña), ayuda y cierre de sesión.
 
 ### Taxista
@@ -64,6 +65,7 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
    GOOGLE_MAPS_ANDROID_API_KEY=
+   EXPO_PUBLIC_URL_UBICACION_COMPARTIDA=
    ```
 3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
 4. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
@@ -168,5 +170,6 @@ Reglas a seguir:
 - [Perfil del cliente y menú lateral](./docs/cliente-perfil.md): perfil, notificaciones, seguridad y ayuda.
 - [Información de paradero](./docs/cliente-paraderos.md): detalle y lista completa de paraderos.
 - [Reservar asientos y seguimiento del taxi](./docs/cliente-reservar-asientos.md): varios asientos, viajes programados y seguimiento en tiempo real.
+- [Mi ubicación y compartirla en tiempo real](./docs/cliente-compartir-ubicacion.md): mapa del cliente, enlace para un familiar y página web en GitHub Pages.
 - [Pantallas del taxista](./docs/taxista.md): servicio, ubicación, viajes, vehículo y perfil.
 - [Opciones del taxista sobre solicitudes y asientos](./docs/taxista-opciones-solicitudes.md): asientos ocupados sin reserva, motivo de rechazo y oferta de los asientos que quedan.
