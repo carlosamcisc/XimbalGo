@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, type LatLng } from "react-native-maps";
+import Constants from "expo-constants";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 import { Icono } from "./Icono";
@@ -37,7 +38,14 @@ const REGION_INICIAL = {
   latitudeDelta: 0.15,
   longitudeDelta: 0.15,
 };
-const ZOOM_UN_PUNTO = 16;
+// Equivale a un zoom de calle; con región en vez de `zoom` funciona igual en
+// Google Maps y en Apple Maps, que ignora `zoom`.
+const DELTA_UN_PUNTO = 0.006;
+// iOS solo trae Google Maps si se compiló con su key (ver app.config.ts).
+const PROVEEDOR =
+  Platform.OS === "ios" && !Constants.expoConfig?.extra?.googleMapsIos
+    ? undefined
+    : PROVIDER_GOOGLE;
 const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
 const aLatLng = ({ latitud, longitud }: Coordenadas): LatLng => ({
@@ -70,7 +78,7 @@ function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
   );
 }
 
-/** Mapa de Google con el taxi, el punto de abordaje, el paradero y el cliente. */
+/** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
   const { taxi, punto, paradero, cliente, style } = props;
   const mapa = useRef<MapView>(null);
@@ -83,7 +91,11 @@ export default function MapaSeguimiento(props: Props) {
 
   const centrar = () => {
     if (puntos.length === 1) {
-      mapa.current?.animateCamera({ center: puntos[0], zoom: ZOOM_UN_PUNTO });
+      mapa.current?.animateToRegion({
+        ...puntos[0],
+        latitudeDelta: DELTA_UN_PUNTO,
+        longitudeDelta: DELTA_UN_PUNTO,
+      });
     } else if (puntos.length > 1) {
       mapa.current?.fitToCoordinates(puntos, { edgePadding: MARGEN_ENCUADRE, animated: true });
     }
@@ -101,7 +113,7 @@ export default function MapaSeguimiento(props: Props) {
     <View style={[styles.contenedor, style]}>
       <MapView
         ref={mapa}
-        provider={PROVIDER_GOOGLE}
+        provider={PROVEEDOR}
         style={styles.mapa}
         initialRegion={REGION_INICIAL}
         onMapReady={() => setMapaListo(true)}
