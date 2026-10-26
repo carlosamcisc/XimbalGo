@@ -100,12 +100,13 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.onSurfaceVariant,
     fontSize: 12,
-    fontWeight: '600',
+    // Con Inter el peso va en fontFamily: iOS ignora la fuente si lleva fontWeight.
+    fontFamily: 'InterSemiBold',
     marginTop: 2,
   },
   labelActive: {
     color: Colors.primary,
-    fontWeight: '800',
+    fontFamily: 'InterBold',
   },
   indicator: {
     width: 40,

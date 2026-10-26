@@ -94,12 +94,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: "600",
+    // Con Inter el peso va en fontFamily: iOS ignora la fuente si lleva fontWeight.
+    fontFamily: "InterSemiBold",
     marginBottom: 8,
     color: Colors.onSurfaceVariant,
   },
   input: {
     elevation: 1,
+    shadowColor: Colors.brandDeep,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -125,12 +130,12 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "500",
+    fontFamily: "InterMedium",
     color: Colors.onSurfaceVariant,
   },
   placeholderText: {
     color: Colors.outlineVariant,
-    fontWeight: "400",
+    fontFamily: "InterRegular",
   },
   disabledText: {
     color: Colors.outlineVariant,

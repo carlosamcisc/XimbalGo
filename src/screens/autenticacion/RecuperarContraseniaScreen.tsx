@@ -166,6 +166,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         elevation: 2,
+        shadowColor: Colors.brandDeep,
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
         marginBottom: 5,
     },
     cardAviso: {
