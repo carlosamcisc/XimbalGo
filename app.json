@@ -5,14 +5,18 @@
     "scheme": "ximbalgo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.carlosmay.XimbalGo",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
@@ -35,7 +39,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos."
+          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos, y para compartirla con un familiar cuando tú lo decidas."
         }
       ]
     ]
