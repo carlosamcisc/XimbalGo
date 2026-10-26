@@ -48,15 +48,18 @@ export async function obtenerUbicacionActual(
  */
 export async function observarUbicacion(
   onCambio: (coordenadas: Coordenadas) => void,
-  mensajePermiso = MENSAJE_PERMISO_CERCANOS
+  mensajePermiso = MENSAJE_PERMISO_CERCANOS,
+  // Avisa al moverse `distanciaMetros`, a lo más cada `intervaloMs` (este
+  // límite solo aplica en Android).
+  { distanciaMetros = 50, intervaloMs = 30_000 } = {}
 ): Promise<() => void> {
   await asegurarUbicacionDisponible(mensajePermiso);
 
   const suscripcion = await Location.watchPositionAsync(
     {
       accuracy: Location.Accuracy.Balanced,
-      distanceInterval: 50,
-      timeInterval: 30_000,
+      distanceInterval: distanciaMetros,
+      timeInterval: intervaloMs,
     },
     (ubicacion) => onCambio(aCoordenadas(ubicacion))
   );

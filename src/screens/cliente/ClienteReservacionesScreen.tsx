@@ -35,6 +35,9 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
                 break;
             case "reservaciones":
                 break;
+            case "yo":
+                navigation.navigate("ClienteYo");
+                break;
         }
     };
 
