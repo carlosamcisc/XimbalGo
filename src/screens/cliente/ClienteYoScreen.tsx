@@ -23,6 +23,7 @@ import {
 import { useCliente } from "./ClienteContext";
 import { useClienteYo } from "./useClienteYo";
 import { mensajeError } from "./useClienteInicio";
+import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteYo'>;
 
@@ -113,78 +114,80 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                     cliente={ubicacion ? { coordenadas: ubicacion, titulo: "Tú" } : null}
                 />
 
-                <Card style={styles.card}>
-                    {compartida ? (
-                        <>
-                            <View style={styles.filaTitulo}>
-                                <View style={styles.puntoEnVivo} />
-                                <AppText weight="semibold" style={styles.tituloCard}>
-                                    Compartiendo en tiempo real
-                                </AppText>
-                            </View>
-                            <AppText style={styles.texto}>
-                                Hasta las {formatearHora(compartida.expiraEn)} ·{" "}
-                                {enviadaEn ? `actualizada ${formatearAntiguedad(enviadaEn, ahora)}` : "enviando..."}
-                                . Mantén la app abierta para que tu familiar te siga viendo.
-                            </AppText>
-                            {errorCompartir && (
-                                <AppText style={[styles.texto, styles.textoError]}>{errorCompartir}</AppText>
-                            )}
-                            <View style={styles.botones}>
-                                <View style={styles.boton}>
-                                    <Button titulo="Enviar enlace" onPress={() => void enviarEnlace(compartida)} />
+                <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
+                    <Card style={styles.card}>
+                        {compartida ? (
+                            <>
+                                <View style={styles.filaTitulo}>
+                                    <View style={styles.puntoEnVivo} />
+                                    <AppText weight="semibold" style={styles.tituloCard}>
+                                        Compartiendo en tiempo real
+                                    </AppText>
                                 </View>
-                                <View style={styles.boton}>
-                                    <Button
-                                        titulo={deteniendo ? "Deteniendo..." : "Detener"}
-                                        color={Colors.danger}
-                                        borderColor={Colors.danger}
-                                        disabled={deteniendo}
-                                        onPress={() => void handleDetener()}
-                                    />
-                                </View>
-                            </View>
-                        </>
-                    ) : (
-                        <>
-                            <View style={styles.filaTitulo}>
-                                <Icono nombre="Share" tamanio={20} color={Colors.primary} />
-                                <AppText weight="semibold" style={styles.tituloCard}>
-                                    Compartir mi ubicación
+                                <AppText style={styles.texto}>
+                                    Hasta las {formatearHora(compartida.expiraEn)} ·{" "}
+                                    {enviadaEn ? `actualizada ${formatearAntiguedad(enviadaEn, ahora)}` : "enviando..."}
+                                    . Mantén la app abierta para que tu familiar te siga viendo.
                                 </AppText>
-                            </View>
-                            <AppText style={styles.texto}>
-                                Tu familiar verá dónde estás en un mapa desde un enlace, sin instalar la app.
-                            </AppText>
-                            <View style={styles.duraciones}>
-                                {DURACIONES_COMPARTIR.map((duracion) => {
-                                    const elegida = duracion.minutos === minutos;
-                                    return (
-                                        <Pressable
-                                            key={duracion.minutos}
-                                            onPress={() => setMinutos(duracion.minutos)}
-                                            accessibilityRole="radio"
-                                            accessibilityState={{ selected: elegida }}
-                                            style={[styles.duracion, elegida && styles.duracionElegida]}
-                                        >
-                                            <AppText
-                                                weight="medium"
-                                                style={[styles.textoDuracion, elegida && styles.textoDuracionElegida]}
+                                {errorCompartir && (
+                                    <AppText style={[styles.texto, styles.textoError]}>{errorCompartir}</AppText>
+                                )}
+                                <View style={styles.botones}>
+                                    <View style={styles.boton}>
+                                        <Button titulo="Enviar enlace" onPress={() => void enviarEnlace(compartida)} />
+                                    </View>
+                                    <View style={styles.boton}>
+                                        <Button
+                                            titulo={deteniendo ? "Deteniendo..." : "Detener"}
+                                            color={Colors.danger}
+                                            borderColor={Colors.danger}
+                                            disabled={deteniendo}
+                                            onPress={() => void handleDetener()}
+                                        />
+                                    </View>
+                                </View>
+                            </>
+                        ) : (
+                            <>
+                                <View style={styles.filaTitulo}>
+                                    <Icono nombre="Share" tamanio={20} color={Colors.primary} />
+                                    <AppText weight="semibold" style={styles.tituloCard}>
+                                        Compartir mi ubicación
+                                    </AppText>
+                                </View>
+                                <AppText style={styles.texto}>
+                                    Tu familiar verá dónde estás en un mapa desde un enlace, sin instalar la app.
+                                </AppText>
+                                <View style={styles.duraciones}>
+                                    {DURACIONES_COMPARTIR.map((duracion) => {
+                                        const elegida = duracion.minutos === minutos;
+                                        return (
+                                            <Pressable
+                                                key={duracion.minutos}
+                                                onPress={() => setMinutos(duracion.minutos)}
+                                                accessibilityRole="radio"
+                                                accessibilityState={{ selected: elegida }}
+                                                style={[styles.duracion, elegida && styles.duracionElegida]}
                                             >
-                                                {duracion.etiqueta}
-                                            </AppText>
-                                        </Pressable>
-                                    );
-                                })}
-                            </View>
-                            <Button
-                                titulo={iniciando ? "Compartiendo..." : "Compartir ubicación"}
-                                disabled={iniciando}
-                                onPress={() => void handleCompartir()}
-                            />
-                        </>
-                    )}
-                </Card>
+                                                <AppText
+                                                    weight="medium"
+                                                    style={[styles.textoDuracion, elegida && styles.textoDuracionElegida]}
+                                                >
+                                                    {duracion.etiqueta}
+                                                </AppText>
+                                            </Pressable>
+                                        );
+                                    })}
+                                </View>
+                                <Button
+                                    titulo={iniciando ? "Compartiendo..." : "Compartir ubicación"}
+                                    disabled={iniciando}
+                                    onPress={() => void handleCompartir()}
+                                />
+                            </>
+                        )}
+                    </Card>
+                </KeyboardAwareScroll>
             </View>
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="yo" onPressTab={handlePressTab} />
         </SafeAreaView>
@@ -199,6 +202,9 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 100,
     },
     containerEncabezado: {
         marginHorizontal: 20,
