@@ -1,6 +1,6 @@
 import TextInputField from "../../components/TextInputField";
 import Button from "../../components/Button";
-import { View, Text, StyleSheet, Image, Pressable, Alert, ToastAndroid } from "react-native";
+import { View, Text, StyleSheet, Image, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import Colors from "../../theme/colors";
@@ -11,6 +11,7 @@ import BottomWavePrimary from "../../components/BottomWavePrimary";
 import DecorativeBubble from "../../components/DecorativeBubble";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import AppText from "../../components/AppText";
+import { ToastMessage } from "../../components/ToastMessaje";
 import {
     iniciarSesion,
     obtenerRolUsuario,
@@ -27,13 +28,6 @@ const IncioSesionScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
     const [contrasenia, setContrasenia] = useState("");
     const [cargando, setCargando] = useState(false);
-
-    const mostrarToast = (titulo: string) => {
-        ToastAndroid.show(titulo,
-            ToastAndroid.SHORT
-        );
-
-    };
 
     const handleInicioSesion = async () => {
         const correoLimpio = correo.trim();
@@ -55,7 +49,7 @@ const IncioSesionScreen = ({ navigation }: Props) => {
             const { user } = await iniciarSesion(correoLimpio, contraseniaLimpia);
             const rol = await obtenerRolUsuario(user.id);
             asignarRolUsuario(rol);
-            mostrarToast("Sesión iniciada");
+            ToastMessage.show("Sesión iniciada");
         } catch (error: unknown) {
             const mensaje =
                 error instanceof Error
@@ -193,6 +187,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         elevation: 2,
+        shadowColor: Colors.brandDeep,
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
     },
     contentOlviContrasnia: {
         alignItems: "flex-end",
