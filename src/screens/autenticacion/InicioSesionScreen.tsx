@@ -116,6 +116,8 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                             placeholder="Escribe tu correo..."
                             onChangeText={setCorreo}
                             icono="email"
+                            iconoColor={Colors.primary}
+                            iconoBackgroundColor={Colors.primaryContainer}
                         />
                         <TextInputField
                             label="Contraseña"
@@ -123,6 +125,8 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                             placeholder="Escribe tu contraseña..."
                             onChangeText={setContrasenia}
                             icono="lock"
+                            iconoColor={Colors.primary}
+                            iconoBackgroundColor={Colors.primaryContainer}
                             secureTextEntry
                         />
                         <View style={styles.contentOlviContrasnia}>
@@ -168,8 +172,8 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 100,
     },
-    contentImagen:{
-       alignItems: "center",
+    contentImagen: {
+        alignItems: "center",
     },
     imagen: {
         marginTop: 10,
@@ -188,14 +192,14 @@ const styles = StyleSheet.create({
         textAlign: "center",
         color: Colors.onSurfaceVariant,
     },
-    contentXimbalGo:{
+    contentXimbalGo: {
         flexDirection: "row",
     },
-    textXimbal:{
+    textXimbal: {
         fontSize: 25,
         color: Colors.primary,
     },
-    textGo:{
+    textGo: {
         fontSize: 25,
         color: Colors.secondary
     },
