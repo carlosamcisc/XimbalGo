@@ -104,7 +104,10 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                     <View style={styles.contentTitulos}>
                         <AppText weight="bold" style={styles.titulo}>¡Bienvenido de nuevo!</AppText>
                         <AppText style={styles.subtitulo}>Inicia sesion para continuar con</AppText>
-                        <AppText style={styles.subtitulo}>Ximbal Go</AppText>
+                        <View style={styles.contentXimbalGo}>
+                            <AppText weight="bold" style={styles.textXimbal}>Ximbal </AppText>
+                            <AppText weight="bold" style={styles.textGo}>Go</AppText>
+                        </View>
                     </View>
                     <View style={styles.contenedor}>
                         <TextInputField
@@ -126,7 +129,7 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                             <Pressable
                                 onPress={() => navigation.navigate('RecuperarContrasenia')}
                             >
-                                <AppText style={styles.textOlviContrasnia}>¿Olvidaste tu contraseña?</AppText>
+                                <AppText weight="medium" style={styles.textOlviContrasnia}>¿Olvidaste tu contraseña?</AppText>
                             </Pressable>
                         </View>
 
@@ -142,7 +145,7 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                     <View style={styles.contentOpciones}>
                         <AppText style={styles.noCuenta}>¿No tienes una cuenta?</AppText>
                         <Pressable onPress={() => navigation.navigate('SeleccionRol')}>
-                            <AppText weight="bold" style={styles.registrarse}>Registrate</AppText>
+                            <AppText weight="medium" style={styles.registrarse}>Registrate</AppText>
                         </Pressable>
                     </View>
 
@@ -184,6 +187,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         color: Colors.onSurfaceVariant,
+    },
+    contentXimbalGo:{
+        flexDirection: "row",
+    },
+    textXimbal:{
+        fontSize: 25,
+        color: Colors.primary,
+    },
+    textGo:{
+        fontSize: 25,
+        color: Colors.secondary
     },
     contenedor: {
         marginTop: 10,
