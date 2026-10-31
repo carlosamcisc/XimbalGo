@@ -12,6 +12,8 @@ interface Prop{
     onChangeText?: (text: string) => void;
     secureTextEntry?: boolean;
     icono?: NombreIcono;
+    iconoColor?: string;
+    iconoBackgroundColor?: string;
     keyboardType?: TextInputProps["keyboardType"];
     autoCapitalize?: TextInputProps["autoCapitalize"];
     maxLength?: number;
@@ -24,6 +26,8 @@ const TextInputField: React.FC<Prop> = ({
     onChangeText,
     secureTextEntry,
     icono,
+    iconoColor = Colors.outline,
+    iconoBackgroundColor,
     keyboardType,
     autoCapitalize,
     maxLength,
@@ -38,7 +42,12 @@ const TextInputField: React.FC<Prop> = ({
             {label && <AppText style={styles.label}>{label}</AppText>}
             <View style={[styles.input, isFocused && styles.inputFocused]}>
                 {icono && (
-                    <Icono nombre={icono} tamanio={20} color={Colors.outline}/>
+                    <Icono
+                        nombre={icono}
+                        tamanio={22}
+                        color={iconoColor}
+                        backgroundColor={iconoBackgroundColor}
+                    />
                 )}
                 <TextInput
                      style={styles.texto}
