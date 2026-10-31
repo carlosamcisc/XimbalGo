@@ -20,8 +20,8 @@ import { asignarRolUsuario } from "../../store/autenticacionStore";
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
 const logoXimbalGo = require('../../../assets/icon.png');
-const width = 150;
-const height = 150;
+const width = 130;
+const height = 130;
 
 const IncioSesionScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
@@ -94,11 +94,13 @@ const IncioSesionScreen = ({ navigation }: Props) => {
 
                 <BottomWavePrimary />
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                    <Image
-                        source={logoXimbalGo}
-                        style={[styles.imagen, { width, height }]}
-                        resizeMode="cover"
-                    />
+                    <View style={styles.contentImagen}>
+                        <Image
+                            source={logoXimbalGo}
+                            style={[styles.imagen, { width, height }]}
+                            resizeMode="cover"
+                        />
+                    </View>
                     <View style={styles.contentTitulos}>
                         <AppText weight="bold" style={styles.titulo}>¡Bienvenido de nuevo!</AppText>
                         <AppText style={styles.subtitulo}>Inicia sesion para continuar con</AppText>
@@ -163,10 +165,11 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 100,
     },
+    contentImagen:{
+       alignItems: "center",
+    },
     imagen: {
-        marginStart: 120,
-        marginEnd: 120,
-        marginTop: 20,
+        marginTop: 10,
     },
     contentTitulos: {
         marginTop: 10,
