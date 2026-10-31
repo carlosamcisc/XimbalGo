@@ -5,17 +5,17 @@
 
 export const Colors = {
   // Colores principales
-  primary: '#123A8C',          // Azul principal (botones, acciones destacadas)
+  primary: '#34618D',     
   onPrimary: '#FFFFFF',
-  primaryContainer: '#E8F6FF', // Azul muy claro (fondos, tarjetas)
+  primaryContainer: '#E8F6FF',
   onPrimaryContainer: '#0F2D5B',
 
-  secondary: '#2F80F7',         // Cian principal (bordes, acentos, detalles)
+  secondary: '#2F80F7',        
   onSecondary: '#FFFFFF',
   secondaryContainer: '#E5F6F9',
   onSecondaryContainer: '#0B263D',
 
-  tertiary: '#94A3B8',         // Gris medio (informativo, íconos inactivos)
+  tertiary: '#94A3B8',         
   onTertiary: '#FFFFFF',
   tertiaryContainer: '#E5EAF2',
   onTertiaryContainer: '#263746',
@@ -25,12 +25,12 @@ export const Colors = {
   errorContainer: '#FFDAD6',
   onErrorContainer: '#93000A',
 
-  background: '#FFFFFF',       // Fondo principal limpio
+  background: '#FFFFFF',      
   onBackground: '#191C20',
 
   surface: '#FFFFFF',
   onSurface: '#191C20',
-  surfaceVariant: '#E8F6FF',   // Azul muy claro como superficie secundaria
+  surfaceVariant: '#E8F6FF',   
   onSurfaceVariant: '#42474E',
 
   outline: '#73777F',
@@ -65,7 +65,7 @@ export const Colors = {
   surfaceContainerHighest: '#E1E2E8',
 
   // Extras de branding
-  brandDeep: '#0F2D5B',        // Azul oscuro (encabezados, textos principales)
+  brandDeep: '#0F2D5B',     
   brandDeepShadow: '#0B263D',
   brandText: '#263746',
   brandSubtitle: '#D6E8F5',
