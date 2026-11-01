@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, StyleSheet, Pressable } from "react-native"
+import { View, StyleSheet, Pressable } from "react-native"
 import Colors from "../theme/colors"
 import { Icono, NombreIcono } from "./Icono";
 import AppText from "./AppText";
@@ -11,6 +11,9 @@ interface ButtonProps {
     color?: string;
     borderColor?: string;
     icono?: NombreIcono; //icono opcional
+    colorTitulo?: string;
+    posicionIcono?: "izquierda" | "derecha";
+    colorIcono?: string;
     disabled?: boolean;
 }
 
@@ -20,6 +23,9 @@ const Button: React.FC<ButtonProps> = ({
     color = Colors.primary, //color por defecto si no se pasa otro color
     borderColor = Colors.primary,
     icono,
+    colorTitulo = Colors.white,
+    posicionIcono = "derecha",
+    colorIcono = Colors.white,
     onPress,
     disabled = false,
 }) => {
@@ -36,17 +42,15 @@ const Button: React.FC<ButtonProps> = ({
                 disabled && styles.buttonDeshabilitado,
             ]}
         >
-            {({ pressed }) => (
-                <View style={styles.contenedor}>
+            <View style={[styles.contenedor, posicionIcono === "izquierda" && styles.iconoIzquierdo]}>
                     <AppText weight="bold" style={[
                         styles.text,
-                        { color: disabled ? Colors.outline : Colors.white },
+                        { color: disabled ? Colors.outline : colorTitulo },
                     ]}>
                         {titulo}
                     </AppText>
-                    {icono && <Icono nombre={icono} tamanio={30} color={disabled ? Colors.outline : Colors.white} />}
+                    {icono && <Icono nombre={icono} tamanio={30} color={disabled ? Colors.outline : colorIcono} />}
                 </View>
-            )}
 
         </Pressable>
     );
@@ -71,6 +75,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        gap: 8,
+    },
+    iconoIzquierdo: {
+        flexDirection: "row-reverse",
     },
     text: {
         color: Colors.white,
