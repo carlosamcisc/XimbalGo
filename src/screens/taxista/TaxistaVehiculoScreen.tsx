@@ -23,6 +23,7 @@ import {
 } from "../../modules/taxista/types";
 import { useTaxista } from "./TaxistaContext";
 import { pantallaDePestania } from "./navegacion";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaVehiculo">;
 
@@ -317,11 +318,8 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <View style={styles.encabezado}>
-        <AppText weight="bold" style={styles.titulo}>Mi vehículo</AppText>
-        <AppText style={styles.subtitulo}>Datos de tu unidad y estado de los asientos</AppText>
-      </View>
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Mi vehículo" subtitulo="Datos de tu unidad y estado de los asientos" />
         <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
           {renderContenido()}
         </KeyboardAwareScroll>
@@ -357,9 +355,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,

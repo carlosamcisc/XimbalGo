@@ -22,6 +22,7 @@ import type { DatosPerfilTaxista, PerfilTaxista, RutaTaxista } from "../../modul
 import { mensajeError } from "../cliente/useClienteInicio";
 import { useTaxista } from "./TaxistaContext";
 import { pantallaDePestania } from "./navegacion";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaPerfil">;
 
@@ -187,8 +188,8 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
     }
     return (
       <>
+        <AppText weight="semibold" style={styles.tituloTarjeta}>Datos personales</AppText>
         <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>Datos personales</AppText>
           <TextInputField label="Nombre(s) *" value={formulario.nombres} onChangeText={cambiar("nombres")} autoCapitalize="words" />
           <TextInputField label="Apellidos *" value={formulario.apellidos} onChangeText={cambiar("apellidos")} autoCapitalize="words" />
           <TextInputField
@@ -201,8 +202,8 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
           <TextInputField label="Dirección" value={formulario.direccion} onChangeText={cambiar("direccion")} autoCapitalize="sentences" />
         </Card>
 
+        <AppText weight="semibold" style={styles.tituloTarjeta}>Tu servicio</AppText>
         <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>Tu servicio</AppText>
           <SelectInput
             label="Ruta"
             value={formulario.ruta ? `${formulario.ruta.origen} → ${formulario.ruta.destino}` : ""}
@@ -255,11 +256,8 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <View style={styles.encabezado}>
-        <AppText weight="bold" style={styles.titulo}>Mi perfil</AppText>
-        <AppText style={styles.subtitulo}>Tus datos, tu ruta y tu tarifa</AppText>
-      </View>
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Mi perfil" subtitulo="Tus datos, tu ruta y tu tarifa" />
         <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
           {renderContenido()}
         </KeyboardAwareScroll>
@@ -309,9 +307,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,
@@ -321,6 +316,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   tituloTarjeta: {
+    marginLeft: 20,
     fontSize: 17,
     color: Colors.brandText,
     marginHorizontal: 10,

@@ -15,6 +15,7 @@ import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 
 type Filtro = "activas" | "historial";
 
@@ -81,11 +82,8 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <View style={styles.encabezado}>
-                <AppText weight="bold" style={styles.titulo}>Mis viajes</AppText>
-                <AppText style={styles.subtitulo}>Solicitudes, viajes en curso e historial</AppText>
-            </View>
             <View style={styles.pantalla}>
+                <EncabezadoPantalla titulo="Mis viajes" subtitulo="Solicitudes, viajes en curso e historial" />
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["activas", "historial"] as const).map((opcion) => {
                         const activo = filtro === opcion;
@@ -158,9 +156,6 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: "hidden",
     },
     filtros: {
         flexDirection: "row",
