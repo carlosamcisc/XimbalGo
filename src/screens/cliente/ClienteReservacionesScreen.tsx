@@ -93,12 +93,11 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <EncabezadoPantalla
-                titulo="Mis reservaciones"
-                subtitulo="Consulta y administra tus viajes"
-                accion={<BotonMenuCliente onPress={() => setMenuVisible(true)} />}
-            />
             <View style={styles.pantalla}>
+                <EncabezadoPantalla
+                    titulo="Mis reservaciones"
+                    subtitulo="Consulta y administra tus viajes"
+                />
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["activas", "historial"] as const).map((opcion) => {
                         const activo = filtro === opcion;
@@ -154,9 +153,6 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: "hidden",
     },
     filtros: {
         flexDirection: "row",
