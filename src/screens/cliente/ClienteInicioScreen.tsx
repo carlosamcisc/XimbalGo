@@ -9,10 +9,11 @@ import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 import { useEffect, useState } from "react";
 import Button from "../../components/Button";
 import EstadoLista from "../../components/EstadoLista";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { BottomTabBar, TABS_CLIENTE, BottomTabId } from "../../components/BottomTabBar";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ClienteStackParamList } from "../../navigation/types";
-import { Icono, IconoFontAwesome6 } from "../../components/Icono";
+import { Icono } from "../../components/Icono";
 import TaxiCard from "../../components/TaxiCard";
 import Card from "../../components/Card";
 import ParadaItem from "../../components/ParadaItem";
@@ -133,9 +134,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                         buenasTextColor={Colors.white}
                     />
                     <View style={styles.contentEncabezado}>
-                        <View style={styles.icono}>
-                            <IconoFontAwesome6 nombre="personWalkingLuggage" tamanio={25} />
-                        </View>
+                        <AnimacionEstado tipo="viajero" tamanio={64} />
                         <View style={styles.textoEncabezado}>
                             <AppText weight="semibold" style={styles.titulo}>Tu viaje</AppText>
                             <AppText style={styles.subtitulo}>Elige tu origen y destino</AppText>
@@ -165,6 +164,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                             vacio={inicio.taxisCercanos.length === 0}
                             textoCargando="Buscando taxis cercanos..."
                             textoVacio="No hay taxis cercanos con asientos disponibles."
+                            animacionVacio="taxi"
                             onReintentar={() => void inicio.buscarCercanos()}
                         >
                             {inicio.taxisCercanos.map((taxi) => (
@@ -197,6 +197,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                             cargando={inicio.cargandoCercanos}
                             error={inicio.errorCercanos}
                             vacio={inicio.paraderosCercanos.length === 0}
+                            animacionVacio="ubicacion"
                             textoCargando="Buscando paraderos cercanos..."
                             textoVacio="No hay paraderos cercanos con ubicación registrada."
                             onReintentar={() => void inicio.buscarCercanos()}
@@ -249,17 +250,6 @@ const styles = StyleSheet.create({
     },
     textoEncabezado: {
         marginLeft: 12,
-    },
-    icono: {
-        width: 48,
-        height: 48,
-        borderRadius: 20,
-        justifyContent: "center",
-        alignItems: "center",
-        shadowOpacity: 0.12,
-        backgroundColor: Colors.primaryContainer,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 3 },
     },
     titulo: {
         fontSize: 20,

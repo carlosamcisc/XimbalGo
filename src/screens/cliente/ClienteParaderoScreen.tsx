@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
@@ -80,7 +81,7 @@ const ClienteParaderoScreen = ({ navigation, route }: Props) => {
     if (cargando && !paradero) {
       return (
         <View style={styles.estado}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando paradero...</AppText>
         </View>
       );
