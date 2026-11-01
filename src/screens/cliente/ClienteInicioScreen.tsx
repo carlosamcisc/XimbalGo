@@ -145,7 +145,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                         <Button titulo="Buscar ruta" onPress={buscarRuta} />
                     </SelectorViaje>
                     <View style={styles.conteTaxisCerca}>
-                        <Icono nombre="locationHistory" tamanio={25} color={Colors.primary} />
+                        <Icono nombre="localTaxi" tamanio={30} color={Colors.primary} backgroundColor={Colors.primaryContainer} />
                         <AppText style={styles.textTaxis}> Taxis cerca de ti</AppText>
                         <Pressable
                             style={styles.verParaderos}
@@ -180,7 +180,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                         </EstadoLista>
                     </Card>
                     <View style={styles.conteParaderoCerca}>
-                        <Icono nombre="business" tamanio={22} color={Colors.primary} />
+                        <Icono nombre="business" tamanio={30} color={Colors.primary} backgroundColor={Colors.primaryContainer} />
                         <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
                         <Pressable
                             style={styles.verParaderos}
