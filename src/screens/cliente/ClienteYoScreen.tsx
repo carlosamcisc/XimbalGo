@@ -183,6 +183,8 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                                     titulo={iniciando ? "Compartiendo..." : "Compartir ubicación"}
                                     disabled={iniciando}
                                     onPress={() => void handleCompartir()}
+                                    icono="Share"
+                                    posicionIcono="izquierda"
                                 />
                             </>
                         )}

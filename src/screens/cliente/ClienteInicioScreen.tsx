@@ -142,7 +142,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                     </View>
 
                     <SelectorViaje viaje={inicio}>
-                        <Button titulo="Buscar ruta" onPress={buscarRuta} />
+                        <Button titulo="Buscar ruta" onPress={buscarRuta} icono="search" posicionIcono="izquierda" />
                     </SelectorViaje>
                     <View style={styles.conteTaxisCerca}>
                         <Icono nombre="localTaxi" tamanio={30} color={Colors.primary} backgroundColor={Colors.primaryContainer} />
