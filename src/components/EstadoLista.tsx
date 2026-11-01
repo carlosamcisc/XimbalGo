@@ -1,5 +1,6 @@
+import AnimacionEstado, { type TipoAnimacionEstado } from "./AnimacionEstado";
 import type { ReactNode } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 
@@ -9,6 +10,7 @@ interface Props {
   vacio: boolean;
   textoCargando: string;
   textoVacio: string;
+  animacionVacio?: TipoAnimacionEstado;
   onReintentar: () => void;
   children: ReactNode;
 }
@@ -20,13 +22,14 @@ export default function EstadoLista({
   vacio,
   textoCargando,
   textoVacio,
+  animacionVacio,
   onReintentar,
   children,
 }: Props) {
   if (cargando) {
     return (
       <View style={styles.estadoLista}>
-        <ActivityIndicator color={Colors.primary} />
+        <AnimacionEstado />
         <AppText style={styles.textoEstado}>{textoCargando}</AppText>
       </View>
     );
@@ -44,6 +47,7 @@ export default function EstadoLista({
   if (vacio) {
     return (
       <View style={styles.estadoLista}>
+        {animacionVacio && <AnimacionEstado tipo={animacionVacio} />}
         <AppText style={styles.textoEstado}>{textoVacio}</AppText>
       </View>
     );

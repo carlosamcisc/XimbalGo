@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
@@ -20,7 +21,7 @@ const ClienteParaderosScreen = ({ navigation }: Props) => {
     if (lista.cargando && lista.total === 0) {
       return (
         <View style={styles.estado}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando paraderos...</AppText>
         </View>
       );

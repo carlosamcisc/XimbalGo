@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Image, Pressable, RefreshControl, StyleSheet, View } from "react-native";
+import { Image, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -109,7 +110,7 @@ const ClientePerfilScreen = ({ navigation }: Props) => {
     if (cliente.cargando && !perfil) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando tu perfil...</AppText>
         </View>
       );

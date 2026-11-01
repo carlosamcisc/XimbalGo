@@ -4,7 +4,7 @@ import { Pressable, Share, StyleSheet, View } from "react-native";
 import AppText from "../../components/AppText";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
-import { Icono } from "../../components/Icono";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import MapaSeguimiento from "../../components/MapaSeguimiento";
 import { StatusBar } from "expo-status-bar";
 import Colors from "../../theme/colors";
@@ -119,7 +119,7 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                         {compartida ? (
                             <>
                                 <View style={styles.filaTitulo}>
-                                    <View style={styles.puntoEnVivo} />
+                                    <AnimacionEstado tipo="compartirUbicacion" tamanio={48} animar />
                                     <AppText weight="semibold" style={styles.tituloCard}>
                                         Compartiendo en tiempo real
                                     </AppText>
@@ -150,7 +150,7 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                         ) : (
                             <>
                                 <View style={styles.filaTitulo}>
-                                    <Icono nombre="Share" tamanio={20} color={Colors.primary} />
+                                    <AnimacionEstado tipo="compartirUbicacion" tamanio={48} animar={false} />
                                     <AppText weight="semibold" style={styles.tituloCard}>
                                         Compartir mi ubicación
                                     </AppText>
@@ -242,14 +242,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     tituloCard: {
+        flex: 1,
         fontSize: 16,
         color: Colors.brandDeep,
-    },
-    puntoEnVivo: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: Colors.success,
     },
     texto: {
         fontSize: 13,

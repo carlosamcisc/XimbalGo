@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
@@ -48,7 +49,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
     if (cliente.cargando && cliente.notificaciones.length === 0) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando notificaciones...</AppText>
         </View>
       );
@@ -69,7 +70,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
       return (
         <Card>
           <View style={styles.estadoLista}>
-            <Icono nombre="notifications" tamanio={36} color={Colors.outlineVariant} />
+            <AnimacionEstado tipo="notificaciones" />
             <AppText style={styles.textoEstado}>
               No tienes notificaciones. Aquí verás cuando un taxista acepte o rechace tus reservaciones.
             </AppText>
