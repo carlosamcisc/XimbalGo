@@ -113,19 +113,19 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo="Notificaciones"
-        subtitulo={cliente.noLeidas > 0 ? `${cliente.noLeidas} sin leer` : "Estás al día"}
-        onBack={() => navigation.goBack()}
-        accion={
-          cliente.noLeidas > 0 ? (
-            <BotonEncabezado onPress={() => void marcar()} accessibilityLabel="Marcar todas como leídas">
-              <Icono nombre="doneAll" tamanio={22} color={Colors.white} />
-            </BotonEncabezado>
-          ) : undefined
-        }
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo="Notificaciones"
+          subtitulo={cliente.noLeidas > 0 ? `${cliente.noLeidas} sin leer` : "Estás al día"}
+          onBack={() => navigation.goBack()}
+          accion={
+            cliente.noLeidas > 0 ? (
+              <BotonEncabezado onPress={() => void marcar()} accessibilityLabel="Marcar todas como leídas">
+                <Icono nombre="doneAll" tamanio={22} color={Colors.white} />
+              </BotonEncabezado>
+            ) : undefined
+          }
+        />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -152,9 +152,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 10,
