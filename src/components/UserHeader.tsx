@@ -68,9 +68,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 20,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 17,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: Colors.brandDeepShadow,
