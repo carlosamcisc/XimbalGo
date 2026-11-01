@@ -61,6 +61,9 @@ export function BotonEncabezado({
 
 const styles = StyleSheet.create({
   encabezado: {
+    backgroundColor: Colors.primary,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
