@@ -104,12 +104,12 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo="Taxis disponibles"
-        subtitulo="Elige tu viaje y cualquier taxi para reservar"
-        onBack={() => navigation.goBack()}
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo="Taxis disponibles"
+          subtitulo="Elige tu viaje y cualquier taxi para reservar"
+          onBack={() => navigation.goBack()}
+        />
         <KeyboardAwareScroll
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -164,9 +164,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   tituloSeccion: {
     fontSize: 16,

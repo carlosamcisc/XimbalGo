@@ -101,11 +101,11 @@ const ClienteParaderoScreen = ({ navigation, route }: Props) => {
     const { coordenadas } = paradero;
     const distancia = distanciaMetros !== undefined
       ? `A ${formatearTrayectoParadero({
-          distanciaMetros,
-          segundosCaminando,
-          distanciaMotoMetros,
-          segundosMoto,
-        })} de ti`
+        distanciaMetros,
+        segundosCaminando,
+        distanciaMotoMetros,
+        segundosMoto,
+      })} de ti`
       : null;
 
     return (
@@ -156,12 +156,12 @@ const ClienteParaderoScreen = ({ navigation, route }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo={paradero?.nombre ?? "Paradero"}
-        subtitulo="Información del paradero"
-        onBack={() => navigation.goBack()}
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo={paradero?.nombre ?? "Paradero"}
+          subtitulo="Información del paradero"
+          onBack={() => navigation.goBack()}
+        />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -188,9 +188,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 12,
