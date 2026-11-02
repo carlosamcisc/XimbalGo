@@ -5,17 +5,17 @@
 
 export const Colors = {
   // Colores principales
-  primary: '#34618D',     
+  primary: '#34618D',
   onPrimary: '#FFFFFF',
   primaryContainer: '#E8F6FF',
   onPrimaryContainer: '#0F2D5B',
 
-  secondary: '#2F80F7',        
+  secondary: '#2F80F7',
   onSecondary: '#FFFFFF',
   secondaryContainer: '#E5F6F9',
   onSecondaryContainer: '#0B263D',
 
-  tertiary: '#94A3B8',         
+  tertiary: '#94A3B8',
   onTertiary: '#FFFFFF',
   tertiaryContainer: '#E5EAF2',
   onTertiaryContainer: '#263746',
@@ -25,12 +25,12 @@ export const Colors = {
   errorContainer: '#FFDAD6',
   onErrorContainer: '#93000A',
 
-  background: '#FFFFFF',      
+  background: '#FFFFFF',
   onBackground: '#191C20',
 
   surface: '#FFFFFF',
   onSurface: '#191C20',
-  surfaceVariant: '#E8F6FF',   
+  surfaceVariant: '#E8F6FF',
   onSurfaceVariant: '#42474E',
 
   outline: '#73777F',
@@ -65,7 +65,7 @@ export const Colors = {
   surfaceContainerHighest: '#E1E2E8',
 
   // Extras de branding
-  brandDeep: '#0F2D5B',     
+  brandDeep: '#0F2D5B',
   brandDeepShadow: '#0B263D',
   brandText: '#263746',
   brandSubtitle: '#D6E8F5',
@@ -86,6 +86,9 @@ export const Colors = {
   danger: '#D6423F',
   onDanger: '#FFFFFF',
   success: '#2E9E5B',
+  onSuccess: '#FFFFFF',
+  successContainer: '#E5F5EB',
+  onSuccessContainer: '#123D23',
   errorContainerSoft: '#FFF0EE',
 
   // Colores generales

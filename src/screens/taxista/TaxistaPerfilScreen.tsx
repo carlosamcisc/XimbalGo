@@ -24,6 +24,7 @@ import { mensajeError } from "../cliente/useClienteInicio";
 import { useTaxista } from "./TaxistaContext";
 import { pantallaDePestania } from "./navegacion";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
+import { Icono } from "../../components/Icono";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaPerfil">;
 
@@ -189,12 +190,15 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
     }
     return (
       <>
-        <AppText weight="semibold" style={styles.tituloTarjeta}>Datos personales</AppText>
+        <View style={styles.seccion}>
+          <Icono nombre="person" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>Datos personales</AppText>
+        </View>
         <Card style={styles.tarjeta}>
-          <TextInputField label="Nombre(s) *" value={formulario.nombres} onChangeText={cambiar("nombres")} autoCapitalize="words" />
-          <TextInputField label="Apellidos *" value={formulario.apellidos} onChangeText={cambiar("apellidos")} autoCapitalize="words" />
+          <TextInputField label="Nombre(s)" value={formulario.nombres} onChangeText={cambiar("nombres")} autoCapitalize="words" disabled={true} />
+          <TextInputField label="Apellidos" value={formulario.apellidos} onChangeText={cambiar("apellidos")} autoCapitalize="words" disabled={true} />
           <TextInputField
-            label="Teléfono *"
+            label="Teléfono"
             value={formulario.telefono}
             placeholder="Los clientes con viaje aceptado lo verán"
             onChangeText={cambiar("telefono")}
@@ -203,7 +207,12 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
           <TextInputField label="Dirección" value={formulario.direccion} onChangeText={cambiar("direccion")} autoCapitalize="sentences" />
         </Card>
 
-        <AppText weight="semibold" style={styles.tituloTarjeta}>Tu servicio</AppText>
+        <View style={styles.seccion}>
+          <Icono nombre="gridView" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>
+            Tu servicio
+          </AppText>
+        </View>
         <Card style={styles.tarjeta}>
           <SelectInput
             label="Ruta"
@@ -235,21 +244,24 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
           />
           <Button
             titulo={guardando ? "Guardando..." : "Guardar cambios"}
+            icono="done"
+            posicionIcono="izquierda"
             disabled={guardando}
             onPress={() => void guardar()}
           />
         </Card>
 
-        <Pressable
+        <Button
+          titulo={cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
+          colorTitulo={Colors.danger}
+          icono="logout"
+          colorIcono={Colors.danger}
+          posicionIcono="izquierda"
+          color={Colors.surface}
+          borderColor={Colors.danger}
           onPress={confirmarCierre}
-          disabled={cerrandoSesion}
-          accessibilityRole="button"
-          style={styles.cerrarSesion}
-        >
-          <AppText weight="semibold" style={styles.textoCerrarSesion}>
-            {cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
-          </AppText>
-        </Pressable>
+        />
+
       </>
     );
   };
@@ -320,6 +332,17 @@ const styles = StyleSheet.create({
   },
   tarjeta: {
     padding: 14,
+  },
+  seccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 10,
+  },
+  tituloSeccion: {
+    fontSize: 16,
+    color: Colors.brandText,
   },
   tituloTarjeta: {
     marginLeft: 20,
