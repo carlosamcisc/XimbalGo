@@ -34,6 +34,7 @@ const ICONOS = {
     done: 'done',
     stop: 'stop',
     assistantNavigation: 'assistant-navigation',
+    refresh: 'refresh',
     //iconos para la pantalla de inicio
     home: 'home',
     map: 'map',
