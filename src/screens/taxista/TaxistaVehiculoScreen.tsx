@@ -175,9 +175,13 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
     }
     return (
       <>
+        <View style={styles.seccion}>
+          <Icono nombre="eventSeat" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>Asientos</AppText>
+        </View>
+
         {vehiculo && vehiculo.asientos.length > 0 && (
           <Card style={styles.tarjeta}>
-            <AppText weight="semibold" style={styles.tituloTarjeta}>Asientos</AppText>
             <AppText style={styles.ayuda}>
               ¿Subió alguien sin reservar? Toca los asientos libres que ocupó y márcalos como ocupados.
               Cuando se bajen, tócalos de nuevo para liberarlos. Los asientos de las reservaciones se
@@ -246,11 +250,14 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
             )}
           </Card>
         )}
-
-        <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>
+        <View style={styles.seccion}>
+          <Icono nombre="localTaxi" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>
             {vehiculo ? "Datos del vehículo" : "Registra tu vehículo"}
           </AppText>
+        </View>
+        <Card style={styles.tarjeta}>
+
           {!vehiculo && (
             <View style={styles.estadoLista}>
               <AnimacionEstado tipo="taxi" />
@@ -369,10 +376,22 @@ const styles = StyleSheet.create({
   tarjeta: {
     padding: 14,
   },
+  seccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 10,
+  },
+  tituloSeccion: {
+    fontSize: 16,
+    color: Colors.brandText,
+  },
   tituloTarjeta: {
     fontSize: 17,
     color: Colors.brandText,
-    marginHorizontal: 10,
+    marginTop: 10,
+    marginLeft: 20,
   },
   ayuda: {
     fontSize: 13,
