@@ -1,9 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Pressable, StyleSheet, Switch, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import TextInputField from "../../components/TextInputField";
@@ -155,7 +156,7 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
     if (taxista.cargando) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado tipo="cargando" />
           <AppText style={styles.textoEstado}>Cargando tu vehículo...</AppText>
         </View>
       );
@@ -250,6 +251,11 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
           <AppText weight="semibold" style={styles.tituloTarjeta}>
             {vehiculo ? "Datos del vehículo" : "Registra tu vehículo"}
           </AppText>
+          {!vehiculo && (
+            <View style={styles.estadoLista}>
+              <AnimacionEstado tipo="taxi" />
+            </View>
+          )}
           {!vehiculo && (
             <AppText style={styles.ayuda}>
               Necesitas un vehículo activo para iniciar tu servicio. Los asientos se crean según la capacidad.

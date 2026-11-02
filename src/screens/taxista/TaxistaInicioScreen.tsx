@@ -1,9 +1,11 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
+import TaxiEstatico from "../../components/TaxiEstatico";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import UserHeader from "../../components/UserHeader";
@@ -143,7 +145,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
         if (taxista.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado tipo="cargando" />
                     <AppText style={styles.textoEstado}>Cargando tu información...</AppText>
                 </View>
             );
@@ -162,7 +164,31 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
         }
         return (
             <>
-                <Card style={styles.tarjeta}>{renderEstadoServicio()}</Card>
+                <Card style={styles.tarjeta}>
+                    <View
+                        key={taxista.cambiandoServicio ? "procesando-servicio" : taxista.enServicio ? "servicio-activo" : "servicio-inactivo"}
+                        collapsable={false}
+                        style={[styles.animacionServicio, taxista.enServicio && styles.animacionServicioActiva]}
+                    >
+                        {taxista.enServicio && (
+                            <View style={styles.etiquetaUbicacion}>
+                                <Icono nombre="map" tamanio={14} color={Colors.primary} />
+                                <AppText weight="semibold" style={styles.textoUbicacion}>
+                                    {taxista.visibleParaClientes ? "Ubicación compartida" : "Conectando ubicación"}
+                                </AppText>
+                            </View>
+                        )}
+                        {!taxista.enServicio && !taxista.cambiandoServicio ? (
+                            <TaxiEstatico tamanio={96} />
+                        ) : (
+                            <AnimacionEstado
+                                tipo={taxista.cambiandoServicio ? "cargando" : "taxistaCarroOndas"}
+                                tamanio={taxista.cambiandoServicio ? 96 : 240}
+                            />
+                        )}
+                    </View>
+                    {renderEstadoServicio()}
+                </Card>
 
                 {(perfil.ruta || vehiculo) && (
                     <Card style={styles.tarjeta}>
@@ -217,6 +243,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                 {taxista.pendientes.length === 0 ? (
                     <Card>
                         <View style={styles.estadoLista}>
+                            <AnimacionEstado tipo="notificaciones" animar={taxista.enServicio} />
                             <AppText style={styles.textoEstado}>
                                 {taxista.enServicio
                                     ? "Aún no hay solicitudes. Te avisaremos aquí en cuanto llegue una."
@@ -295,6 +322,36 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
 };
 
 const styles = StyleSheet.create({
+    animacionServicio: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 12,
+        marginBottom: 16,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLow,
+        overflow: "hidden",
+    },
+    animacionServicioActiva: {
+        backgroundColor: Colors.primaryContainer,
+        borderWidth: 1,
+        borderColor: Colors.secondaryContainer,
+    },
+    etiquetaUbicacion: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginHorizontal: 8,
+        borderRadius: 16,
+        backgroundColor: Colors.white,
+    },
+    textoUbicacion: {
+        fontSize: 12,
+        color: Colors.primary,
+    },
     statusBar: {
         backgroundColor: Colors.primary,
         flex: 1,
