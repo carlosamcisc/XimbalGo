@@ -1,9 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import TextInputField from "../../components/TextInputField";
@@ -169,7 +170,7 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
     if (taxista.cargando) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado tipo="cargando" />
           <AppText style={styles.textoEstado}>Cargando tu perfil...</AppText>
         </View>
       );
@@ -266,6 +267,11 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
       <BottomSheet visible={selectorRutaVisible} onClose={() => setSelectorRutaVisible(false)}>
         <View>
           <AppText weight="semibold" style={styles.tituloSelector}>Elige tu ruta</AppText>
+          {selectorRutaVisible && opcionesRutas.length === 0 && (
+            <View style={styles.estadoLista}>
+              <AnimacionEstado tipo={cargandoRutas ? "cargando" : "ubicacion"} />
+            </View>
+          )}
           <OptionList
             data={opcionesRutas}
             style={styles.listaRutas}

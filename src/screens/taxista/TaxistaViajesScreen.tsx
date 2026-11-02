@@ -1,13 +1,13 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Card from "../../components/Card";
 import ReservaTaxistaCard from "../../components/ReservaTaxistaCard";
 import { BottomTabBar, TABS_TAXISTA } from "../../components/BottomTabBar";
-import { Icono } from "../../components/Icono";
 import Colors from "../../theme/colors";
 import type { TaxistaStackParamList } from "../../navigation/types";
 import { useTaxista } from "./TaxistaContext";
@@ -33,7 +33,7 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
         if (taxista.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado tipo="cargando" />
                     <AppText style={styles.textoEstado}>Cargando tus viajes...</AppText>
                 </View>
             );
@@ -54,7 +54,7 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
             return (
                 <Card>
                     <View style={styles.estadoLista}>
-                        <Icono nombre="bookMarks" tamanio={36} color={Colors.outlineVariant} />
+                        <AnimacionEstado tipo={filtro === "activas" ? "taxi" : "reservaciones"} />
                         <AppText style={styles.textoEstado}>
                             {filtro === "activas"
                                 ? taxista.enServicio
