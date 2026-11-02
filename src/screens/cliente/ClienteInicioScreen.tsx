@@ -146,7 +146,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                     </SelectorViaje>
                     <View style={styles.conteTaxisCerca}>
                         <Icono nombre="localTaxi" tamanio={30} color={Colors.primary} backgroundColor={Colors.primaryContainer} />
-                        <AppText style={styles.textTaxis}> Taxis cerca de ti</AppText>
+                        <AppText weight="semibold" style={styles.textTaxis}> Taxis cerca de ti</AppText>
                         <Pressable
                             style={styles.verParaderos}
                             onPress={verTodosLosTaxis}
@@ -181,7 +181,7 @@ const ClienteInicioScreen = ({ navigation, route }: Props) => {
                     </Card>
                     <View style={styles.conteParaderoCerca}>
                         <Icono nombre="business" tamanio={30} color={Colors.primary} backgroundColor={Colors.primaryContainer} />
-                        <AppText style={styles.textParadero}> Paraderos cercanos a ti</AppText>
+                        <AppText weight="semibold" style={styles.textParadero}> Paraderos cercanos a ti</AppText>
                         <Pressable
                             style={styles.verParaderos}
                             onPress={() => navigation.navigate("ClienteParaderos")}

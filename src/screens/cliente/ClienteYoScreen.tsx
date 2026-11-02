@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Pressable, Share, StyleSheet, View } from "react-native";
+import { AppState, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from "react-native";
 import AppText from "../../components/AppText";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
@@ -23,7 +23,7 @@ import {
 import { useCliente } from "./ClienteContext";
 import { useClienteYo } from "./useClienteYo";
 import { mensajeError } from "./useClienteInicio";
-import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
+import { Icono } from "../../components/Icono";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, 'ClienteYo'>;
 
@@ -37,13 +37,24 @@ const ClienteYoScreen = ({ navigation }: Props) => {
     const { ubicacion, direccion, buscando, error, reintentar } = useClienteYo();
     const [minutos, setMinutos] = useState(DURACIONES_COMPARTIR[1].minutos);
     const [ahora, setAhora] = useState(Date.now());
+    const { height } = useWindowDimensions();
+    const minutosRestantes = compartida
+        ? Math.max(0, Math.ceil((Date.parse(compartida.expiraEn) - ahora) / 60_000))
+        : 0;
 
     useEffect(() => {
         if (!compartida) {
             return;
         }
+        setAhora(Date.now());
+        const estado = AppState.addEventListener("change", (valor) => {
+            if (valor === "active") setAhora(Date.now());
+        });
         const reloj = setInterval(() => setAhora(Date.now()), INTERVALO_RELOJ_MS);
-        return () => clearInterval(reloj);
+        return () => {
+            clearInterval(reloj);
+            estado.remove();
+        };
     }, [compartida]);
 
     const handlePressTab = (tab: BottomTabId) => {
@@ -97,68 +108,99 @@ const ClienteYoScreen = ({ navigation }: Props) => {
         <SafeAreaView style={styles.statusBar} edges={['top', 'bottom']}>
             <StatusBar style="light" />
             <View style={styles.pantalla}>
-                <View style={styles.containerEncabezado}>
-                    <AppText weight="medium" style={styles.titulo}>Me encuentro aquí</AppText>
-                    <AppText style={[styles.subTitulo, error && styles.textoError]} numberOfLines={2}>
-                        {textoUbicacion}
-                    </AppText>
-                    {error && (
-                        <Pressable onPress={reintentar} accessibilityRole="button">
-                            <AppText weight="semibold" style={styles.enlace}>Reintentar</AppText>
-                        </Pressable>
-                    )}
-                </View>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.containerEncabezado}>
+                        <View style={styles.filaEncabezado}>
+                            <Icono nombre="locationOn" tamanio={32} color={Colors.white} />
+                            <AppText weight="bold" style={styles.titulo}>Mi ubicación</AppText>
+                        </View>
+                        {(error || buscando) && <View style={styles.estadoUbicacion}>
+                            <Icono nombre={error ? "info" : "myLocation"} tamanio={16} color={error ? Colors.errorContainer : Colors.white} />
+                            <AppText weight="medium" style={styles.estadoTexto}>
+                                {error ? "Ubicación no disponible" : buscando ? "Buscando ubicación" : "Estás aquí"}
+                            </AppText>
+                        </View>}
+                        <AppText style={[styles.subTitulo, error && styles.errorEncabezado]}>
+                            {textoUbicacion}
+                        </AppText>
+                        {error && (
+                            <Button
+                                titulo="Reintentar"
+                                icono="refresh"
+                                posicionIcono="izquierda"
+                                colorIcono={Colors.error}
+                                onPress={reintentar}
+                                color={Colors.errorContainer}
+                                colorTitulo={Colors.error}
+                            />
+                        )}
+                    </View>
 
-                <MapaSeguimiento
-                    style={styles.mapa}
-                    cliente={ubicacion ? { coordenadas: ubicacion, titulo: "Tú" } : null}
-                />
+                    <MapaSeguimiento
+                        style={[styles.mapa, { height: Math.max(280, Math.min(460, height * 0.42)) }]}
+                        cliente={ubicacion ? { coordenadas: ubicacion, titulo: "Tú" } : null}
+                    />
 
-                <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                    <Card style={styles.card}>
+                    <Card style={[styles.card, compartida && styles.cardActiva]}>
                         {compartida ? (
                             <>
                                 <View style={styles.filaTitulo}>
                                     <AnimacionEstado tipo="compartirUbicacion" tamanio={48} animar />
                                     <AppText weight="semibold" style={styles.tituloCard}>
-                                        Compartiendo en tiempo real
+                                        Compartiendo ubicación
                                     </AppText>
                                 </View>
-                                <AppText style={styles.texto}>
-                                    Hasta las {formatearHora(compartida.expiraEn)} ·{" "}
-                                    {enviadaEn ? `actualizada ${formatearAntiguedad(enviadaEn, ahora)}` : "enviando..."}
-                                    . Mantén la app abierta para que tu familiar te siga viendo.
+                                <View style={styles.resumenTiempo}>
+                                    <Icono nombre="timer" tamanio={24} color={Colors.primary} />
+                                    <View style={styles.detalleTiempo}>
+                                        <AppText weight="bold" style={styles.tiempoRestante}>
+                                            {minutosRestantes > 0 ? `${minutosRestantes} min restantes` : "Tiempo finalizado"}
+                                        </AppText>
+                                        <AppText style={styles.texto}>Hasta las {formatearHora(compartida.expiraEn)}</AppText>
+                                    </View>
+                                </View>
+                                <AppText style={styles.actualizacion}>
+                                    {enviadaEn ? `Última actualización: ${formatearAntiguedad(enviadaEn, ahora)}` : "Enviando la primera ubicación..."}
                                 </AppText>
+                                <AppText style={styles.texto}>Mantén la app abierta para seguir actualizando tu ubicación.</AppText>
                                 {errorCompartir && (
                                     <AppText style={[styles.texto, styles.textoError]}>{errorCompartir}</AppText>
                                 )}
-                                <View style={styles.botones}>
-                                    <View style={styles.boton}>
-                                        <Button titulo="Enviar enlace" onPress={() => void enviarEnlace(compartida)} />
-                                    </View>
-                                    <View style={styles.boton}>
-                                        <Button
-                                            titulo={deteniendo ? "Deteniendo..." : "Detener"}
-                                            color={Colors.danger}
-                                            borderColor={Colors.danger}
-                                            disabled={deteniendo}
-                                            onPress={() => void handleDetener()}
-                                        />
-                                    </View>
-                                </View>
+                                <Button
+                                    titulo="Enviar enlace"
+                                    icono="Share"
+                                    posicionIcono="izquierda"
+                                    disabled={deteniendo || minutosRestantes === 0}
+                                    onPress={() => void enviarEnlace(compartida)}
+                                />
+                                <Pressable
+                                    onPress={() => void handleDetener()}
+                                    disabled={deteniendo}
+                                    accessibilityRole="button"
+                                    accessibilityState={{ disabled: deteniendo }}
+                                    style={({ pressed }) => [styles.detener, (pressed || deteniendo) && styles.presionado]}
+                                >
+                                    <Icono nombre="stop" tamanio={20} color={Colors.danger} />
+                                    <AppText weight="semibold" style={styles.textoDetener}>
+                                        {deteniendo ? "Deteniendo..." : "Dejar de compartir"}
+                                    </AppText>
+                                </Pressable>
                             </>
                         ) : (
                             <>
                                 <View style={styles.filaTitulo}>
-                                    <AnimacionEstado tipo="compartirUbicacion" tamanio={48} animar={false} />
-                                    <AppText weight="semibold" style={styles.tituloCard}>
-                                        Compartir mi ubicación
+                                    <View style={styles.iconoCompartir}>
+                                        <Icono nombre="locationOn" tamanio={30} color={Colors.primary} />
+                                    </View>
+                                    <AppText weight="bold" style={styles.tituloCard}>
+                                        Comparte tu ubicación
                                     </AppText>
                                 </View>
                                 <AppText style={styles.texto}>
-                                    Tu familiar verá dónde estás en un mapa desde un enlace, sin instalar la app.
+                                    Comparte un enlace para que tu familia sepa dónde estás.
                                 </AppText>
-                                <View style={styles.duraciones}>
+                                <AppText weight="medium" style={styles.pregunta}>¿Por cuánto tiempo?</AppText>
+                                <View style={styles.duraciones} accessibilityRole="radiogroup" accessibilityLabel="Duración de ubicación compartida">
                                     {DURACIONES_COMPARTIR.map((duracion) => {
                                         const elegida = duracion.minutos === minutos;
                                         return (
@@ -166,9 +208,11 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                                                 key={duracion.minutos}
                                                 onPress={() => setMinutos(duracion.minutos)}
                                                 accessibilityRole="radio"
-                                                accessibilityState={{ selected: elegida }}
-                                                style={[styles.duracion, elegida && styles.duracionElegida]}
+                                                accessibilityState={{ checked: elegida, disabled: iniciando }}
+                                                disabled={iniciando}
+                                                style={({ pressed }) => [styles.duracion, elegida && styles.duracionElegida, (pressed || iniciando) && styles.presionado]}
                                             >
+                                                {elegida && <Icono nombre="done" tamanio={18} color={Colors.secondary} />}
                                                 <AppText
                                                     weight="medium"
                                                     style={[styles.textoDuracion, elegida && styles.textoDuracionElegida]}
@@ -186,10 +230,11 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                                     icono="Share"
                                     posicionIcono="izquierda"
                                 />
+                                <AppText style={styles.notaCompartir}>Tu familia puede verlo sin instalar la app.</AppText>
                             </>
                         )}
                     </Card>
-                </KeyboardAwareScroll>
+                </ScrollView>
             </View>
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="yo" onPressTab={handlePressTab} />
         </SafeAreaView>
@@ -202,41 +247,51 @@ const styles = StyleSheet.create({
         flex: 1
     },
     pantalla: {
-        backgroundColor: Colors.surface,
+        backgroundColor: Colors.surfaceBright,
         flex: 1,
     },
     scrollContent: {
-        paddingBottom: 100,
+        paddingBottom: 120,
     },
     containerEncabezado: {
-        marginHorizontal: 20,
-        marginTop: 20,
-        marginBottom: 12,
-        gap: 4,
+        backgroundColor: Colors.primary,
+        paddingHorizontal: 20,
+        paddingTop: 24,
+        paddingBottom: 24,
+        marginBottom: 16,
+        gap: 8,
+        borderBottomLeftRadius: 10,
+        borderBottomRightRadius: 10,
     },
     titulo: {
-        fontSize: 20,
-        color: Colors.brandDeep,
+        fontSize: 28,
+        flex: 1,
+        color: Colors.white,
     },
     subTitulo: {
-        fontSize: 15,
-        color: Colors.brandText,
+        fontSize: 16,
+        lineHeight: 23,
+        color: Colors.brandSubtitle,
     },
     textoError: {
         color: Colors.error,
     },
     enlace: {
         fontSize: 15,
-        color: Colors.primary,
+        color: Colors.white,
     },
+    errorEncabezado: { color: Colors.errorContainer },
     mapa: {
-        flex: 1,
-        height: undefined,
-        marginHorizontal: 12,
+        marginHorizontal: 16,
     },
     card: {
-        padding: 16,
-        gap: 8,
+        padding: 18,
+        marginHorizontal: 16,
+        marginTop: 16,
+        gap: 10,
+        borderRadius: 24,
+        elevation: 0,
+        shadowOpacity: 0,
     },
     filaTitulo: {
         flexDirection: "row",
@@ -245,12 +300,12 @@ const styles = StyleSheet.create({
     },
     tituloCard: {
         flex: 1,
-        fontSize: 16,
+        fontSize: 19,
         color: Colors.brandDeep,
     },
     texto: {
-        fontSize: 13,
-        lineHeight: 19,
+        fontSize: 15,
+        lineHeight: 22,
         color: Colors.brandText,
     },
     duraciones: {
@@ -259,14 +314,19 @@ const styles = StyleSheet.create({
     },
     duracion: {
         flex: 1,
+        flexDirection: "row",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: 5,
         alignItems: "center",
-        paddingVertical: 8,
-        borderRadius: 20,
+        paddingVertical: 14,
+        minHeight: 48,
+        borderRadius: 28,
         borderWidth: 1,
         borderColor: Colors.outlineVariant,
     },
     duracionElegida: {
-        borderColor: Colors.primary,
+        borderColor: Colors.secondary,
         backgroundColor: Colors.primaryContainer,
     },
     textoDuracion: {
@@ -274,15 +334,33 @@ const styles = StyleSheet.create({
         color: Colors.brandText,
     },
     textoDuracionElegida: {
-        color: Colors.primary,
+        color: Colors.secondary,
     },
-    botones: {
-        flexDirection: "row",
-        gap: 8,
+    estadoUbicacion: {
+        flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8,
     },
-    boton: {
-        flex: 1,
+    filaEncabezado: { flexDirection: "row", alignItems: "center", gap: 10 },
+    iconoCompartir: {
+        width: 48, height: 48, borderRadius: 24,
+        alignItems: "center", justifyContent: "center", backgroundColor: Colors.primaryContainer,
     },
+    notaCompartir: { fontSize: 13, lineHeight: 19, textAlign: "center", color: Colors.outline },
+    estadoTexto: { fontSize: 13, color: Colors.white },
+    cardActiva: { borderColor: Colors.primaryFixedDim },
+    pregunta: { fontSize: 14, color: Colors.brandDeep, marginTop: 8 },
+    resumenTiempo: {
+        flexDirection: "row", alignItems: "center", gap: 12,
+        padding: 14, borderRadius: 16, backgroundColor: Colors.primaryContainer,
+    },
+    detalleTiempo: { flex: 1, gap: 4 },
+    tiempoRestante: { fontSize: 22, color: Colors.brandDeep },
+    actualizacion: { fontSize: 12, color: Colors.onSurfaceVariant },
+    detener: {
+        flexDirection: "row", alignItems: "center", justifyContent: "center",
+        gap: 8, minHeight: 48, paddingVertical: 12, borderRadius: 16,
+    },
+    textoDetener: { fontSize: 14, color: Colors.danger, flexShrink: 1 },
+    presionado: { opacity: 0.6 },
 });
 
 export default ClienteYoScreen;
