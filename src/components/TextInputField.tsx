@@ -17,6 +17,7 @@ interface Prop{
     keyboardType?: TextInputProps["keyboardType"];
     autoCapitalize?: TextInputProps["autoCapitalize"];
     maxLength?: number;
+    disabled?: boolean;
 }
 
 const TextInputField: React.FC<Prop> = ({
@@ -31,6 +32,7 @@ const TextInputField: React.FC<Prop> = ({
     keyboardType,
     autoCapitalize,
     maxLength,
+    disabled = false,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [mostrarContrasenia, setMostrarContrasenia] = useState(false);
@@ -40,7 +42,7 @@ const TextInputField: React.FC<Prop> = ({
     return(
         <View style={styles.contenedor}>
             {label && <AppText style={styles.label}>{label}</AppText>}
-            <View style={[styles.input, isFocused && styles.inputFocused]}>
+            <View style={[styles.input, isFocused && !disabled && styles.inputFocused, disabled && styles.inputDisabled]}>
                 {icono && (
                     <Icono
                         nombre={icono}
@@ -58,12 +60,20 @@ const TextInputField: React.FC<Prop> = ({
                      keyboardType={keyboardType}
                      autoCapitalize={autoCapitalize}
                      maxLength={maxLength}
+                     editable={!disabled}
+                     accessibilityState={{ disabled }}
                      onFocus={() => setIsFocused(true)}
                      onBlur={() => setIsFocused(false)}
 
                 />
                 {esContrasenia && (
-                    <Pressable onPress={() => setMostrarContrasenia((anterior) => !anterior)}>
+                    <Pressable
+                        onPress={() => setMostrarContrasenia((anterior) => !anterior)}
+                        disabled={disabled}
+                        accessibilityRole="button"
+                        accessibilityLabel={mostrarContrasenia ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        accessibilityState={{ disabled }}
+                    >
                         <Icono
                             nombre={mostrarContrasenia ? 'visibilityOff' : 'visibility'}
                             tamanio={24}
@@ -97,6 +107,10 @@ const styles = StyleSheet.create({
     },
     inputFocused:{
         borderColor: Colors.primary,
+    },
+    inputDisabled: {
+        backgroundColor: Colors.surfaceContainerLow,
+        opacity: 0.6,
     },
     texto:{
         flex: 1,
