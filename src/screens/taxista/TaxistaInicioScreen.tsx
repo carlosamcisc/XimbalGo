@@ -22,6 +22,7 @@ import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
+import Divider from "../../components/Divider";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaInicio">;
 
@@ -103,8 +104,12 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     )}
                     <Button
                         titulo={taxista.cambiandoServicio ? "Procesando..." : "Terminar servicio"}
-                        color={Colors.danger}
+                        colorTitulo={Colors.danger}
+                        color={Colors.surface}
                         borderColor={Colors.danger}
+                        icono="stop"
+                        colorIcono={Colors.danger}
+                        posicionIcono="izquierda"
                         disabled={taxista.cambiandoServicio}
                         onPress={terminarServicio}
                     />
@@ -134,6 +139,8 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                 />
                 <Button
                     titulo={taxista.cambiandoServicio ? "Obteniendo ubicación..." : "Iniciar servicio"}
+                    icono="assistantNavigation"
+                    posicionIcono="izquierda"
                     disabled={!puedeIniciar || taxista.cambiandoServicio}
                     onPress={() => void cambiarServicio(true)}
                 />
@@ -189,7 +196,10 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     </View>
                     {renderEstadoServicio()}
                 </Card>
-
+                <View style={styles.seccion}>
+                    <Icono nombre="gridView" tamanio={25} color={Colors.primary} />
+                    <AppText weight="semibold" style={styles.tituloSeccion}>Ruta y asientos</AppText>
+                </View>
                 {(perfil.ruta || vehiculo) && (
                     <Card style={styles.tarjeta}>
                         {perfil.ruta && (
@@ -203,39 +213,37 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                                 </View>
                             </View>
                         )}
+                        <Divider />
                         {vehiculo && (
                             <View style={styles.asientos}>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosLibres}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.success }]}>{conteo.libres}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Libres</AppText>
                                 </View>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosReservados}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.primary }]}>{conteo.reservados}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Reservados</AppText>
                                 </View>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosOcupados}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.brandText }]}>{conteo.ocupados}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Ocupados</AppText>
                                 </View>
                             </View>
                         )}
+                        <Divider />
                         {vehiculo && asientos.length > 0 && (
-                            <Pressable
-                                onPress={() => navigation.navigate("TaxistaVehiculo")}
-                                accessibilityRole="button"
-                                style={styles.enlaceAsientos}
-                            >
-                                <Icono nombre="eventSeat" tamanio={18} color={Colors.primary} />
-                                <AppText weight="semibold" style={styles.enlace}>
-                                    ¿Subió alguien sin reservar? Marca sus asientos
-                                </AppText>
-                            </Pressable>
+                            <Button titulo="Gestionar asientos" icono="eventSeat" posicionIcono="izquierda" onPress={() => navigation.navigate("TaxistaVehiculo")} />
                         )}
+                        <Pressable
+                            onPress={() => navigation.navigate("TaxistaVehiculo")}
+                        >
+                            <AppText weight="medium" style={styles.enlace}>¿Subio alguien sin reservar?</AppText>
+                        </Pressable>
                     </Card>
                 )}
 
                 <View style={styles.seccion}>
-                    <Icono nombre="bookMarks" tamanio={22} color={Colors.primary} />
+                    <Icono nombre="bookMarks" tamanio={25} color={Colors.primary} />
                     <AppText weight="semibold" style={styles.tituloSeccion}>
                         Solicitudes pendientes ({taxista.pendientes.length})
                     </AppText>
@@ -412,7 +420,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     marcaCumplida: {
-        backgroundColor: Colors.success,
+        backgroundColor: Colors.secondary,
     },
     marcaPendiente: {
         borderWidth: 2,
@@ -428,8 +436,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
         paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.divider,
     },
     textoResumen: {
         flex: 1,
@@ -445,10 +451,28 @@ const styles = StyleSheet.create({
     asientos: {
         flexDirection: "row",
         paddingTop: 12,
+        gap: 5,
     },
-    asiento: {
+    asientosLibres: {
         flex: 1,
         alignItems: "center",
+        backgroundColor: Colors.successContainer,
+        borderRadius: 8,
+        paddingVertical: 5,
+    },
+    asientosReservados: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: Colors.secondaryContainer,
+        borderRadius: 8,
+        paddingVertical: 5,
+    },
+    asientosOcupados: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 8,
+        paddingVertical: 5,
     },
     numeroAsientos: {
         fontSize: 22,
@@ -477,6 +501,7 @@ const styles = StyleSheet.create({
     enlace: {
         fontSize: 14,
         color: Colors.primary,
+        textAlign: "center",
     },
     enlaceAsientos: {
         flexDirection: "row",
