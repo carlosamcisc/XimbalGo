@@ -33,7 +33,7 @@ El `id` es un uuid aleatorio y funciona como llave del enlace: quien lo tenga ve
 
 ## Página web
 
-[web/compartir/index.html](../web/compartir/index.html) es una página estática: consulta `obtener_ubicacion_compartida` por la API REST cada 10 s (se pausa si la pestaña está oculta) y dibuja la posición con Leaflet y los mosaicos de OpenStreetMap, que no necesitan API key. Tiene un enlace para abrir el punto en Google Maps.
+[web/compartir/index.html](../web/compartir/index.html) es una página estática: consulta `obtener_ubicacion_compartida` por la API REST cada 10 s (se pausa si la pestaña está oculta) y dibuja la posición con MapLibre GL JS y el estilo Liberty de OpenFreeMap, que no necesitan API key. Conserva la atribución del mapa y tiene un enlace para abrir el punto en OpenStreetMap.
 
 Las Edge Functions de Supabase no sirven HTML, así que la página se publica en GitHub Pages con el flujo [.github/workflows/pagina-ubicacion.yml](../.github/workflows/pagina-ubicacion.yml), que reemplaza `__SUPABASE_URL__` y `__SUPABASE_PUBLISHABLE_KEY__` al publicar.
 

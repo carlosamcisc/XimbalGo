@@ -9,6 +9,7 @@ import { Alert } from 'react-native';
 import RootNavigator from './src/navigation/RootNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { ToastHost } from './src/components/ToastMessaje';
 import type { AuthStackParamList } from './src/navigation/types';
 import {
   obtenerEnlaceRecuperacionInvalido,
@@ -100,6 +101,7 @@ export default function App() {
       <NavigationContainer linking={linking}>
         <RootNavigator />
       </NavigationContainer>
+      <ToastHost />
     </SafeAreaProvider>
   );
 }

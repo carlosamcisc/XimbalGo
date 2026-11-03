@@ -273,6 +273,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         elevation: 2,
+        shadowColor: Colors.brandDeep,
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
     },
     contenedorBoton: {
         justifyContent: "center",
@@ -305,7 +309,7 @@ const styles = StyleSheet.create({
         marginTop: 12,
         color: Colors.primary,
         fontSize: 15,
-        fontWeight: "bold",
+        fontFamily: "InterBold",
     },
 });
 
