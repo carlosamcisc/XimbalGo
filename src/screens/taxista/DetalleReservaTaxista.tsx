@@ -58,7 +58,7 @@ export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: 
   const precio = reserva ? formatearPrecio(reserva.precio) : null;
 
   return (
-    <BottomSheet visible={reserva !== undefined} onClose={onClose} height="50%">
+    <BottomSheet visible={reserva !== undefined} onClose={onClose} height="75%">
       {reserva && estado && (
         <View style={styles.contenido}>
           <View style={styles.encabezado}>
