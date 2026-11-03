@@ -59,7 +59,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
     const conteo = {
         libres: asientos.filter((asiento) => asiento.estado === "disponible").length,
         reservados: asientos.filter((asiento) => asiento.estado === "reservado").length,
-        ocupados: asientos.filter((asiento) => asiento.estado === "ocupado").length,
+        ocupados: asientos.filter((asiento) => asiento.enPlataforma && asiento.estado === "ocupado").length,
     };
     const precio = formatearPrecio(perfil?.precioRuta ?? perfil?.ruta?.precioBase ?? null);
 

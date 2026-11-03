@@ -42,6 +42,7 @@ export type Database = {
       }
       asientos: {
         Row: {
+          en_plataforma: boolean
           estado: string
           id: string
           numero_asiento: number
@@ -49,6 +50,7 @@ export type Database = {
           vehiculo_id: string
         }
         Insert: {
+          en_plataforma?: boolean
           estado?: string
           id?: string
           numero_asiento: number
@@ -56,6 +58,7 @@ export type Database = {
           vehiculo_id: string
         }
         Update: {
+          en_plataforma?: boolean
           estado?: string
           id?: string
           numero_asiento?: number

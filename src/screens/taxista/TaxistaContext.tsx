@@ -13,6 +13,7 @@ import {
   actualizarUbicacion,
   actualizarVehiculo,
   cambiarServicio,
+  configurarAsientosPlataforma,
   escucharTaxista,
   guardarPerfilTaxista,
   marcarAsientos,
@@ -222,6 +223,21 @@ function useTaxistaEstado() {
   );
 
   /** Devuelve un mensaje de error para el usuario, o null si se guardó. */
+  const configurarAsientos = useCallback(async (cantidad: number): Promise<string | null> => {
+    if (!vehiculo) return "Registra tu vehículo primero.";
+    setMarcandoAsientos(true);
+    try {
+      await configurarAsientosPlataforma(vehiculo.id, cantidad);
+      await cargar();
+      return null;
+    } catch (e: unknown) {
+      void cargar();
+      return mensajeError(e, "No se pudo guardar la cantidad de asientos.");
+    } finally {
+      setMarcandoAsientos(false);
+    }
+  }, [vehiculo, cargar]);
+
   const guardarPerfil = useCallback(
     async (datos: DatosPerfilTaxista): Promise<string | null> => {
       if (!taxistaId) {
@@ -382,6 +398,7 @@ function useTaxistaEstado() {
     procesandoAccion,
     responderReserva,
     ofrecerAsientos: ofrecerAsientosReserva,
+    configurarAsientos,
     marcandoAsientos,
     marcarAsientos: marcarAsientosVehiculo,
     guardarPerfil,

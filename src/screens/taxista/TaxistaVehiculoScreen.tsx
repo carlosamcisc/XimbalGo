@@ -38,6 +38,7 @@ const COLOR_ASIENTO: Record<EstadoAsiento, { fondo: string; texto: string }> = {
 
 // Ocupado por una reservación aceptada: se libera al cerrar ese viaje.
 const etiquetaAsiento = (asiento: AsientoTaxista) =>
+  !asiento.enPlataforma ? "Fuera de app" :
   asiento.estado === "ocupado" && asiento.conReserva ? "En viaje" : ETIQUETA_ASIENTO[asiento.estado];
 
 const textoCantidad = (cantidad: number) =>
@@ -96,6 +97,23 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
   const [formulario, setFormulario] = useState<Formulario>(() => formularioDesde(vehiculo));
   const [guardando, setGuardando] = useState(false);
   const [seleccion, setSeleccion] = useState<string[]>([]);
+  const enPlataforma = vehiculo?.asientos.filter((asiento) => asiento.enPlataforma).length ?? 0;
+  const [cantidadPlataforma, setCantidadPlataforma] = useState(String(enPlataforma));
+
+  useEffect(() => {
+    setCantidadPlataforma(String(enPlataforma));
+  }, [vehiculo?.id, enPlataforma]);
+
+  const guardarCantidad = async () => {
+    const cantidad = Number(cantidadPlataforma);
+    if (!vehiculo || !/^\d+$/.test(cantidadPlataforma) || !Number.isInteger(cantidad) || cantidad > vehiculo.capacidad) {
+      ToastMessage.show(`Indica entre 0 y ${vehiculo?.capacidad ?? 0} asientos.`, "long");
+      return;
+    }
+    const error = await taxista.configurarAsientos(cantidad);
+    if (!error) setSeleccion([]);
+    ToastMessage.show(error ?? "Asientos de la plataforma actualizados", error ? "long" : "short");
+  };
 
   // Un asiento seleccionado deja de serlo si un cliente lo reserva mientras tanto.
   const seleccionados = (vehiculo?.asientos ?? []).filter(
@@ -106,6 +124,10 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
 
   const tocarAsiento = (asiento: AsientoTaxista) => {
     if (!asientoEditable(asiento)) {
+      if (!asiento.enPlataforma) {
+        ToastMessage.show("Aumenta la cantidad de asientos en la plataforma para habilitarlo.", "long");
+        return;
+      }
       ToastMessage.show(
         `El asiento ${asiento.numero} es de una reservación; se libera al cerrar ese viaje.`,
         "long"
@@ -182,6 +204,23 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
 
         {vehiculo && vehiculo.asientos.length > 0 && (
           <Card style={styles.tarjeta}>
+            <AppText weight="semibold" style={styles.etiquetaSwitch}>Asientos en la plataforma</AppText>
+            <AppText style={styles.ayuda}>
+              Ofreces {enPlataforma} de {vehiculo.capacidad} asientos. El resto queda fuera de la app.
+              La cantidad incluye los reservados y ocupados; no se pueden retirar mientras estén en uso.
+            </AppText>
+            <TextInputField
+              label="Cantidad de asientos en servicio"
+              value={cantidadPlataforma}
+              onChangeText={setCantidadPlataforma}
+              keyboardType="number-pad"
+              placeholder={`De 0 a ${vehiculo.capacidad}`}
+            />
+            <Button
+              titulo={taxista.marcandoAsientos ? "Guardando..." : "Guardar asientos en servicio"}
+              disabled={taxista.marcandoAsientos || guardando || cantidadPlataforma === String(enPlataforma)}
+              onPress={() => void guardarCantidad()}
+            />
             <AppText style={styles.ayuda}>
               ¿Subió alguien sin reservar? Toca los asientos libres que ocupó y márcalos como ocupados.
               Cuando se bajen, tócalos de nuevo para liberarlos. Los asientos de las reservaciones se
@@ -320,7 +359,7 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
           </View>
           <Button
             titulo={guardando ? "Guardando..." : vehiculo ? "Guardar cambios" : "Registrar vehículo"}
-            disabled={guardando}
+            disabled={guardando || taxista.marcandoAsientos}
             onPress={() => void guardar()}
           />
         </Card>
