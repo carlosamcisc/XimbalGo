@@ -80,7 +80,7 @@ Migración `20261020120000_reservar_varios_asientos.sql` (aplicada al proyecto e
 
 ## Mapa
 
-El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGLE}`); antes era Leaflet en un WebView. Los marcadores son vistas propias con los colores de la leyenda y se mueven al cambiar las props, sin recargar el mapa. Se encuadra solo la primera vez que hay marcadores; el botón vuelve a encuadrar. La configuración de la API key está en [README.md](../README.md#google-maps).
+El mapa usa MapLibre Native con el estilo Liberty de OpenFreeMap en Android e iOS, sin API key. Los marcadores conservan los colores de la leyenda y se mueven al cambiar las props, sin recargar el mapa. Se encuadra solo la primera vez que hay marcadores; el botón vuelve a encuadrar los puntos actuales. La atribución permanece accesible. Ver [README.md](../README.md#mapas-y-rutas).
 
 ## Arquitectura y archivos
 
@@ -95,7 +95,7 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
 | `src/screens/cliente/mensajeError.ts` | `mensajeError`; `useClienteInicio` lo reexporta para no cambiar las importaciones existentes. |
 | `src/components/SelectorAsientos.tsx` | Botones − y + para la cantidad. |
 | `src/components/SelectorFechaViaje.tsx` | «Lo antes posible» o día y hora. |
-| `src/components/MapaSeguimiento.tsx` | Mapa de Google (`react-native-maps`). |
+| `src/components/MapaSeguimiento.tsx` | Mapa nativo con MapLibre y OpenFreeMap. |
 | `src/components/TaxiCard.tsx` | Línea opcional `detalle`. |
 | `src/components/ReservaCard.tsx`, `ReservaTaxistaCard.tsx`, `src/screens/taxista/DetalleReservaTaxista.tsx` | Cantidad de asientos y fecha programada. |
 | `src/modules/cliente/seguimiento.ts` | Tipos del seguimiento, distancia y estimación de llegada. |
@@ -110,7 +110,7 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
 
 ## Configuración y ejecución
 
-1. `npm install` y la key de Google Maps en `.env` (ver [README.md](../README.md#google-maps)).
+1. `npm install` y las variables de Supabase en `.env` (ver [README.md](../README.md#mapas-y-rutas)); el mapa no requiere clave.
 2. La migración ya está aplicada en el proyecto remoto. Para otro proyecto Supabase:
 
    ```powershell
@@ -127,7 +127,7 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
 - **La ubicación del taxi solo se actualiza con su app abierta** (ver `taxista.md`).
 - **Una reserva en curso por cliente** (regla existente); para varias personas se reservan varios asientos en una sola reserva.
 - **Los números de asiento de las reservas cerradas** se pierden al liberarse los asientos; queda el primero (`reservas.asiento_id`) y la cantidad.
-- **El mapa necesita internet** la primera vez que se ve una zona (Google Maps guarda en caché lo ya visto). Con una key inválida o sin restricción correcta, el mapa sale gris y el error aparece en `adb logcat` (`Google Android Maps SDK`).
+- **El mapa necesita internet** para descargar estilos y mosaicos de OpenFreeMap. Si falla la carga del estilo, ofrece reintentar.
 - El origen del catálogo de rutas no tiene coordenadas: el seguimiento usa la última ubicación guardada del cliente; si nunca se guardó, no hay estimación.
 
 ## Validación realizada
@@ -143,4 +143,4 @@ El mapa es Google Maps nativo con `react-native-maps` (`provider={PROVIDER_GOOGL
   - `obtener_reservas_taxista` devuelve `cantidad_asientos = 2` y `numeros_asientos = {1,2}`.
   - Otro usuario no puede ver el seguimiento de la reserva.
 - Después se aplicó con `db push` y se regeneraron los tipos.
-- **No se probó en un dispositivo**: falta compilar el cliente nativo con `react-native-maps` y la key de Google Maps.
+- **Validación en dispositivo pendiente**: MapLibre requiere generar e instalar un cliente nativo nuevo en Android e iOS.

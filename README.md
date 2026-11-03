@@ -40,7 +40,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
-| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android e iOS; Apple Maps en iOS si no hay key) |
+| Mapa | MapLibre Native con OpenFreeMap (datos de OpenStreetMap), sin API key |
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
@@ -65,11 +65,9 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    ```env
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-   GOOGLE_MAPS_ANDROID_API_KEY=
-   GOOGLE_MAPS_IOS_API_KEY=
    EXPO_PUBLIC_URL_UBICACION_COMPARTIDA=
    ```
-3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
+3. Revisa [Mapas y rutas](#mapas-y-rutas): el mapa no necesita clave; GraphHopper se configura en Supabase.
 4. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
 5. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
    ```bash
@@ -77,30 +75,20 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    npx supabase db push
    ```
 
-### Google Maps
+### Mapas y rutas
 
-El mapa usa Google Maps nativo con `react-native-maps`. Cada plataforma lleva su propia key porque Google las restringe distinto.
+Android e iOS usan [MapLibre React Native](https://maplibre.org/maplibre-react-native/docs/setup/expo/) con el estilo Liberty de [OpenFreeMap](https://openfreemap.org/). Los mapas no necesitan cuenta ni API key. La atribución a OpenStreetMap y OpenMapTiles permanece accesible en el control del mapa.
 
-#### Android
+- [MapaSeguimiento.tsx](./src/components/MapaSeguimiento.tsx) muestra taxi, cliente, abordaje y paradero. Actualiza los marcadores sin recentrar mientras el usuario explora; el botón de centrar encuadra los puntos actuales.
+- [app.config.ts](./app.config.ts) instala el plugin nativo de MapLibre. Después de instalar las dependencias hay que generar un nuevo cliente nativo: un build anterior no incluye MapLibre.
+- En Android, regenera con `npx expo prebuild --platform android --clean` y compila con `npm run android`. Las carpetas nativas son generadas y no se versionan.
+- En iOS, genera una compilación con EAS o usa macOS y Xcode (ver más abajo).
+- La página de ubicación compartida usa MapLibre GL JS con OpenFreeMap. Los enlaces de navegador abren OpenStreetMap; el botón de la app intenta primero abrir la aplicación de mapas del dispositivo.
+- Las claves antiguas de Maps ya no se leen y pueden quitarse del `.env` y de EAS.
 
-1. En Google Cloud, en el proyecto de la app, habilita **Maps SDK for Android**.
-2. En *Credenciales*, restringe la API key:
-   - **Restricción de aplicación**: *Apps para Android*, con el paquete `com.carlosmay.XimbalGo` y la huella SHA-1 de cada keystore que firme la app. La del keystore de debug (también firma el release mientras no haya uno propio) se obtiene con `cd android && ./gradlew signingReport`.
-   - **Restricción de API**: solo *Maps SDK for Android*.
-3. Pon la key en `GOOGLE_MAPS_ANDROID_API_KEY` del `.env`. [app.config.ts](./app.config.ts) la lee al compilar y el plugin de `react-native-maps` la escribe en el `AndroidManifest.xml`; no lleva el prefijo `EXPO_PUBLIC_` porque la app no la usa en JavaScript.
-4. Regenera la carpeta nativa y compila: `npx expo prebuild --platform android --clean` y `npm run android`.
+**GraphHopper** sigue calculando distancias y tiempos a paraderos desde la Edge Function `distancias-paraderos`. Su clave va como secreto `GRAPHHOPPER_API_KEY` en Supabase, nunca en el cliente. Ver [configuración y límites](./docs/distancias-paraderos.md). El plan gratuito tiene 500 créditos diarios para uso no comercial; la caché reduce llamadas y, si falla el servicio o se agota la cuota, se muestran distancias en línea recta sin tiempos. Mover el mapa y actualizar marcadores no llama a GraphHopper.
 
-Si el mapa sale gris, revisa `adb logcat | grep -i "maps"`: casi siempre es la SHA-1 o el paquete de la restricción.
-
-#### iOS
-
-1. En el mismo proyecto de Google Cloud, habilita **Maps SDK for iOS**.
-2. Crea otra API key con:
-   - **Restricción de aplicación**: *Apps para iOS*, con el bundle identifier `com.carlosmay.XimbalGo`.
-   - **Restricción de API**: solo *Maps SDK for iOS*.
-3. Ponla en `GOOGLE_MAPS_IOS_API_KEY`. El plugin de `react-native-maps` la escribe en el `Info.plist` e instala el SDK de Google Maps en el `Podfile`.
-
-Sin `GOOGLE_MAPS_IOS_API_KEY` la app también compila: en iOS el mapa usa Apple Maps. [app.config.ts](./app.config.ts) avisa a [MapaSeguimiento.tsx](./src/components/MapaSeguimiento.tsx) con `extra.googleMapsIos` cuál proveedor quedó instalado, porque pedir Google Maps sin su SDK hace fallar el mapa.
+Esta migración conserva las funciones actuales: el seguimiento muestra posiciones; no añade navegación giro a giro ni una línea de ruta por calles.
 
 ### iOS
 
@@ -108,7 +96,7 @@ En Windows no se puede compilar para iOS de forma local (`npm run ios` requiere 
 
 1. Instala EAS CLI e inicia sesión con la cuenta de Expo: `npm install -g eas-cli` y `eas login`.
 2. Enlaza el proyecto la primera vez: `eas init`.
-3. Sube las variables del `.env` a EAS, porque el `.env` no se sube al repositorio ni a EAS. Para cada variable y cada ambiente (`development`, `preview`, `production`): `eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value ... --environment development`. Las `EXPO_PUBLIC_*` pueden ser visibilidad *plaintext*; las keys de Maps, *sensitive*.
+3. Sube las variables del `.env` a EAS, porque el `.env` no se sube al repositorio ni a EAS. Para cada variable y cada ambiente (`development`, `preview`, `production`): `eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value ... --environment development`. Las `EXPO_PUBLIC_*` pueden ser visibilidad *plaintext*. La clave de GraphHopper permanece en Supabase.
 4. Compila para el simulador de iOS (no requiere cuenta de Apple Developer): `eas build -p ios --profile development`. El simulador solo corre en macOS: en una Mac, instálalo con `eas build:run -p ios` o arrastra el `.app` del `.tar.gz` descargado al simulador.
 
 Para instalar en un iPhone físico o publicar en App Store se necesita una cuenta de Apple Developer: se registra el dispositivo con `eas device:create` y se compila con un perfil sin `"simulator": true`.
@@ -130,6 +118,7 @@ Detalles de iOS que ya resuelve el código:
 | Iniciar solo el servidor de Metro (con el build ya instalado) | `npm start` |
 | Generar e instalar el APK de release | `npx expo run:android --variant release` |
 | Verificar tipos | `npm run typecheck` |
+| Ejecutar pruebas de mapas y ubicación | `npm test` |
 | Regenerar la carpeta nativa `android/` | `npx expo prebuild --platform android --clean` |
 
 Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). Las carpetas `android/` e `ios/` no se versionan.
