@@ -214,6 +214,7 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
   return data.map((reserva) => ({
     id: reserva.id,
     estado: reserva.estado as EstadoReserva,
+    abordadoEn: reserva.abordado_en,
     fechaReserva: reserva.fecha_hora_reserva,
     fechaViaje: reserva.fecha_hora_viaje,
     precio: reserva.precio,
@@ -237,6 +238,11 @@ export async function actualizarReserva(
   accion: AccionReserva,
   motivo: string | null = null
 ): Promise<void> {
+  if (accion === "abordada") {
+    const { error } = await supabase.rpc("confirmar_abordaje_taxista", { p_reserva_id: reservaId });
+    if (error) throw error;
+    return;
+  }
   const { error } = await supabase.rpc("actualizar_reserva_taxista", {
     p_reserva_id: reservaId,
     p_estado: accion,

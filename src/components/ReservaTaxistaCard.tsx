@@ -101,6 +101,9 @@ const ReservaTaxistaCard: React.FC<ReservaTaxistaCardProps> = ({
           </AppText>
         </View>
       )}
+      {reserva.abordadoEn && (
+        <AppText weight="semibold">Cliente a bordo · {formatearFecha(reserva.abordadoEn)}</AppText>
+      )}
       {reserva.motivoTaxista && (
         <View style={styles.aviso}>
           <Icono nombre="info" tamanio={16} color={Colors.onSurfaceVariant} />

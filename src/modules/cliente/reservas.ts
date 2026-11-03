@@ -15,6 +15,7 @@ export type EstadoReserva =
 export interface ReservaCliente {
   id: string;
   estado: EstadoReserva;
+  abordadoEn: string | null;
   fechaReserva: string;
   fechaViaje: string | null;
   precio: number | null;

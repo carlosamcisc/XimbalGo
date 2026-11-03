@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { AppState } from "react-native";
 import {
   escucharCliente,
   guardarPerfilCliente,
@@ -126,6 +127,13 @@ function useClienteEstado() {
 
   useEffect(() => {
     void cargar();
+  }, [cargar]);
+
+  useEffect(() => {
+    const cambio = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") void cargar();
+    });
+    return () => cambio.remove();
   }, [cargar]);
 
   // El taxista responde una reserva: llega la notificación y cambia el resumen.

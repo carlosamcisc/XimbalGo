@@ -340,6 +340,7 @@ export type Database = {
       }
       reservas: {
         Row: {
+          abordado_en: string | null
           asiento_id: string | null
           asientos_ofrecidos: number | null
           cantidad_asientos: number
@@ -361,6 +362,7 @@ export type Database = {
           vehiculo_id: string
         }
         Insert: {
+          abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
           cantidad_asientos?: number
@@ -382,6 +384,7 @@ export type Database = {
           vehiculo_id: string
         }
         Update: {
+          abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
           cantidad_asientos?: number
@@ -1070,6 +1073,7 @@ export type Database = {
       obtener_reservas_taxista: {
         Args: never
         Returns: {
+          abordado_en: string | null
           asientos_ofrecidos: number
           cantidad_asientos: number
           destino: string

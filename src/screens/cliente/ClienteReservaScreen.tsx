@@ -171,7 +171,7 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
   };
 
   const renderSeguimiento = () => {
-    if (!detalle.activa) {
+    if (!detalle.activa || reserva?.abordadoEn) {
       return null;
     }
 
@@ -304,7 +304,7 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
             </View>
           </View>
           <AppText style={styles.descripcionEstado}>
-            {oferta ? "El taxista respondió a tu solicitud. Revisa su oferta." : estado.descripcion}
+            {reserva.abordadoEn && reserva.estado === "aceptada" ? "Tu taxista confirmó que ya subiste al taxi. ¡Buen viaje!" : oferta ? "El taxista respondió a tu solicitud. Revisa su oferta." : estado.descripcion}
           </AppText>
           {reserva.motivoTaxista && (
             <View style={styles.motivo}>
@@ -323,6 +323,7 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
 
         <AppText weight="semibold" style={styles.tituloSeccion}>Detalles</AppText>
         <Card>
+          {reserva.abordadoEn && <DetalleFila icono="localTaxi" etiqueta="Abordaje confirmado" valor={formatearFecha(reserva.abordadoEn)} />}
           <DetalleFila icono="locationHistory" etiqueta="Origen" valor={reserva.origen ?? "Mi ubicación"} />
           <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
           <DetalleFila
@@ -362,7 +363,7 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
           {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
 
           {/* Con una oferta pendiente, «No acepto» ya cancela la solicitud. */}
-          {puedeCancelarse(reserva.estado) && !oferta && (
+          {puedeCancelarse(reserva.estado) && !reserva.abordadoEn && !oferta && (
             confirmandoCancelacion ? (
               <View style={styles.confirmacion}>
                 <AppText style={styles.textoConfirmacion}>

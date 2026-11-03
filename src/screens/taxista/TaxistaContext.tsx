@@ -180,7 +180,12 @@ function useTaxistaEstado() {
         reservaId,
         accion,
         () => actualizarReserva(reservaId, accion, motivo),
-        { estado: accion, ...(motivo !== null && { motivoTaxista: motivo }) }
+        {
+          ...(accion === "abordada"
+            ? { abordadoEn: new Date().toISOString() }
+            : { estado: accion }),
+          ...(motivo !== null && { motivoTaxista: motivo }),
+        }
       ),
     [operarReserva]
   );
