@@ -70,6 +70,9 @@ const ReservaCard: React.FC<ReservaCardProps> = ({ reserva, onPress }) => {
           </AppText>
         </View>
       )}
+      {reserva.abordadoEn && (
+        <AppText weight="semibold">Ya estás a bordo · {formatearFecha(reserva.abordadoEn)}</AppText>
+      )}
       {reserva.motivoTaxista && (
         <View style={[styles.aviso, styles.avisoMotivo]}>
           <Icono nombre="info" tamanio={16} color={Colors.error} />

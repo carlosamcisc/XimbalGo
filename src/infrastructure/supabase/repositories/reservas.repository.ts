@@ -16,7 +16,7 @@ import type {
 // `apartados` son todos los asientos que la reserva tiene (`asientos.reserva_id`).
 const SELECT_RESERVA = `
   id, estado, fecha_hora_reserva, fecha_hora_viaje, precio, notas, origen, destino,
-  cantidad_asientos, motivo_taxista, asientos_ofrecidos,
+  cantidad_asientos, motivo_taxista, asientos_ofrecidos, abordado_en,
   paradero_origen:paraderos!reservas_paradero_origen_id_fkey(nombre),
   paradero_destino:paraderos!reservas_paradero_destino_id_fkey(nombre),
   vehiculo:vehiculos!reservas_vehiculo_id_fkey(matricula, marca, modelo),
@@ -65,6 +65,7 @@ function aReservaCliente(reserva: FilaReserva): ReservaCliente {
       numerosAsientos.length > 0 ? numerosAsientos : numeroAsiento !== null ? [numeroAsiento] : [],
     motivoTaxista: reserva.motivo_taxista,
     asientosOfrecidos: reserva.asientos_ofrecidos,
+    abordadoEn: reserva.abordado_en,
   };
 }
 

@@ -17,6 +17,7 @@ import { useCliente } from "./ClienteContext";
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteNotificaciones">;
 
 const PRESENTACION_TIPO: Record<TipoNotificacion, { icono: NombreIcono; color: string; fondo: string }> = {
+  cliente_abordo: { icono: "localTaxi", color: Colors.success, fondo: Colors.brandAccentContainer },
   reserva_solicitada: { icono: "bookMarks", color: Colors.primary, fondo: Colors.primaryContainer },
   reserva_aceptada: { icono: "checkCircle", color: Colors.success, fondo: Colors.brandAccentContainer },
   reserva_rechazada: { icono: "cancel", color: Colors.error, fondo: Colors.errorContainerSoft },
@@ -41,7 +42,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
       void marcar(notificacion.id);
     }
     if (notificacion.reservaId) {
-      navigation.navigate("ClienteReservaciones");
+      navigation.navigate("ClienteReserva", { reservaId: notificacion.reservaId });
     }
   };
 

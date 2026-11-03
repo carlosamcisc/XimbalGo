@@ -68,6 +68,7 @@ export interface DatosVehiculo {
 export interface ReservaTaxista {
   id: string;
   estado: EstadoReserva;
+  abordadoEn: string | null;
   fechaReserva: string;
   fechaViaje: string | null;
   precio: number | null;
@@ -97,8 +98,9 @@ export const puedeOfrecerAsientos = (reserva: ReservaTaxista) =>
   reserva.asientosOfrecidos === null &&
   reserva.cantidadAsientos > 1;
 
-// Coincide con las transiciones de `actualizar_reserva_taxista`.
+// Estados de `actualizar_reserva_taxista` y confirmación de abordaje.
 export type AccionReserva =
+  | "abordada"
   | "aceptada"
   | "rechazada"
   | "completada"
@@ -107,14 +109,16 @@ export type AccionReserva =
 
 export const ACCIONES_POR_ESTADO: Partial<Record<EstadoReserva, AccionReserva[]>> = {
   pendiente: ["aceptada", "rechazada"],
-  aceptada: ["completada", "no_show", "cancelada_taxista"],
+  aceptada: ["abordada", "completada", "no_show", "cancelada_taxista"],
 };
 
 /** Con una oferta sin responder solo se puede rechazar. */
 export const accionesDisponibles = (reserva: ReservaTaxista): AccionReserva[] =>
   esperaRespuestaOferta(reserva)
     ? ["rechazada"]
-    : ACCIONES_POR_ESTADO[reserva.estado] ?? [];
+    : (ACCIONES_POR_ESTADO[reserva.estado] ?? []).filter((accion) =>
+        reserva.abordadoEn ? accion !== "abordada" && accion !== "no_show" : true
+      );
 
 interface PresentacionAccion {
   etiqueta: string;
@@ -126,6 +130,13 @@ interface PresentacionAccion {
 }
 
 export const PRESENTACION_ACCION: Record<AccionReserva, PresentacionAccion> = {
+  abordada: {
+    etiqueta: "Cliente a bordo",
+    confirmacion: null,
+    exito: "Abordaje confirmado. Se notificó al cliente.",
+    peligrosa: false,
+    motivo: null,
+  },
   aceptada: {
     etiqueta: "Aceptar",
     confirmacion: null,
