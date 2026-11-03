@@ -38,7 +38,11 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos."
+          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos.",
+          "locationAlwaysAndWhenInUsePermission": "Permite que Ximbal Go actualice tu ubicación mientras estás en servicio o compartiéndola, incluso con la pantalla bloqueada.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ]
     ]

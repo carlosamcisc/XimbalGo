@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { AppState } from "react-native";
+import { asegurarPermisoSegundoPlano, iniciarUbicacionSegundoPlano, detenerUbicacionSegundoPlano } from "../../infrastructure/location/background-location.service";
 import {
   actualizarReserva,
   actualizarUbicacion,
@@ -114,8 +115,10 @@ function useTaxistaEstado() {
     async (enServicio: boolean): Promise<string | null> => {
       setCambiandoServicio(true);
       try {
+        if (enServicio) await asegurarPermisoSegundoPlano();
         const ubicacion = enServicio ? await obtenerUbicacionActual(MENSAJE_PERMISO) : null;
         await cambiarServicio(enServicio, ubicacion);
+        if (!enServicio) await detenerUbicacionSegundoPlano();
         ultimaUbicacion.current = ubicacion;
         setErrorUbicacion(null);
         await cargar();
@@ -300,24 +303,40 @@ function useTaxistaEstado() {
     };
   }, [taxistaId, vehiculoId, cargar]);
 
-  // Mientras está en servicio, envía la ubicación con la app abierta.
+  // El observador actualiza la UI y la tarea nativa continúa en segundo plano.
   const enServicio = perfil?.enServicio ?? false;
   useEffect(() => {
-    if (!enServicio) {
+    if (!enServicio || !taxistaId) {
       return;
     }
 
     let activo = true;
     let dejarDeObservar: (() => void) | undefined;
+    let errorSegundoPlano: string | null = null;
+    const destino = { tipo: "taxista" as const, usuarioId: taxistaId };
+    const iniciarSeguimiento = () => {
+      if (!activo || AppState.currentState !== "active") return;
+      void iniciarUbicacionSegundoPlano(destino).then(() => {
+        if (!activo) return;
+        errorSegundoPlano = null;
+        setErrorUbicacion(null);
+      }, (e: unknown) => {
+        errorSegundoPlano = mensajeError(e, "No se pudo iniciar la ubicación en segundo plano.");
+        if (activo) setErrorUbicacion(errorSegundoPlano);
+      });
+    };
+    iniciarSeguimiento();
     const enviar = (coordenadas: Coordenadas) => {
+      if (!activo) return;
       ultimaUbicacion.current = coordenadas;
       actualizarUbicacion(coordenadas).then(
         () => {
-          setErrorUbicacion(null);
+          if (!activo) return;
+          setErrorUbicacion(errorSegundoPlano);
           const ahora = new Date().toISOString();
           setPerfil((actual) => actual && { ...actual, ubicacionActualizadaEn: ahora });
         },
-        (e: unknown) => setErrorUbicacion(mensajeError(e, "No se pudo enviar tu ubicación."))
+        (e: unknown) => { if (activo) setErrorUbicacion(mensajeError(e, "No se pudo enviar tu ubicación.")); }
       );
     };
 
@@ -337,8 +356,8 @@ function useTaxistaEstado() {
     );
 
     const reenvio = setInterval(() => {
-      if (ultimaUbicacion.current) {
-        enviar(ultimaUbicacion.current);
+      if (AppState.currentState === "active") {
+        void obtenerUbicacionActual(MENSAJE_PERMISO, false).then(enviar, () => undefined);
       }
     }, REENVIO_UBICACION_MS);
 
@@ -352,6 +371,7 @@ function useTaxistaEstado() {
     const cambioApp = AppState.addEventListener("change", (estado) => {
       const volvio = estadoAnterior === "background" && estado === "active";
       estadoAnterior = estado;
+      if (estado === "active") iniciarSeguimiento();
       if (!volvio || obteniendo) {
         return;
       }
@@ -371,10 +391,11 @@ function useTaxistaEstado() {
     return () => {
       activo = false;
       dejarDeObservar?.();
+      void detenerUbicacionSegundoPlano(destino).catch(() => undefined);
       clearInterval(reenvio);
       cambioApp.remove();
     };
-  }, [enServicio, cargar]);
+  }, [enServicio, cargar, taxistaId]);
 
   return {
     perfil,
