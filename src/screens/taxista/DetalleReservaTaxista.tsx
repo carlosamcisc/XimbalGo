@@ -22,6 +22,7 @@ import {
 import { textoAsientos } from "../../modules/cliente/reservas";
 import { useTaxista } from "./TaxistaContext";
 import type { AccionesReserva } from "./useAccionReserva";
+import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
 
 const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta: string; valor: string }) => (
   <View style={styles.detalleFila}>
@@ -57,9 +58,9 @@ export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: 
   const precio = reserva ? formatearPrecio(reserva.precio) : null;
 
   return (
-    <BottomSheet visible={reserva !== undefined} onClose={onClose}>
+    <BottomSheet visible={reserva !== undefined} onClose={onClose} height="75%">
       {reserva && estado && (
-        <View>
+        <View style={styles.contenido}>
           <View style={styles.encabezado}>
             <AppText weight="semibold" style={styles.titulo}>Detalle del viaje</AppText>
             <View style={[styles.estado, { backgroundColor: estado.fondo }]}>
@@ -68,95 +69,102 @@ export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: 
               </AppText>
             </View>
           </View>
-          <AppText style={styles.descripcion}>{DESCRIPCION_ESTADO_TAXISTA[reserva.estado]}</AppText>
-          {esperaRespuestaOferta(reserva) && (
-            <View style={styles.aviso}>
-              <AppText style={styles.textoAviso}>
-                Ofreciste {textoAsientos(reserva.asientosOfrecidos!)} de los {reserva.cantidadAsientos} que pidió.
-                Esperando a que el cliente acepte o cancele.
-              </AppText>
-            </View>
-          )}
+          <AppText style={styles.descripcion}>
+            {reserva.abordadoEn && reserva.estado === "aceptada"
+              ? "El cliente ya está a bordo. Completa el viaje al llegar a su destino."
+              : DESCRIPCION_ESTADO_TAXISTA[reserva.estado]}
+          </AppText>
+          <KeyboardAwareScroll contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator>
+            {esperaRespuestaOferta(reserva) && (
+              <View style={styles.aviso}>
+                <AppText style={styles.textoAviso}>
+                  Ofreciste {textoAsientos(reserva.asientosOfrecidos!)} de los {reserva.cantidadAsientos} que pidió.
+                  Esperando a que el cliente acepte o cancele.
+                </AppText>
+              </View>
+            )}
 
-          <DetalleFila icono="person" etiqueta="Cliente" valor={reserva.nombreCliente} />
-          {reserva.telefonoCliente && (
-            <Pressable
-              onPress={() => void llamar(reserva.telefonoCliente!)}
-              accessibilityRole="button"
-              accessibilityLabel={`Llamar a ${reserva.nombreCliente}`}
-            >
-              <DetalleFila icono="phone" etiqueta="Teléfono (toca para llamar)" valor={reserva.telefonoCliente} />
-            </Pressable>
-          )}
-          <DetalleFila
-            icono="locationHistory"
-            etiqueta="Origen"
-            valor={reserva.origen ?? "Ubicación del cliente (ver notas)"}
-          />
-          <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
-          <DetalleFila
-            icono="eventSeat"
-            etiqueta={reserva.cantidadAsientos === 1 ? "Asiento" : "Asientos"}
-            valor={[
-              formatearAsientos(reserva.cantidadAsientos, reserva.numerosAsientos),
-              reserva.matricula,
-            ].filter(Boolean).join(" · ")}
-          />
-          <DetalleFila
-            icono="calendar"
-            etiqueta="Viaje"
-            valor={reserva.fechaViaje ? formatearFecha(reserva.fechaViaje) : "En cuanto pases"}
-          />
-          <DetalleFila
-            icono="schedule"
-            etiqueta="Solicitada"
-            valor={formatearFecha(reserva.fechaReserva)}
-          />
-          {precio && <DetalleFila icono="payments" etiqueta="Precio" valor={precio} />}
-          {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
-          {reserva.motivoTaxista && (
-            <DetalleFila icono="info" etiqueta="Motivo que le diste al cliente" valor={reserva.motivoTaxista} />
-          )}
+            {reserva.abordadoEn && <DetalleFila icono="localTaxi" etiqueta="Cliente a bordo" valor={formatearFecha(reserva.abordadoEn)} />}
+            <DetalleFila icono="person" etiqueta="Cliente" valor={reserva.nombreCliente} />
+            {reserva.telefonoCliente && (
+              <Pressable
+                onPress={() => void llamar(reserva.telefonoCliente!)}
+                accessibilityRole="button"
+                accessibilityLabel={`Llamar a ${reserva.nombreCliente}`}
+              >
+                <DetalleFila icono="phone" etiqueta="Teléfono (toca para llamar)" valor={reserva.telefonoCliente} />
+              </Pressable>
+            )}
+            <DetalleFila
+              icono="locationHistory"
+              etiqueta="Origen"
+              valor={reserva.origen ?? "Ubicación del cliente (ver notas)"}
+            />
+            <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
+            <DetalleFila
+              icono="eventSeat"
+              etiqueta={reserva.cantidadAsientos === 1 ? "Asiento" : "Asientos"}
+              valor={[
+                formatearAsientos(reserva.cantidadAsientos, reserva.numerosAsientos),
+                reserva.matricula,
+              ].filter(Boolean).join(" · ")}
+            />
+            <DetalleFila
+              icono="calendar"
+              etiqueta="Viaje"
+              valor={reserva.fechaViaje ? formatearFecha(reserva.fechaViaje) : "En cuanto pases"}
+            />
+            <DetalleFila
+              icono="schedule"
+              etiqueta="Solicitada"
+              valor={formatearFecha(reserva.fechaReserva)}
+            />
+            {precio && <DetalleFila icono="payments" etiqueta="Precio" valor={precio} />}
+            {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
+            {reserva.motivoTaxista && (
+              <DetalleFila icono="info" etiqueta="Motivo que le diste al cliente" valor={reserva.motivoTaxista} />
+            )}
 
-          <View style={styles.acciones}>
-            {accionesDisponibles(reserva).map((accion) => {
-              const presentacion = PRESENTACION_ACCION[accion];
-              return (
+            <View style={styles.acciones}>
+              {accionesDisponibles(reserva).map((accion) => {
+                const presentacion = PRESENTACION_ACCION[accion];
+                return (
+                  <Button
+                    key={accion}
+                    titulo={procesando && procesandoAccion === accion ? "Procesando..." : presentacion.etiqueta}
+                    disabled={procesando}
+                    color={presentacion.peligrosa ? Colors.danger : Colors.primary}
+                    borderColor={presentacion.peligrosa ? Colors.danger : Colors.primary}
+                    onPress={() => {
+                      // La confirmación y el motivo se muestran sin el detalle
+                      // abierto: un `Alert` encima de un `Modal` puede dejar la
+                      // pantalla sin responder a toques en Android.
+                      if (presentacion.confirmacion || presentacion.motivo) {
+                        onClose();
+                        acciones.ejecutar(reserva.id, accion, { desdePanel: true });
+                        return;
+                      }
+                      // Al terminar se cierra el detalle para volver a la lista
+                      // ya actualizada.
+                      acciones.ejecutar(reserva.id, accion, { onExito: onClose });
+                    }}
+                  />
+                );
+              })}
+              {puedeOfrecerAsientos(reserva) && (
                 <Button
-                  key={accion}
-                  titulo={procesando && procesandoAccion === accion ? "Procesando..." : presentacion.etiqueta}
+                  titulo="Ofrecer menos asientos"
+                  color={Colors.brandDeep}
+                  borderColor={Colors.brandDeep}
                   disabled={procesando}
-                  color={presentacion.peligrosa ? Colors.danger : Colors.primary}
-                  borderColor={presentacion.peligrosa ? Colors.danger : Colors.primary}
                   onPress={() => {
-                    // La confirmación y el motivo se muestran sin el detalle
-                    // abierto: un `Alert` encima de un `Modal` puede dejar la
-                    // pantalla sin responder a toques en Android.
-                    if (presentacion.confirmacion || presentacion.motivo) {
-                      onClose();
-                      acciones.ejecutar(reserva.id, accion, { desdePanel: true });
-                      return;
-                    }
-                    // Al terminar se cierra el detalle para volver a la lista
-                    // ya actualizada.
-                    acciones.ejecutar(reserva.id, accion, { onExito: onClose });
+                    onClose();
+                    acciones.ofrecer(reserva.id, true);
                   }}
                 />
-              );
-            })}
-            {puedeOfrecerAsientos(reserva) && (
-              <Button
-                titulo="Ofrecer menos asientos"
-                color={Colors.brandDeep}
-                borderColor={Colors.brandDeep}
-                disabled={procesando}
-                onPress={() => {
-                  onClose();
-                  acciones.ofrecer(reserva.id, true);
-                }}
-              />
-            )}
-          </View>
+              )}
+            </View>
+          </KeyboardAwareScroll>
         </View>
       )}
     </BottomSheet>
@@ -164,11 +172,17 @@ export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: 
 }
 
 const styles = StyleSheet.create({
+  contenido: {
+    flex: 1,
+  },
   encabezado: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
+  },
+  scrollContent: {
+    paddingBottom: 16,
   },
   titulo: {
     fontSize: 18,

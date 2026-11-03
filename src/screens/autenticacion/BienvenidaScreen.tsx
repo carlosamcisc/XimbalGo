@@ -78,7 +78,7 @@ const BienvenidaScreen = ({ navigation }: Props) => {
 
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
                     <View style={styles.contenedorText}>
-                        <AppText style={styles.titulo}>Bienvenido a </AppText>
+                        <AppText weight="semibold" style={styles.titulo}>Bienvenido a </AppText>
                         <View style={styles.contentTitulos}>
                             <AppText weight="bold" style={styles.subtitulo}>Ximbal</AppText>
                             <AppText weight="bold" style={styles.subtituloGO}> Go</AppText>
@@ -129,11 +129,12 @@ const styles = StyleSheet.create({
         flexDirection: "row"
     },
     subtitulo: {
+        color: Colors.primary,
         fontSize: 40,
     },
     subtituloGO: {
         fontSize: 40,
-        color: Colors.primary,
+        color: Colors.secondary,
     },
     informacion: {
         fontSize: 17,

@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type DimensionValue,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "../theme/colors";
@@ -12,9 +13,10 @@ interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
   children: ReactNode;
+  height?: DimensionValue;
 }
 
-const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) => {
+const BottomSheet = ({ visible, onClose, children, height }: BottomSheetProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -31,7 +33,7 @@ const BottomSheet = ({ visible, onClose, children }: BottomSheetProps) => {
           accessibilityRole="button"
           accessibilityLabel="Cerrar panel"
         />
-        <View style={[styles.container, { paddingBottom: Math.max(30, 16 + insets.bottom) }]}>
+        <View style={[styles.container, { height, paddingBottom: Math.max(30, 16 + insets.bottom) }]}>
           <View style={styles.handle} />
           {children}
         </View>

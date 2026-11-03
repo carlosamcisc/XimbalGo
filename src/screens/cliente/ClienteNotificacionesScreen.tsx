@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
@@ -16,6 +17,7 @@ import { useCliente } from "./ClienteContext";
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteNotificaciones">;
 
 const PRESENTACION_TIPO: Record<TipoNotificacion, { icono: NombreIcono; color: string; fondo: string }> = {
+  cliente_abordo: { icono: "localTaxi", color: Colors.success, fondo: Colors.brandAccentContainer },
   reserva_solicitada: { icono: "bookMarks", color: Colors.primary, fondo: Colors.primaryContainer },
   reserva_aceptada: { icono: "checkCircle", color: Colors.success, fondo: Colors.brandAccentContainer },
   reserva_rechazada: { icono: "cancel", color: Colors.error, fondo: Colors.errorContainerSoft },
@@ -40,7 +42,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
       void marcar(notificacion.id);
     }
     if (notificacion.reservaId) {
-      navigation.navigate("ClienteReservaciones");
+      navigation.navigate("ClienteReserva", { reservaId: notificacion.reservaId });
     }
   };
 
@@ -48,7 +50,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
     if (cliente.cargando && cliente.notificaciones.length === 0) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando notificaciones...</AppText>
         </View>
       );
@@ -69,7 +71,7 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
       return (
         <Card>
           <View style={styles.estadoLista}>
-            <Icono nombre="notifications" tamanio={36} color={Colors.outlineVariant} />
+            <AnimacionEstado tipo="notificaciones" />
             <AppText style={styles.textoEstado}>
               No tienes notificaciones. Aquí verás cuando un taxista acepte o rechace tus reservaciones.
             </AppText>
@@ -113,19 +115,19 @@ const ClienteNotificacionesScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo="Notificaciones"
-        subtitulo={cliente.noLeidas > 0 ? `${cliente.noLeidas} sin leer` : "Estás al día"}
-        onBack={() => navigation.goBack()}
-        accion={
-          cliente.noLeidas > 0 ? (
-            <BotonEncabezado onPress={() => void marcar()} accessibilityLabel="Marcar todas como leídas">
-              <Icono nombre="doneAll" tamanio={22} color={Colors.white} />
-            </BotonEncabezado>
-          ) : undefined
-        }
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo="Notificaciones"
+          subtitulo={cliente.noLeidas > 0 ? `${cliente.noLeidas} sin leer` : "Estás al día"}
+          onBack={() => navigation.goBack()}
+          accion={
+            cliente.noLeidas > 0 ? (
+              <BotonEncabezado onPress={() => void marcar()} accessibilityLabel="Marcar todas como leídas">
+                <Icono nombre="doneAll" tamanio={22} color={Colors.white} />
+              </BotonEncabezado>
+            ) : undefined
+          }
+        />
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -152,9 +154,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 10,

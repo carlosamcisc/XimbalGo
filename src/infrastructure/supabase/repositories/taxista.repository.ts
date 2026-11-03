@@ -93,7 +93,7 @@ export async function obtenerVehiculoTaxista(
     .from("vehiculos")
     .select(`
       id, matricula, marca, modelo, anio, capacidad_total_asientos, activo,
-      asientos!asientos_vehiculo_id_fkey(id, numero_asiento, estado, reserva_id)
+      asientos!asientos_vehiculo_id_fkey(id, numero_asiento, estado, reserva_id, en_plataforma)
     `)
     .eq("taxista_id", taxistaId)
     .order("activo", { ascending: false })
@@ -122,6 +122,7 @@ export async function obtenerVehiculoTaxista(
         numero: asiento.numero_asiento,
         estado: asiento.estado as EstadoAsiento,
         conReserva: asiento.reserva_id !== null,
+        enPlataforma: asiento.en_plataforma,
       }))
       .sort((a, b) => a.numero - b.numero),
   };
@@ -214,6 +215,7 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
   return data.map((reserva) => ({
     id: reserva.id,
     estado: reserva.estado as EstadoReserva,
+    abordadoEn: reserva.abordado_en,
     fechaReserva: reserva.fecha_hora_reserva,
     fechaViaje: reserva.fecha_hora_viaje,
     precio: reserva.precio,
@@ -237,6 +239,11 @@ export async function actualizarReserva(
   accion: AccionReserva,
   motivo: string | null = null
 ): Promise<void> {
+  if (accion === "abordada") {
+    const { error } = await supabase.rpc("confirmar_abordaje_taxista", { p_reserva_id: reservaId });
+    if (error) throw error;
+    return;
+  }
   const { error } = await supabase.rpc("actualizar_reserva_taxista", {
     p_reserva_id: reservaId,
     p_estado: accion,
@@ -308,4 +315,12 @@ export function escucharTaxista(
   return () => {
     void supabase.removeChannel(suscrito);
   };
+}
+
+/** Guarda la cantidad ofrecida sin modificar reservas ni ocupaciones reales. */
+export async function configurarAsientosPlataforma(vehiculoId: string, cantidad: number): Promise<void> {
+  const { error } = await supabase.rpc("configurar_asientos_plataforma", {
+    p_vehiculo_id: vehiculoId, p_cantidad: cantidad,
+  });
+  if (error) throw error;
 }

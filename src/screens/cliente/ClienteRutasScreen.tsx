@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, StyleSheet, Pressable, ActivityIndicator, RefreshControl, ScrollView, TextInput } from "react-native";
+import { View, StyleSheet, Pressable, RefreshControl, ScrollView, TextInput } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -143,7 +144,7 @@ const ClienteRutasScreen = ({ navigation, route }: Props) => {
         if (rutasCliente.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado />
                     <AppText style={styles.textoEstado}>Cargando rutas...</AppText>
                 </View>
             );
@@ -199,12 +200,11 @@ const ClienteRutasScreen = ({ navigation, route }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <EncabezadoPantalla
-                titulo="Rutas"
-                subtitulo="Conoce los trayectos y los taxistas que los cubren"
-                accion={<BotonMenuCliente onPress={() => setMenuVisible(true)} />}
-            />
             <View style={styles.pantalla}>
+                <EncabezadoPantalla
+                    titulo="Rutas"
+                    subtitulo="Conoce los trayectos y los taxistas que los cubren"
+                />
                 <View style={styles.buscador}>
                     <Icono nombre="search" tamanio={20} color={Colors.outline} />
                     <TextInput
@@ -328,9 +328,6 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: "hidden",
     },
     buscador: {
         flexDirection: "row",

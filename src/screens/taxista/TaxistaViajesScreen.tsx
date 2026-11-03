@@ -1,13 +1,13 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Card from "../../components/Card";
 import ReservaTaxistaCard from "../../components/ReservaTaxistaCard";
 import { BottomTabBar, TABS_TAXISTA } from "../../components/BottomTabBar";
-import { Icono } from "../../components/Icono";
 import Colors from "../../theme/colors";
 import type { TaxistaStackParamList } from "../../navigation/types";
 import { useTaxista } from "./TaxistaContext";
@@ -15,6 +15,7 @@ import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 
 type Filtro = "activas" | "historial";
 
@@ -32,7 +33,7 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
         if (taxista.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado tipo="cargando" />
                     <AppText style={styles.textoEstado}>Cargando tus viajes...</AppText>
                 </View>
             );
@@ -53,7 +54,7 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
             return (
                 <Card>
                     <View style={styles.estadoLista}>
-                        <Icono nombre="bookMarks" tamanio={36} color={Colors.outlineVariant} />
+                        <AnimacionEstado tipo={filtro === "activas" ? "taxi" : "reservaciones"} />
                         <AppText style={styles.textoEstado}>
                             {filtro === "activas"
                                 ? taxista.enServicio
@@ -81,11 +82,8 @@ const TaxistaViajesScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <View style={styles.encabezado}>
-                <AppText weight="bold" style={styles.titulo}>Mis viajes</AppText>
-                <AppText style={styles.subtitulo}>Solicitudes, viajes en curso e historial</AppText>
-            </View>
             <View style={styles.pantalla}>
+                <EncabezadoPantalla titulo="Mis viajes" subtitulo="Solicitudes, viajes en curso e historial" />
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["activas", "historial"] as const).map((opcion) => {
                         const activo = filtro === opcion;
@@ -158,9 +156,6 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: "hidden",
     },
     filtros: {
         flexDirection: "row",

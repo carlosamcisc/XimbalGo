@@ -83,8 +83,8 @@ const ClienteSeguridadScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla titulo="Seguridad" subtitulo="Protege el acceso a tu cuenta" onBack={() => navigation.goBack()} />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Seguridad" subtitulo="Protege el acceso a tu cuenta" onBack={() => navigation.goBack()} />
         <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
           <Card style={styles.tarjeta}>
             <View style={styles.aviso}>
@@ -132,9 +132,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,

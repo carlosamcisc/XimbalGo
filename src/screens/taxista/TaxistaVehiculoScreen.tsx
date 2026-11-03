@@ -1,9 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Pressable, StyleSheet, Switch, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import TextInputField from "../../components/TextInputField";
@@ -23,6 +24,7 @@ import {
 } from "../../modules/taxista/types";
 import { useTaxista } from "./TaxistaContext";
 import { pantallaDePestania } from "./navegacion";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaVehiculo">;
 
@@ -36,6 +38,7 @@ const COLOR_ASIENTO: Record<EstadoAsiento, { fondo: string; texto: string }> = {
 
 // Ocupado por una reservación aceptada: se libera al cerrar ese viaje.
 const etiquetaAsiento = (asiento: AsientoTaxista) =>
+  !asiento.enPlataforma ? "Fuera de app" :
   asiento.estado === "ocupado" && asiento.conReserva ? "En viaje" : ETIQUETA_ASIENTO[asiento.estado];
 
 const textoCantidad = (cantidad: number) =>
@@ -94,6 +97,23 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
   const [formulario, setFormulario] = useState<Formulario>(() => formularioDesde(vehiculo));
   const [guardando, setGuardando] = useState(false);
   const [seleccion, setSeleccion] = useState<string[]>([]);
+  const enPlataforma = vehiculo?.asientos.filter((asiento) => asiento.enPlataforma).length ?? 0;
+  const [cantidadPlataforma, setCantidadPlataforma] = useState(String(enPlataforma));
+
+  useEffect(() => {
+    setCantidadPlataforma(String(enPlataforma));
+  }, [vehiculo?.id, enPlataforma]);
+
+  const guardarCantidad = async () => {
+    const cantidad = Number(cantidadPlataforma);
+    if (!vehiculo || !/^\d+$/.test(cantidadPlataforma) || !Number.isInteger(cantidad) || cantidad > vehiculo.capacidad) {
+      ToastMessage.show(`Indica entre 0 y ${vehiculo?.capacidad ?? 0} asientos.`, "long");
+      return;
+    }
+    const error = await taxista.configurarAsientos(cantidad);
+    if (!error) setSeleccion([]);
+    ToastMessage.show(error ?? "Asientos de la plataforma actualizados", error ? "long" : "short");
+  };
 
   // Un asiento seleccionado deja de serlo si un cliente lo reserva mientras tanto.
   const seleccionados = (vehiculo?.asientos ?? []).filter(
@@ -104,6 +124,10 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
 
   const tocarAsiento = (asiento: AsientoTaxista) => {
     if (!asientoEditable(asiento)) {
+      if (!asiento.enPlataforma) {
+        ToastMessage.show("Aumenta la cantidad de asientos en la plataforma para habilitarlo.", "long");
+        return;
+      }
       ToastMessage.show(
         `El asiento ${asiento.numero} es de una reservación; se libera al cerrar ese viaje.`,
         "long"
@@ -154,7 +178,7 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
     if (taxista.cargando) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado tipo="cargando" />
           <AppText style={styles.textoEstado}>Cargando tu vehículo...</AppText>
         </View>
       );
@@ -173,9 +197,30 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
     }
     return (
       <>
+        <View style={styles.seccion}>
+          <Icono nombre="eventSeat" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>Asientos</AppText>
+        </View>
+
         {vehiculo && vehiculo.asientos.length > 0 && (
           <Card style={styles.tarjeta}>
-            <AppText weight="semibold" style={styles.tituloTarjeta}>Asientos</AppText>
+            <AppText weight="semibold" style={styles.etiquetaSwitch}>Asientos en la plataforma</AppText>
+            <AppText style={styles.ayuda}>
+              Ofreces {enPlataforma} de {vehiculo.capacidad} asientos. El resto queda fuera de la app.
+              La cantidad incluye los reservados y ocupados; no se pueden retirar mientras estén en uso.
+            </AppText>
+            <TextInputField
+              label="Cantidad de asientos en servicio"
+              value={cantidadPlataforma}
+              onChangeText={setCantidadPlataforma}
+              keyboardType="number-pad"
+              placeholder={`De 0 a ${vehiculo.capacidad}`}
+            />
+            <Button
+              titulo={taxista.marcandoAsientos ? "Guardando..." : "Guardar asientos en servicio"}
+              disabled={taxista.marcandoAsientos || guardando || cantidadPlataforma === String(enPlataforma)}
+              onPress={() => void guardarCantidad()}
+            />
             <AppText style={styles.ayuda}>
               ¿Subió alguien sin reservar? Toca los asientos libres que ocupó y márcalos como ocupados.
               Cuando se bajen, tócalos de nuevo para liberarlos. Los asientos de las reservaciones se
@@ -244,11 +289,19 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
             )}
           </Card>
         )}
-
-        <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>
+        <View style={styles.seccion}>
+          <Icono nombre="localTaxi" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>
             {vehiculo ? "Datos del vehículo" : "Registra tu vehículo"}
           </AppText>
+        </View>
+        <Card style={styles.tarjeta}>
+
+          {!vehiculo && (
+            <View style={styles.estadoLista}>
+              <AnimacionEstado tipo="taxi" />
+            </View>
+          )}
           {!vehiculo && (
             <AppText style={styles.ayuda}>
               Necesitas un vehículo activo para iniciar tu servicio. Los asientos se crean según la capacidad.
@@ -306,7 +359,7 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
           </View>
           <Button
             titulo={guardando ? "Guardando..." : vehiculo ? "Guardar cambios" : "Registrar vehículo"}
-            disabled={guardando}
+            disabled={guardando || taxista.marcandoAsientos}
             onPress={() => void guardar()}
           />
         </Card>
@@ -317,11 +370,8 @@ const TaxistaVehiculoScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <View style={styles.encabezado}>
-        <AppText weight="bold" style={styles.titulo}>Mi vehículo</AppText>
-        <AppText style={styles.subtitulo}>Datos de tu unidad y estado de los asientos</AppText>
-      </View>
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Mi vehículo" subtitulo="Datos de tu unidad y estado de los asientos" />
         <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
           {renderContenido()}
         </KeyboardAwareScroll>
@@ -357,9 +407,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,
@@ -368,10 +415,22 @@ const styles = StyleSheet.create({
   tarjeta: {
     padding: 14,
   },
+  seccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 10,
+  },
+  tituloSeccion: {
+    fontSize: 16,
+    color: Colors.brandText,
+  },
   tituloTarjeta: {
     fontSize: 17,
     color: Colors.brandText,
-    marginHorizontal: 10,
+    marginTop: 10,
+    marginLeft: 20,
   },
   ayuda: {
     fontSize: 13,

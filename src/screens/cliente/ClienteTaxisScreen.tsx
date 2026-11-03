@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -58,7 +59,7 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
     if (lista.cargando) {
       return (
         <View style={styles.estado}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Buscando taxis disponibles...</AppText>
         </View>
       );
@@ -76,7 +77,7 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
     if (taxis.length === 0) {
       return (
         <View style={styles.estado}>
-          <Icono nombre="localTaxi" tamanio={36} color={Colors.outlineVariant} />
+          <AnimacionEstado tipo="taxi" />
           <AppText style={styles.textoEstado}>
             {busqueda.trim()
               ? `No hay taxis que coincidan con «${busqueda.trim()}».`
@@ -104,12 +105,12 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo="Taxis disponibles"
-        subtitulo="Elige tu viaje y cualquier taxi para reservar"
-        onBack={() => navigation.goBack()}
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo="Taxis disponibles"
+          subtitulo="Elige tu viaje y cualquier taxi para reservar"
+          onBack={() => navigation.goBack()}
+        />
         <KeyboardAwareScroll
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -164,9 +165,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   tituloSeccion: {
     fontSize: 16,

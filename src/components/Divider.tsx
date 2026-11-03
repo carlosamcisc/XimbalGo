@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-
+import Colors  from "../theme/colors";
 interface DividerProps {
   color?: string;   // 🔑 color opcional, si no se pasa usa gris
   thickness?: number; // opcional: grosor de la línea
@@ -8,7 +8,7 @@ interface DividerProps {
 }
 
 const Divider: React.FC<DividerProps> = ({
-  color = "#ccc",
+  color = Colors.divider,
   thickness = 1,
   margin = 10,
 }) => {
@@ -29,6 +29,7 @@ const Divider: React.FC<DividerProps> = ({
 const styles = StyleSheet.create({
   divider: {
     width: "100%",
+    marginVertical: 5,
   },
 });
 

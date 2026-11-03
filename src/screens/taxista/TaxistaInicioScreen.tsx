@@ -1,9 +1,11 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
+import TaxiEstatico from "../../components/TaxiEstatico";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import UserHeader from "../../components/UserHeader";
@@ -20,6 +22,7 @@ import { useAccionReserva } from "./useAccionReserva";
 import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
+import Divider from "../../components/Divider";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaInicio">;
 
@@ -56,7 +59,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
     const conteo = {
         libres: asientos.filter((asiento) => asiento.estado === "disponible").length,
         reservados: asientos.filter((asiento) => asiento.estado === "reservado").length,
-        ocupados: asientos.filter((asiento) => asiento.estado === "ocupado").length,
+        ocupados: asientos.filter((asiento) => asiento.enPlataforma && asiento.estado === "ocupado").length,
     };
     const precio = formatearPrecio(perfil?.precioRuta ?? perfil?.ruta?.precioBase ?? null);
 
@@ -93,7 +96,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     </View>
                     <AppText style={styles.descripcionEstado}>
                         {taxista.visibleParaClientes
-                            ? "Los clientes cercanos te ven y pueden reservar. Mantén la app abierta para seguir enviando tu ubicación."
+                            ? "Los clientes cercanos te ven y pueden reservar. Tu ubicación se actualiza también con la pantalla bloqueada mientras estés en servicio."
                             : "Enviando tu ubicación... Hasta que llegue, los clientes no te verán."}
                     </AppText>
                     {taxista.errorUbicacion && (
@@ -101,8 +104,12 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     )}
                     <Button
                         titulo={taxista.cambiandoServicio ? "Procesando..." : "Terminar servicio"}
-                        color={Colors.danger}
+                        colorTitulo={Colors.danger}
+                        color={Colors.surface}
                         borderColor={Colors.danger}
+                        icono="stop"
+                        colorIcono={Colors.danger}
+                        posicionIcono="izquierda"
                         disabled={taxista.cambiandoServicio}
                         onPress={terminarServicio}
                     />
@@ -132,6 +139,8 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                 />
                 <Button
                     titulo={taxista.cambiandoServicio ? "Obteniendo ubicación..." : "Iniciar servicio"}
+                    icono="assistantNavigation"
+                    posicionIcono="izquierda"
                     disabled={!puedeIniciar || taxista.cambiandoServicio}
                     onPress={() => void cambiarServicio(true)}
                 />
@@ -143,7 +152,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
         if (taxista.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado tipo="cargando" />
                     <AppText style={styles.textoEstado}>Cargando tu información...</AppText>
                 </View>
             );
@@ -162,8 +171,35 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
         }
         return (
             <>
-                <Card style={styles.tarjeta}>{renderEstadoServicio()}</Card>
-
+                <Card style={styles.tarjeta}>
+                    <View
+                        key={taxista.cambiandoServicio ? "procesando-servicio" : taxista.enServicio ? "servicio-activo" : "servicio-inactivo"}
+                        collapsable={false}
+                        style={[styles.animacionServicio, taxista.enServicio && styles.animacionServicioActiva]}
+                    >
+                        {taxista.enServicio && (
+                            <View style={styles.etiquetaUbicacion}>
+                                <Icono nombre="map" tamanio={14} color={Colors.primary} />
+                                <AppText weight="semibold" style={styles.textoUbicacion}>
+                                    {taxista.visibleParaClientes ? "Ubicación compartida" : "Conectando ubicación"}
+                                </AppText>
+                            </View>
+                        )}
+                        {!taxista.enServicio && !taxista.cambiandoServicio ? (
+                            <TaxiEstatico tamanio={96} />
+                        ) : (
+                            <AnimacionEstado
+                                tipo={taxista.cambiandoServicio ? "cargando" : "taxistaCarroOndas"}
+                                tamanio={taxista.cambiandoServicio ? 96 : 240}
+                            />
+                        )}
+                    </View>
+                    {renderEstadoServicio()}
+                </Card>
+                <View style={styles.seccion}>
+                    <Icono nombre="gridView" tamanio={25} color={Colors.primary} />
+                    <AppText weight="semibold" style={styles.tituloSeccion}>Ruta y asientos</AppText>
+                </View>
                 {(perfil.ruta || vehiculo) && (
                     <Card style={styles.tarjeta}>
                         {perfil.ruta && (
@@ -177,39 +213,37 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                                 </View>
                             </View>
                         )}
+                        <Divider />
                         {vehiculo && (
                             <View style={styles.asientos}>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosLibres}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.success }]}>{conteo.libres}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Libres</AppText>
                                 </View>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosReservados}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.primary }]}>{conteo.reservados}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Reservados</AppText>
                                 </View>
-                                <View style={styles.asiento}>
+                                <View style={styles.asientosOcupados}>
                                     <AppText weight="bold" style={[styles.numeroAsientos, { color: Colors.brandText }]}>{conteo.ocupados}</AppText>
                                     <AppText style={styles.etiquetaResumen}>Ocupados</AppText>
                                 </View>
                             </View>
                         )}
+                        <Divider />
                         {vehiculo && asientos.length > 0 && (
-                            <Pressable
-                                onPress={() => navigation.navigate("TaxistaVehiculo")}
-                                accessibilityRole="button"
-                                style={styles.enlaceAsientos}
-                            >
-                                <Icono nombre="eventSeat" tamanio={18} color={Colors.primary} />
-                                <AppText weight="semibold" style={styles.enlace}>
-                                    ¿Subió alguien sin reservar? Marca sus asientos
-                                </AppText>
-                            </Pressable>
+                            <Button titulo="Gestionar asientos" icono="eventSeat" posicionIcono="izquierda" onPress={() => navigation.navigate("TaxistaVehiculo")} />
                         )}
+                        <Pressable
+                            onPress={() => navigation.navigate("TaxistaVehiculo")}
+                        >
+                            <AppText weight="medium" style={styles.enlace}>¿Subio alguien sin reservar?</AppText>
+                        </Pressable>
                     </Card>
                 )}
 
                 <View style={styles.seccion}>
-                    <Icono nombre="bookMarks" tamanio={22} color={Colors.primary} />
+                    <Icono nombre="bookMarks" tamanio={25} color={Colors.primary} />
                     <AppText weight="semibold" style={styles.tituloSeccion}>
                         Solicitudes pendientes ({taxista.pendientes.length})
                     </AppText>
@@ -217,6 +251,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                 {taxista.pendientes.length === 0 ? (
                     <Card>
                         <View style={styles.estadoLista}>
+                            <AnimacionEstado tipo="notificaciones" animar={taxista.enServicio} />
                             <AppText style={styles.textoEstado}>
                                 {taxista.enServicio
                                     ? "Aún no hay solicitudes. Te avisaremos aquí en cuanto llegue una."
@@ -295,6 +330,36 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
 };
 
 const styles = StyleSheet.create({
+    animacionServicio: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 12,
+        marginBottom: 16,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLow,
+        overflow: "hidden",
+    },
+    animacionServicioActiva: {
+        backgroundColor: Colors.primaryContainer,
+        borderWidth: 1,
+        borderColor: Colors.secondaryContainer,
+    },
+    etiquetaUbicacion: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        flexWrap: "wrap",
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        marginHorizontal: 8,
+        borderRadius: 16,
+        backgroundColor: Colors.white,
+    },
+    textoUbicacion: {
+        fontSize: 12,
+        color: Colors.primary,
+    },
     statusBar: {
         backgroundColor: Colors.primary,
         flex: 1,
@@ -355,7 +420,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     marcaCumplida: {
-        backgroundColor: Colors.success,
+        backgroundColor: Colors.secondary,
     },
     marcaPendiente: {
         borderWidth: 2,
@@ -371,8 +436,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
         paddingBottom: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: Colors.divider,
     },
     textoResumen: {
         flex: 1,
@@ -388,10 +451,28 @@ const styles = StyleSheet.create({
     asientos: {
         flexDirection: "row",
         paddingTop: 12,
+        gap: 5,
     },
-    asiento: {
+    asientosLibres: {
         flex: 1,
         alignItems: "center",
+        backgroundColor: Colors.successContainer,
+        borderRadius: 8,
+        paddingVertical: 5,
+    },
+    asientosReservados: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: Colors.secondaryContainer,
+        borderRadius: 8,
+        paddingVertical: 5,
+    },
+    asientosOcupados: {
+        flex: 1,
+        alignItems: "center",
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 8,
+        paddingVertical: 5,
     },
     numeroAsientos: {
         fontSize: 22,
@@ -420,6 +501,7 @@ const styles = StyleSheet.create({
     enlace: {
         fontSize: 14,
         color: Colors.primary,
+        textAlign: "center",
     },
     enlaceAsientos: {
         flexDirection: "row",

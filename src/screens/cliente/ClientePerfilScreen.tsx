@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Image, Pressable, RefreshControl, StyleSheet, View } from "react-native";
+import { Image, Pressable, RefreshControl, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -109,7 +110,7 @@ const ClientePerfilScreen = ({ navigation }: Props) => {
     if (cliente.cargando && !perfil) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando tu perfil...</AppText>
         </View>
       );
@@ -196,8 +197,8 @@ const ClientePerfilScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla titulo="Mi perfil" subtitulo="Tus datos y tu actividad" onBack={() => navigation.goBack()} />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Mi perfil" subtitulo="Tus datos y tu actividad" onBack={() => navigation.goBack()} />
         <KeyboardAwareScroll
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -224,9 +225,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,

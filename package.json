@@ -17,6 +17,7 @@
     "expo-modules-core": "^57.0.20",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
+    "expo-task-manager": "~57.0.21",
     "lottie-ios": "^4.6.1",
     "lottie-react-native": "^7.5.0",
     "react": "19.2.3",
