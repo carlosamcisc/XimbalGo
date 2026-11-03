@@ -12,9 +12,12 @@ interface Prop{
     onChangeText?: (text: string) => void;
     secureTextEntry?: boolean;
     icono?: NombreIcono;
+    iconoColor?: string;
+    iconoBackgroundColor?: string;
     keyboardType?: TextInputProps["keyboardType"];
     autoCapitalize?: TextInputProps["autoCapitalize"];
     maxLength?: number;
+    disabled?: boolean;
 }
 
 const TextInputField: React.FC<Prop> = ({
@@ -24,9 +27,12 @@ const TextInputField: React.FC<Prop> = ({
     onChangeText,
     secureTextEntry,
     icono,
+    iconoColor = Colors.outline,
+    iconoBackgroundColor,
     keyboardType,
     autoCapitalize,
     maxLength,
+    disabled = false,
 }) => {
     const [isFocused, setIsFocused] = useState(false);
     const [mostrarContrasenia, setMostrarContrasenia] = useState(false);
@@ -36,9 +42,14 @@ const TextInputField: React.FC<Prop> = ({
     return(
         <View style={styles.contenedor}>
             {label && <AppText style={styles.label}>{label}</AppText>}
-            <View style={[styles.input, isFocused && styles.inputFocused]}>
+            <View style={[styles.input, isFocused && !disabled && styles.inputFocused, disabled && styles.inputDisabled]}>
                 {icono && (
-                    <Icono nombre={icono} tamanio={20} color={Colors.outline}/>
+                    <Icono
+                        nombre={icono}
+                        tamanio={22}
+                        color={iconoColor}
+                        backgroundColor={iconoBackgroundColor}
+                    />
                 )}
                 <TextInput
                      style={styles.texto}
@@ -49,12 +60,20 @@ const TextInputField: React.FC<Prop> = ({
                      keyboardType={keyboardType}
                      autoCapitalize={autoCapitalize}
                      maxLength={maxLength}
+                     editable={!disabled}
+                     accessibilityState={{ disabled }}
                      onFocus={() => setIsFocused(true)}
                      onBlur={() => setIsFocused(false)}
 
                 />
                 {esContrasenia && (
-                    <Pressable onPress={() => setMostrarContrasenia((anterior) => !anterior)}>
+                    <Pressable
+                        onPress={() => setMostrarContrasenia((anterior) => !anterior)}
+                        disabled={disabled}
+                        accessibilityRole="button"
+                        accessibilityLabel={mostrarContrasenia ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        accessibilityState={{ disabled }}
+                    >
                         <Icono
                             nombre={mostrarContrasenia ? 'visibilityOff' : 'visibility'}
                             tamanio={24}
@@ -88,6 +107,10 @@ const styles = StyleSheet.create({
     },
     inputFocused:{
         borderColor: Colors.primary,
+    },
+    inputDisabled: {
+        backgroundColor: Colors.surfaceContainerLow,
+        opacity: 0.6,
     },
     texto:{
         flex: 1,

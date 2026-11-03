@@ -30,6 +30,11 @@ const ICONOS = {
     ArrowRight: 'keyboard-arrow-right',
     ArrowDown: 'keyboard-arrow-down',
     Share: 'share',
+    gridView: 'grid-view',
+    done: 'done',
+    stop: 'stop',
+    assistantNavigation: 'assistant-navigation',
+    refresh: 'refresh',
     //iconos para la pantalla de inicio
     home: 'home',
     map: 'map',

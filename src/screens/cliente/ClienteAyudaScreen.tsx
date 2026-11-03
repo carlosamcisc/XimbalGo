@@ -51,8 +51,8 @@ const ClienteAyudaScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla titulo="Ayuda" subtitulo="Preguntas frecuentes" onBack={() => navigation.goBack()} />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Ayuda" subtitulo="Preguntas frecuentes" onBack={() => navigation.goBack()} />
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Card style={styles.tarjeta}>
             {PREGUNTAS.map((item, indice) => {
@@ -101,9 +101,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,

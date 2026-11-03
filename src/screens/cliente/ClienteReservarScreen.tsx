@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState, type ReactNode } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -94,7 +95,7 @@ const ClienteReservarScreen = ({ navigation, route }: Props) => {
     if (reservar.cargando && !taxi) {
       return (
         <View style={styles.estado}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando taxi...</AppText>
         </View>
       );

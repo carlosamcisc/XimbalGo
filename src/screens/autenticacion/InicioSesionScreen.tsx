@@ -21,8 +21,8 @@ import { asignarRolUsuario } from "../../store/autenticacionStore";
 type Props = NativeStackScreenProps<AuthStackParamList, 'InicioSesion'>;
 
 const logoXimbalGo = require('../../../assets/icon.png');
-const width = 150;
-const height = 150;
+const width = 130;
+const height = 130;
 
 const IncioSesionScreen = ({ navigation }: Props) => {
     const [correo, setCorreo] = useState("");
@@ -88,15 +88,20 @@ const IncioSesionScreen = ({ navigation }: Props) => {
 
                 <BottomWavePrimary />
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                    <Image
-                        source={logoXimbalGo}
-                        style={[styles.imagen, { width, height }]}
-                        resizeMode="cover"
-                    />
+                    <View style={styles.contentImagen}>
+                        <Image
+                            source={logoXimbalGo}
+                            style={[styles.imagen, { width, height }]}
+                            resizeMode="cover"
+                        />
+                    </View>
                     <View style={styles.contentTitulos}>
                         <AppText weight="bold" style={styles.titulo}>¡Bienvenido de nuevo!</AppText>
                         <AppText style={styles.subtitulo}>Inicia sesion para continuar con</AppText>
-                        <AppText style={styles.subtitulo}>Ximbal Go</AppText>
+                        <View style={styles.contentXimbalGo}>
+                            <AppText weight="bold" style={styles.textXimbal}>Ximbal </AppText>
+                            <AppText weight="bold" style={styles.textGo}>Go</AppText>
+                        </View>
                     </View>
                     <View style={styles.contenedor}>
                         <TextInputField
@@ -105,6 +110,8 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                             placeholder="Escribe tu correo..."
                             onChangeText={setCorreo}
                             icono="email"
+                            iconoColor={Colors.primary}
+                            iconoBackgroundColor={Colors.primaryContainer}
                         />
                         <TextInputField
                             label="Contraseña"
@@ -112,13 +119,15 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                             placeholder="Escribe tu contraseña..."
                             onChangeText={setContrasenia}
                             icono="lock"
+                            iconoColor={Colors.primary}
+                            iconoBackgroundColor={Colors.primaryContainer}
                             secureTextEntry
                         />
                         <View style={styles.contentOlviContrasnia}>
                             <Pressable
                                 onPress={() => navigation.navigate('RecuperarContrasenia')}
                             >
-                                <AppText style={styles.textOlviContrasnia}>¿Olvidaste tu contraseña?</AppText>
+                                <AppText weight="medium" style={styles.textOlviContrasnia}>¿Olvidaste tu contraseña?</AppText>
                             </Pressable>
                         </View>
 
@@ -134,7 +143,7 @@ const IncioSesionScreen = ({ navigation }: Props) => {
                     <View style={styles.contentOpciones}>
                         <AppText style={styles.noCuenta}>¿No tienes una cuenta?</AppText>
                         <Pressable onPress={() => navigation.navigate('SeleccionRol')}>
-                            <AppText weight="bold" style={styles.registrarse}>Registrate</AppText>
+                            <AppText weight="medium" style={styles.registrarse}>Registrate</AppText>
                         </Pressable>
                     </View>
 
@@ -157,10 +166,11 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingBottom: 100,
     },
+    contentImagen: {
+        alignItems: "center",
+    },
     imagen: {
-        marginStart: 120,
-        marginEnd: 120,
-        marginTop: 20,
+        marginTop: 10,
     },
     contentTitulos: {
         marginTop: 10,
@@ -175,6 +185,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: "center",
         color: Colors.onSurfaceVariant,
+    },
+    contentXimbalGo: {
+        flexDirection: "row",
+    },
+    textXimbal: {
+        fontSize: 25,
+        color: Colors.primary,
+    },
+    textGo: {
+        fontSize: 25,
+        color: Colors.secondary
     },
     contenedor: {
         marginTop: 10,

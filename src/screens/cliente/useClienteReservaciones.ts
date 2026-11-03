@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import {
   escucharReservasCliente,
   obtenerReservasCliente,
@@ -52,6 +53,13 @@ export function useClienteReservaciones() {
     setRefrescando(true);
     await cargar();
     setRefrescando(false);
+  }, [cargar]);
+
+  useEffect(() => {
+    const cambio = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") void cargar();
+    });
+    return () => cambio.remove();
   }, [cargar]);
 
   useEffect(() => {

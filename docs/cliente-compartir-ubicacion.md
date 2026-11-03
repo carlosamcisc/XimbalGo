@@ -13,7 +13,7 @@ La pestaña **Yo** del cliente muestra en el mapa dónde se encuentra y le permi
 
 El envío vive en `ClienteContext` (`useCompartirUbicacion`): sigue funcionando aunque el cliente cambie de pantalla, y al volver a abrir la app retoma la ubicación compartida que siga vigente.
 
-**Solo funciona con la app abierta** (igual que la ubicación del taxista). Con la app en segundo plano no se envía nada; al volver, se envía de inmediato. Si la última ubicación tiene más de 3 minutos, la página avisa que el cliente pudo cerrar la app o quedarse sin internet.
+También funciona en segundo plano y con la pantalla bloqueada mediante una tarea nativa, si se concede el permiso de ubicación «todo el tiempo». Requiere reconstruir la app. Al volver se actualiza la pantalla de inmediato. Si la última ubicación tiene más de 3 minutos, la página avisa que el cliente pudo cerrar la app o quedarse sin internet. Véase [ubicación en segundo plano](ubicacion-segundo-plano.md).
 
 ## Base de datos
 
@@ -62,6 +62,6 @@ Para probar la página en local, reemplaza los dos valores en una copia del HTML
 | [ubicacionCompartida.ts](../src/modules/cliente/ubicacionCompartida.ts) | Tipos, duraciones, enlace y mensaje |
 | [MapaSeguimiento.tsx](../src/components/MapaSeguimiento.tsx) | Marcador «Tú»; la leyenda muestra solo los marcadores que recibe |
 
-## Pendiente
+## Validación en dispositivo
 
-- Envío en segundo plano (pantalla bloqueada): requiere `expo-task-manager`, el servicio en primer plano de Android y el permiso de ubicación «todo el tiempo».
+La configuración y los casos pendientes de prueba en Android e iOS están documentados en [ubicación en segundo plano](ubicacion-segundo-plano.md).

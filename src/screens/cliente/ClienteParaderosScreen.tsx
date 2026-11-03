@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
@@ -20,7 +21,7 @@ const ClienteParaderosScreen = ({ navigation }: Props) => {
     if (lista.cargando && lista.total === 0) {
       return (
         <View style={styles.estado}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado />
           <AppText style={styles.textoEstado}>Cargando paraderos...</AppText>
         </View>
       );
@@ -61,12 +62,12 @@ const ClienteParaderosScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <EncabezadoPantalla
-        titulo="Paraderos"
-        subtitulo={lista.total > 0 ? `${lista.total} paraderos disponibles` : "Conoce dónde abordar"}
-        onBack={() => navigation.goBack()}
-      />
       <View style={styles.pantalla}>
+        <EncabezadoPantalla
+          titulo="Paraderos"
+          subtitulo={lista.total > 0 ? `${lista.total} paraderos disponibles` : "Conoce dónde abordar"}
+          onBack={() => navigation.goBack()}
+        />
         <View style={styles.buscador}>
           <Icono nombre="search" tamanio={20} color={Colors.outline} />
           <TextInput
@@ -112,9 +113,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   buscador: {
     flexDirection: "row",

@@ -84,6 +84,8 @@ const RecuperarContraseniaScreen = ({ navigation }: Props) => {
                             placeholder="Escribe tu correo..."
                             onChangeText={setCorreo}
                             icono="email"
+                            iconoColor={Colors.primary}
+                            iconoBackgroundColor={Colors.primaryContainer}
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />

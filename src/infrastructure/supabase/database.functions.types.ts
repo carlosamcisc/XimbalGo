@@ -1,6 +1,14 @@
 import type { Database } from "./database.types";
 
 type NearbyFunctions = {
+  configurar_asientos_plataforma: {
+    Args: { p_vehiculo_id: string; p_cantidad: number };
+    Returns: number;
+  };
+  confirmar_abordaje_taxista: {
+    Args: { p_reserva_id: string };
+    Returns: string;
+  };
   obtener_paraderos_cercanos: {
     Args: {
       p_latitud: number;
@@ -102,6 +110,7 @@ type NearbyFunctions = {
   obtener_reservas_taxista: {
     Args: never;
     Returns: {
+      abordado_en: string | null;
       id: string;
       estado: string;
       fecha_hora_reserva: string;

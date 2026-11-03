@@ -1,9 +1,10 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import AppText from "../../components/AppText";
+import AnimacionEstado from "../../components/AnimacionEstado";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import TextInputField from "../../components/TextInputField";
@@ -22,6 +23,8 @@ import type { DatosPerfilTaxista, PerfilTaxista, RutaTaxista } from "../../modul
 import { mensajeError } from "../cliente/useClienteInicio";
 import { useTaxista } from "./TaxistaContext";
 import { pantallaDePestania } from "./navegacion";
+import EncabezadoPantalla from "../../components/EncabezadoPantalla";
+import { Icono } from "../../components/Icono";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaPerfil">;
 
@@ -168,7 +171,7 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
     if (taxista.cargando) {
       return (
         <View style={styles.estadoLista}>
-          <ActivityIndicator color={Colors.primary} />
+          <AnimacionEstado tipo="cargando" />
           <AppText style={styles.textoEstado}>Cargando tu perfil...</AppText>
         </View>
       );
@@ -187,12 +190,15 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
     }
     return (
       <>
+        <View style={styles.seccion}>
+          <Icono nombre="person" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>Datos personales</AppText>
+        </View>
         <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>Datos personales</AppText>
-          <TextInputField label="Nombre(s) *" value={formulario.nombres} onChangeText={cambiar("nombres")} autoCapitalize="words" />
-          <TextInputField label="Apellidos *" value={formulario.apellidos} onChangeText={cambiar("apellidos")} autoCapitalize="words" />
+          <TextInputField label="Nombre(s)" value={formulario.nombres} onChangeText={cambiar("nombres")} autoCapitalize="words" disabled={true} />
+          <TextInputField label="Apellidos" value={formulario.apellidos} onChangeText={cambiar("apellidos")} autoCapitalize="words" disabled={true} />
           <TextInputField
-            label="Teléfono *"
+            label="Teléfono"
             value={formulario.telefono}
             placeholder="Los clientes con viaje aceptado lo verán"
             onChangeText={cambiar("telefono")}
@@ -201,8 +207,13 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
           <TextInputField label="Dirección" value={formulario.direccion} onChangeText={cambiar("direccion")} autoCapitalize="sentences" />
         </Card>
 
+        <View style={styles.seccion}>
+          <Icono nombre="gridView" tamanio={25} color={Colors.primary} />
+          <AppText weight="semibold" style={styles.tituloSeccion}>
+            Tu servicio
+          </AppText>
+        </View>
         <Card style={styles.tarjeta}>
-          <AppText weight="semibold" style={styles.tituloTarjeta}>Tu servicio</AppText>
           <SelectInput
             label="Ruta"
             value={formulario.ruta ? `${formulario.ruta.origen} → ${formulario.ruta.destino}` : ""}
@@ -233,21 +244,24 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
           />
           <Button
             titulo={guardando ? "Guardando..." : "Guardar cambios"}
+            icono="done"
+            posicionIcono="izquierda"
             disabled={guardando}
             onPress={() => void guardar()}
           />
         </Card>
 
-        <Pressable
+        <Button
+          titulo={cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
+          colorTitulo={Colors.danger}
+          icono="logout"
+          colorIcono={Colors.danger}
+          posicionIcono="izquierda"
+          color={Colors.surface}
+          borderColor={Colors.danger}
           onPress={confirmarCierre}
-          disabled={cerrandoSesion}
-          accessibilityRole="button"
-          style={styles.cerrarSesion}
-        >
-          <AppText weight="semibold" style={styles.textoCerrarSesion}>
-            {cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
-          </AppText>
-        </Pressable>
+        />
+
       </>
     );
   };
@@ -255,11 +269,8 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
       <StatusBar style="light" />
-      <View style={styles.encabezado}>
-        <AppText weight="bold" style={styles.titulo}>Mi perfil</AppText>
-        <AppText style={styles.subtitulo}>Tus datos, tu ruta y tu tarifa</AppText>
-      </View>
       <View style={styles.pantalla}>
+        <EncabezadoPantalla titulo="Mi perfil" subtitulo="Tus datos, tu ruta y tu tarifa" />
         <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
           {renderContenido()}
         </KeyboardAwareScroll>
@@ -268,6 +279,11 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
       <BottomSheet visible={selectorRutaVisible} onClose={() => setSelectorRutaVisible(false)}>
         <View>
           <AppText weight="semibold" style={styles.tituloSelector}>Elige tu ruta</AppText>
+          {selectorRutaVisible && opcionesRutas.length === 0 && (
+            <View style={styles.estadoLista}>
+              <AnimacionEstado tipo={cargandoRutas ? "cargando" : "ubicacion"} />
+            </View>
+          )}
           <OptionList
             data={opcionesRutas}
             style={styles.listaRutas}
@@ -309,9 +325,6 @@ const styles = StyleSheet.create({
   pantalla: {
     backgroundColor: Colors.surface,
     flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   scrollContent: {
     paddingTop: 6,
@@ -320,7 +333,19 @@ const styles = StyleSheet.create({
   tarjeta: {
     padding: 14,
   },
+  seccion: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 14,
+    marginTop: 10,
+  },
+  tituloSeccion: {
+    fontSize: 16,
+    color: Colors.brandText,
+  },
   tituloTarjeta: {
+    marginLeft: 20,
     fontSize: 17,
     color: Colors.brandText,
     marginHorizontal: 10,

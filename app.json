@@ -16,7 +16,11 @@
     },
     "android": {
       "adaptiveIcon": {
+<<<<<<< HEAD
         "foregroundImage": "./assets/app-icon.png",
+=======
+        "foregroundImage": "./assets/adaptive-icon.png",
+>>>>>>> 2486963935069d91f223a9e5bdc16b6ffbed3fbd
         "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
@@ -30,7 +34,10 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 320,
+          "imageWidth": 240,
+          "android": {
+            "imageWidth": 160
+          },
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF"
         }
@@ -39,7 +46,15 @@
       [
         "expo-location",
         {
+<<<<<<< HEAD
           "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos, y para compartirla con un familiar cuando tú lo decidas."
+=======
+          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos.",
+          "locationAlwaysAndWhenInUsePermission": "Permite que Ximbal Go actualice tu ubicación mientras estás en servicio o compartiéndola, incluso con la pantalla bloqueada.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+>>>>>>> 2486963935069d91f223a9e5bdc16b6ffbed3fbd
         }
       ]
     ]

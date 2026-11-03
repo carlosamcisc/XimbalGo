@@ -1,5 +1,6 @@
+import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, StyleSheet, Pressable, ActivityIndicator, RefreshControl, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, RefreshControl, ScrollView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -8,7 +9,6 @@ import Colors from "../../theme/colors";
 import Card from "../../components/Card";
 import ReservaCard from "../../components/ReservaCard";
 import { BottomTabBar, TABS_CLIENTE, type BottomTabId } from "../../components/BottomTabBar";
-import { Icono } from "../../components/Icono";
 import type { ClienteStackParamList } from "../../navigation/types";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 import ClienteSideBar, { BotonMenuCliente } from "./ClienteSideBar";
@@ -45,7 +45,7 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
         if (reservaciones.cargando) {
             return (
                 <View style={styles.estadoLista}>
-                    <ActivityIndicator color={Colors.primary} />
+                    <AnimacionEstado />
                     <AppText style={styles.textoEstado}>Cargando tus reservaciones...</AppText>
                 </View>
             );
@@ -66,7 +66,7 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
             return (
                 <Card>
                     <View style={styles.estadoLista}>
-                        <Icono nombre="bookMarks" tamanio={36} color={Colors.outlineVariant} />
+                        <AnimacionEstado tipo="reservaciones"/>
                         <AppText style={styles.textoEstado}>
                             {filtro === "activas"
                                 ? "No tienes reservaciones en curso."
@@ -93,12 +93,11 @@ const ClienteReservacionesScreen = ({ navigation }: Props) => {
     return (
         <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
             <StatusBar style="light" />
-            <EncabezadoPantalla
-                titulo="Mis reservaciones"
-                subtitulo="Consulta y administra tus viajes"
-                accion={<BotonMenuCliente onPress={() => setMenuVisible(true)} />}
-            />
             <View style={styles.pantalla}>
+                <EncabezadoPantalla
+                    titulo="Mis reservaciones"
+                    subtitulo="Consulta y administra tus viajes"
+                />
                 <View style={styles.filtros} accessibilityRole="tablist">
                     {(["activas", "historial"] as const).map((opcion) => {
                         const activo = filtro === opcion;
@@ -154,9 +153,6 @@ const styles = StyleSheet.create({
     pantalla: {
         backgroundColor: Colors.surface,
         flex: 1,
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        overflow: "hidden",
     },
     filtros: {
         flexDirection: "row",
