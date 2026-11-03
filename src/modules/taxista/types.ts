@@ -39,11 +39,12 @@ export interface AsientoTaxista {
   estado: EstadoAsiento;
   /** Apartado u ocupado por una reservación; se libera al cerrar ese viaje. */
   conReserva: boolean;
+  enPlataforma: boolean;
 }
 
 /** Solo los asientos sin reservación se marcan a mano (`marcar_asientos_taxista`). */
 export const asientoEditable = (asiento: AsientoTaxista) =>
-  !asiento.conReserva && asiento.estado !== "reservado";
+  asiento.enPlataforma && !asiento.conReserva && asiento.estado !== "reservado";
 
 export interface VehiculoTaxista {
   id: string;

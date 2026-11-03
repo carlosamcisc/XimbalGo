@@ -1,6 +1,10 @@
 import type { Database } from "./database.types";
 
 type NearbyFunctions = {
+  configurar_asientos_plataforma: {
+    Args: { p_vehiculo_id: string; p_cantidad: number };
+    Returns: number;
+  };
   confirmar_abordaje_taxista: {
     Args: { p_reserva_id: string };
     Returns: string;
