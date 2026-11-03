@@ -15,6 +15,7 @@
       }
     },
     "android": {
+      "permissions": ["android.permission.RECEIVE_BOOT_COMPLETED"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
