@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { detenerUbicacionSegundoPlano } from "../infrastructure/location/background-location.service";
 import type { Session, User } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
 import {
@@ -190,6 +191,7 @@ export async function finalizarRecuperacionContrasena(): Promise<void> {
 }
 
 export async function cerrarSesionUsuario(): Promise<void> {
+  await detenerUbicacionSegundoPlano();
   await cerrarSesionSupabase();
   updateState({
     sesion: null,

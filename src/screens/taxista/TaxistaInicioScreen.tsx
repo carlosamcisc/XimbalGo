@@ -96,7 +96,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                     </View>
                     <AppText style={styles.descripcionEstado}>
                         {taxista.visibleParaClientes
-                            ? "Los clientes cercanos te ven y pueden reservar. Mantén la app abierta para seguir enviando tu ubicación."
+                            ? "Los clientes cercanos te ven y pueden reservar. Tu ubicación se actualiza también con la pantalla bloqueada mientras estés en servicio."
                             : "Enviando tu ubicación... Hasta que llegue, los clientes no te verán."}
                     </AppText>
                     {taxista.errorUbicacion && (

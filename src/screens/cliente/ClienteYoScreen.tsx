@@ -162,7 +162,7 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                                 <AppText style={styles.actualizacion}>
                                     {enviadaEn ? `Última actualización: ${formatearAntiguedad(enviadaEn, ahora)}` : "Enviando la primera ubicación..."}
                                 </AppText>
-                                <AppText style={styles.texto}>Mantén la app abierta para seguir actualizando tu ubicación.</AppText>
+                                <AppText style={styles.texto}>Tu ubicación se actualiza también con la pantalla bloqueada si permitiste el acceso todo el tiempo.</AppText>
                                 {errorCompartir && (
                                     <AppText style={[styles.texto, styles.textoError]}>{errorCompartir}</AppText>
                                 )}
