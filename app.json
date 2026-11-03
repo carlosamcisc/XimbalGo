@@ -15,7 +15,9 @@
       }
     },
     "android": {
-      "permissions": ["android.permission.RECEIVE_BOOT_COMPLETED"],
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -50,6 +52,12 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4cd2f8ae-8267-4756-a608-c7fe9711ccc4"
+      }
+    },
+    "owner": "ximbalgos-team"
   }
 }

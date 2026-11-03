@@ -28,6 +28,17 @@
     "production": {
       "environment": "production",
       "autoIncrement": true
+    },
+    "ios-unsigned": {
+      "environment": "production",
+      "distribution": "internal",
+      "developmentClient": false,
+      "ios": {
+        "simulator": false,
+        "withoutCredentials": true,
+        "buildConfiguration": "Release",
+        "config": "ios-unsigned.yml"
+      }
     }
   },
   "submit": {
