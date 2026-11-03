@@ -99,7 +99,42 @@ En Windows no se puede compilar para iOS de forma local (`npm run ios` requiere 
 3. Sube las variables del `.env` a EAS, porque el `.env` no se sube al repositorio ni a EAS. Para cada variable y cada ambiente (`development`, `preview`, `production`): `eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value ... --environment development`. Las `EXPO_PUBLIC_*` pueden ser visibilidad *plaintext*. La clave de GraphHopper permanece en Supabase.
 4. Compila para el simulador de iOS (no requiere cuenta de Apple Developer): `eas build -p ios --profile development`. El simulador solo corre en macOS: en una Mac, instálalo con `eas build:run -p ios` o arrastra el `.app` del `.tar.gz` descargado al simulador.
 
-Para instalar en un iPhone físico o publicar en App Store se necesita una cuenta de Apple Developer: se registra el dispositivo con `eas device:create` y se compila con un perfil sin `"simulator": true`.
+Para distribuir con EAS mediante TestFlight, App Store o instalación ad hoc se necesita la membresía Apple Developer. Para ad hoc, registra el dispositivo con `eas device:create` y usa un perfil sin `"simulator": true`.
+
+#### IPA sin firma para uso personal
+
+El perfil `ios-unsigned` compila una app de iPhone en modo Release en los servidores macOS de EAS y genera `app.ipa` sin certificados de Apple. La configuración está en [.eas/build/ios-unsigned.yml](./.eas/build/ios-unsigned.yml) y el empaquetado en [scripts/build-ios-unsigned.cjs](./scripts/build-ios-unsigned.cjs). Incluye el bundle JavaScript para funcionar sin Metro. Este perfil no genera un build de simulador ni envía la app a App Store.
+
+Desde PowerShell, en la carpeta del proyecto:
+
+```powershell
+npx.cmd eas-cli@latest login
+npx.cmd eas-cli@latest init
+```
+
+`init` se ejecuta solo al enlazar el proyecto por primera vez. En el panel del proyecto en Expo, crea estas variables en el ambiente **production**, con los valores de tu `.env`:
+
+```text
+EXPO_PUBLIC_SUPABASE_URL
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+EXPO_PUBLIC_URL_UBICACION_COMPARTIDA
+```
+
+Las tres pueden tener visibilidad `plaintext`: son configuración pública del cliente. La clave de GraphHopper se conserva como secreto de Supabase. El script detiene la compilación si faltan estas variables, sin imprimir sus valores.
+
+Para generar el IPA:
+
+```powershell
+npx.cmd eas-cli@latest build --platform ios --profile ios-unsigned
+```
+
+Al finalizar, descarga `app.ipa` desde el enlace del build de EAS. No se necesita una membresía Apple Developer para esta compilación sin firma; requiere una cuenta de Expo y cuota de compilación disponible. El archivo todavía debe firmarse antes de instalarlo.
+
+Para uso personal desde Windows, [Sideloadly](https://sideloadly.io/) permite firmar e instalar el IPA con una cuenta gratuita de Apple. Conecta el iPhone por USB, confía en la computadora, carga el IPA en Sideloadly y sigue sus pasos de firma e instalación. La cuenta de Apple se introduce en esa herramienta, nunca en el repositorio ni en las variables de EAS. Activa el modo desarrollador del iPhone si el sistema lo solicita. Con una cuenta gratuita la firma caduca a los siete días y debe renovarse para continuar usando la app.
+
+Validación disponible desde Windows: sintaxis del script y lectura de JSON/YAML. La compilación nativa y el funcionamiento en iPhone deben comprobarse con el primer build de EAS y la instalación del IPA firmado.
+
+Referencias: [compilaciones personalizadas](https://docs.expo.dev/custom-builds/get-started/), [withoutCredentials](https://docs.expo.dev/eas/json/#withoutcredentials) y [Sideloadly](https://sideloadly.io/).
 
 Detalles de iOS que ya resuelve el código:
 
