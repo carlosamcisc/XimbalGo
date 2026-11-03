@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE, type LatLng } from "react-native-maps";
-import Constants from "expo-constants";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
+import { Camera, Map, Marker, type CameraRef } from "@maplibre/maplibre-react-native";
+import { aLngLat, encuadreMapa } from "../modules/cliente/mapa";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
 import { Icono } from "./Icono";
@@ -31,47 +31,19 @@ const LEYENDA: { tipo: TipoMarcador; etiqueta: string; color: string }[] = [
   { tipo: "cliente", etiqueta: "Tú", color: Colors.secondary },
 ];
 
-// Mérida, mientras no hay marcadores.
-const REGION_INICIAL = {
-  latitude: 20.97,
-  longitude: -89.62,
-  latitudeDelta: 0.15,
-  longitudeDelta: 0.15,
-};
-// Equivale a un zoom de calle; con región en vez de `zoom` funciona igual en
-// Google Maps y en Apple Maps, que ignora `zoom`.
-const DELTA_UN_PUNTO = 0.006;
-// iOS solo trae Google Maps si se compiló con su key (ver app.config.ts).
-const PROVEEDOR =
-  Platform.OS === "ios" && !Constants.expoConfig?.extra?.googleMapsIos
-    ? undefined
-    : PROVIDER_GOOGLE;
+const ESTILO_MAPA = "https://tiles.openfreemap.org/styles/liberty";
+const VISTA_INICIAL = { center: [-89.62, 20.97] as [number, number], zoom: 11 };
 const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-const aLatLng = ({ latitud, longitud }: Coordenadas): LatLng => ({
-  latitude: latitud,
-  longitude: longitud,
-});
-
-/** Círculo de color con borde blanco, igual que en la leyenda. */
 function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
-  // Android dibuja la vista del marcador como imagen: se deja de redibujar
-  // cuando ya se pintó, para que mover el taxi no cueste.
-  const [redibujar, setRedibujar] = useState(true);
-  useEffect(() => {
-    const temporizador = setTimeout(() => setRedibujar(false), 500);
-    return () => clearTimeout(temporizador);
-  }, []);
-
   return (
     <Marker
-      coordinate={aLatLng(dato.coordenadas)}
-      title={dato.titulo}
-      anchor={{ x: 0.5, y: 0.5 }}
-      zIndex={tipo === "taxi" ? 1000 : 0}
-      tracksViewChanges={redibujar}
+      id={tipo}
+      lngLat={aLngLat(dato.coordenadas)}
+      anchor="center"
+      accessibilityLabel={dato.titulo}
     >
-      <View style={[styles.marcador, styles[tipo]]}>
+      <View collapsable={false} style={[styles.marcador, styles[tipo]]}>
         {tipo === "taxi" && <Icono nombre="localTaxi" tamanio={18} color={Colors.white} />}
       </View>
     </Marker>
@@ -81,52 +53,72 @@ function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
 /** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
   const { taxi, punto, paradero, cliente, style } = props;
-  const mapa = useRef<MapView>(null);
+  const camara = useRef<CameraRef>(null);
   const [mapaListo, setMapaListo] = useState(false);
+  const [tamanoListo, setTamanoListo] = useState(false);
+  const [errorMapa, setErrorMapa] = useState(false);
+  const [intento, setIntento] = useState(0);
   const centrado = useRef(false);
 
-  const puntos = [paradero, punto, cliente, taxi]
-    .filter((dato): dato is MarcadorMapa => Boolean(dato))
-    .map((dato) => aLatLng(dato.coordenadas));
+  const encuadre = useMemo(
+    () => encuadreMapa(
+      [paradero, punto, cliente, taxi]
+        .filter((dato): dato is MarcadorMapa => Boolean(dato))
+        .map((dato) => dato.coordenadas)
+    ),
+    [paradero, punto, cliente, taxi]
+  );
 
-  const centrar = () => {
-    if (puntos.length === 1) {
-      mapa.current?.animateToRegion({
-        ...puntos[0],
-        latitudeDelta: DELTA_UN_PUNTO,
-        longitudeDelta: DELTA_UN_PUNTO,
-      });
-    } else if (puntos.length > 1) {
-      mapa.current?.fitToCoordinates(puntos, { edgePadding: MARGEN_ENCUADRE, animated: true });
+  const centrar = useCallback(() => {
+    if (!mapaListo || !tamanoListo || !encuadre || !camara.current) return;
+    if ("center" in encuadre) {
+      camara.current.easeTo({ ...encuadre, duration: 400 });
+    } else {
+      camara.current.fitBounds(encuadre.bounds, { padding: MARGEN_ENCUADRE, duration: 400 });
     }
-  };
+  }, [mapaListo, tamanoListo, encuadre]);
 
   // Solo se encuadra la primera vez: después el cliente mueve el mapa.
   useEffect(() => {
-    if (mapaListo && !centrado.current && puntos.length > 0) {
-      centrado.current = true;
+    if (mapaListo && tamanoListo && !centrado.current && encuadre && camara.current) {
       centrar();
+      centrado.current = true;
     }
-  });
+  }, [mapaListo, tamanoListo, encuadre, centrar]);
+
+  const reintentar = () => {
+    centrado.current = false;
+    setMapaListo(false);
+    setErrorMapa(false);
+    setIntento((actual) => actual + 1);
+  };
 
   return (
     <View style={[styles.contenedor, style]}>
-      <MapView
-        ref={mapa}
-        provider={PROVEEDOR}
+      <Map
+        key={intento}
+        mapStyle={ESTILO_MAPA}
         style={styles.mapa}
-        initialRegion={REGION_INICIAL}
-        onMapReady={() => setMapaListo(true)}
-        toolbarEnabled={false}
-        showsMyLocationButton={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
+        onLayout={({ nativeEvent: { layout } }) => setTamanoListo(layout.width > 0 && layout.height > 0)}
+        onDidFinishLoadingStyle={() => { setMapaListo(true); setErrorMapa(false); }}
+        onDidFailLoadingMap={() => setErrorMapa(true)}
+        touchRotate={false}
+        touchPitch={false}
+        attribution
+        attributionPosition={{ bottom: 8, left: 8 }}
+        androidView="texture"
       >
+        <Camera ref={camara} initialViewState={VISTA_INICIAL} maxZoom={18} />
         {paradero && <Marcador tipo="paradero" dato={paradero} />}
         {punto && <Marcador tipo="punto" dato={punto} />}
         {cliente && <Marcador tipo="cliente" dato={cliente} />}
         {taxi && <Marcador tipo="taxi" dato={taxi} />}
-      </MapView>
+      </Map>
+      {errorMapa && (
+        <Pressable onPress={reintentar} accessibilityRole="button" style={styles.errorMapa}>
+          <AppText style={styles.textoError}>No se pudo cargar el mapa. Toca para reintentar.</AppText>
+        </Pressable>
+      )}
       <Pressable
         onPress={centrar}
         accessibilityRole="button"
@@ -157,6 +149,16 @@ const styles = StyleSheet.create({
   mapa: {
     flex: 1,
   },
+  errorMapa: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    top: "45%",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: Colors.white,
+  },
+  textoError: { fontSize: 13, textAlign: "center", color: Colors.brandText },
   marcador: {
     alignItems: "center",
     justifyContent: "center",

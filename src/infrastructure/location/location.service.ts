@@ -97,7 +97,7 @@ export async function obtenerDireccionActual(
 
 /**
  * Abre el punto en la app de mapas del dispositivo. Si no hay una app que
- * acepte el enlace nativo, lo abre en Google Maps desde el navegador.
+ * acepte el enlace nativo, lo abre en OpenStreetMap desde el navegador.
  */
 export async function abrirEnMapa(
   { latitud, longitud }: Coordenadas,
@@ -120,6 +120,6 @@ export async function abrirEnMapa(
   }
 
   await Linking.openURL(
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(punto)}`
+    `https://www.openstreetmap.org/?mlat=${latitud}&mlon=${longitud}#map=16/${latitud}/${longitud}`
   );
 }
