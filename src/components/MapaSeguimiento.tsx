@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
-import { Camera, Map, Marker, type CameraRef } from "@maplibre/maplibre-react-native";
+import { Camera, Map, Marker, GeoJSONSource, Layer, type CameraRef } from "@maplibre/maplibre-react-native";
 import { aLngLat, encuadreMapa } from "../modules/cliente/mapa";
 import Colors from "../theme/colors";
 import AppText from "./AppText";
@@ -19,6 +19,7 @@ interface Props {
   paradero?: MarcadorMapa | null;
   /** El propio cliente. */
   cliente?: MarcadorMapa | null;
+  ruta?: import("geojson").LineString | null;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -52,7 +53,7 @@ function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
 
 /** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
-  const { taxi, punto, paradero, cliente, style } = props;
+  const { taxi, punto, paradero, cliente, style, ruta } = props;
   const camara = useRef<CameraRef>(null);
   const [mapaListo, setMapaListo] = useState(false);
   const [tamanoListo, setTamanoListo] = useState(false);
@@ -65,9 +66,12 @@ export default function MapaSeguimiento(props: Props) {
       [paradero, punto, cliente, taxi]
         .filter((dato): dato is MarcadorMapa => Boolean(dato))
         .map((dato) => dato.coordenadas)
+        .concat((ruta?.coordinates ?? []).map(([longitud, latitud]) => ({ latitud, longitud })))
     ),
-    [paradero, punto, cliente, taxi]
+    [paradero, punto, cliente, taxi, ruta]
   );
+
+  useEffect(() => { centrado.current = false; }, [ruta]);
 
   const centrar = useCallback(() => {
     if (!mapaListo || !tamanoListo || !encuadre || !camara.current) return;
@@ -109,6 +113,10 @@ export default function MapaSeguimiento(props: Props) {
         androidView="texture"
       >
         <Camera ref={camara} initialViewState={VISTA_INICIAL} maxZoom={18} />
+        {ruta && <GeoJSONSource id="ruta-paradero" data={ruta}>
+          <Layer id="ruta-borde" type="line" paint={{ "line-color": Colors.white, "line-width": 9 }} layout={{ "line-cap": "round", "line-join": "round" }} />
+          <Layer id="ruta-linea" type="line" paint={{ "line-color": Colors.primary, "line-width": 5 }} layout={{ "line-cap": "round", "line-join": "round" }} />
+        </GeoJSONSource>}
         {paradero && <Marcador tipo="paradero" dato={paradero} />}
         {punto && <Marcador tipo="punto" dato={punto} />}
         {cliente && <Marcador tipo="cliente" dato={cliente} />}
