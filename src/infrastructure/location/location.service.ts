@@ -2,14 +2,16 @@ import * as Location from "expo-location";
 import * as Linking from "expo-linking";
 import { Platform } from "react-native";
 import type { Coordenadas } from "../../modules/cliente/ubicacion";
+import { conTiempoLimite } from "../../modules/cliente/tiempoLimite";
 
 const MENSAJE_PERMISO_CERCANOS =
   "Se necesita permiso de ubicación para buscar opciones cercanas.";
 
 async function asegurarUbicacionDisponible(mensajePermiso: string, pedirPermiso = true) {
-  const permiso = pedirPermiso
-    ? await Location.requestForegroundPermissionsAsync()
-    : await Location.getForegroundPermissionsAsync();
+  let permiso = await Location.getForegroundPermissionsAsync();
+  if (!permiso.granted && pedirPermiso) {
+    permiso = await Location.requestForegroundPermissionsAsync();
+  }
   if (!permiso.granted) {
     throw new Error(mensajePermiso);
   }
@@ -28,16 +30,23 @@ const aCoordenadas = (ubicacion: Location.LocationObject): Coordenadas => ({
 /**
  * Con `pedirPermiso` en false no abre el diálogo de permiso: si no está
  * concedido, falla con `mensajePermiso`.
+ * El tiempo límite es opcional y solo se aplica si la pantalla lo solicita.
  */
 export async function obtenerUbicacionActual(
   mensajePermiso = MENSAJE_PERMISO_CERCANOS,
-  pedirPermiso = true
+  pedirPermiso = true,
+  { tiempoEsperaMs }: { tiempoEsperaMs?: number } = {},
 ): Promise<Coordenadas> {
   await asegurarUbicacionDisponible(mensajePermiso, pedirPermiso);
 
-  const ubicacion = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.Balanced,
-  });
+  const posicion = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+  const ubicacion = tiempoEsperaMs === undefined
+    ? await posicion
+    : await conTiempoLimite(
+      posicion,
+      tiempoEsperaMs,
+      "Está tardando en obtenerse tu ubicación. Verifica que el GPS esté activo y reintenta.",
+    );
 
   return aCoordenadas(ubicacion);
 }
