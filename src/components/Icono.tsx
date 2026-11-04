@@ -27,6 +27,7 @@ const ICONOS = {
     locationHistory: 'location-history',
     locationOn: 'location-on',
     myLocation: 'my-location',
+    fullscreen: 'fullscreen',
     ArrowRight: 'keyboard-arrow-right',
     ArrowDown: 'keyboard-arrow-down',
     Share: 'share',
