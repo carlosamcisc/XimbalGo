@@ -107,8 +107,13 @@ Deno.serve(async (req) => {
   }
 
   let origen: Coordenadas;
+  let paraderoId: unknown;
+  let modo: unknown;
   try {
-    const { latitud, longitud } = await req.json();
+    const cuerpo = await req.json();
+    const { latitud, longitud } = cuerpo;
+    paraderoId = cuerpo.paraderoId;
+    modo = cuerpo.modo === undefined ? "caminando" : cuerpo.modo;
     if (!esCoordenada(latitud, 90) || !esCoordenada(longitud, 180)) {
       throw new Error();
     }
@@ -122,6 +127,45 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: autorizacion } } }
   );
+
+  // Consulta el destino con el token del cliente y las políticas RLS existentes.
+  if (paraderoId !== undefined) {
+    if (modo !== "caminando" && modo !== "moto") {
+      return respuesta({ error: "Modo de viaje no válido." }, 400);
+    }
+    if (typeof paraderoId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paraderoId)) {
+      return respuesta({ error: "Paradero no válido." }, 400);
+    }
+    const { data, error } = await supabase.rpc("obtener_paradero", { p_paradero_id: paraderoId });
+    if (error) return respuesta({ error: "No se pudo consultar el paradero. Verifica tu sesión." }, 403);
+    const destino = data?.[0];
+    if (!destino || !esCoordenada(destino.latitud, 90) || !esCoordenada(destino.longitud, 180)) {
+      return respuesta({ error: "El paradero no está disponible o no tiene ubicación." }, 404);
+    }
+    const perfil = modo === "moto" ? PERFIL_MOTO : PERFIL_PIE;
+    const parametros = new URLSearchParams({ profile: perfil, calc_points: "true", points_encoded: "false", instructions: "false" });
+    parametros.append("point", `${origen.latitud},${origen.longitud}`);
+    parametros.append("point", `${destino.latitud},${destino.longitud}`);
+    if (GRAPHHOPPER_API_KEY) parametros.set("key", GRAPHHOPPER_API_KEY);
+    try {
+      const res = await fetch(`${GRAPHHOPPER_URL}/route?${parametros}`, { signal: AbortSignal.timeout(ESPERA_GRAPHHOPPER_MS) });
+      if (!res.ok) throw new Error("Proveedor no disponible");
+      const datos = await res.json();
+      const ruta = datos?.paths?.[0];
+      if (!Number.isFinite(ruta?.distance) || ruta.distance < 0 || !Number.isFinite(ruta?.time) || ruta.time < 0 || ruta?.points?.type !== "LineString" || !Array.isArray(ruta.points.coordinates) || ruta.points.coordinates.length < 2 || !ruta.points.coordinates.every((p: unknown) => Array.isArray(p) && esCoordenada(p[0], 180) && esCoordenada(p[1], 90))) {
+        throw new Error("Ruta no válida");
+      }
+      return respuesta({
+        metros: ruta.distance,
+        segundos: Math.round(ruta.time / 1000),
+        geometria: ruta.points,
+        modo,
+        aproximada: modo === "moto" && perfil === "car",
+      });
+    } catch {
+      return respuesta({ error: `No se pudo calcular la ruta ${modo === "moto" ? "en moto" : "caminando"}. Intenta de nuevo.` }, 502);
+    }
+  }
 
   const { data, error } = await supabase.rpc("obtener_paraderos_cercanos", {
     p_latitud: origen.latitud,
