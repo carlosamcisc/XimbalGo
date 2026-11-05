@@ -27,6 +27,78 @@ function servidor({ destino, falloRpc = false, falloProveedor = false, geometria
 
 const body = { paraderoId: '12345678-1234-1234-1234-123456789012', latitud: 20.97, longitud: -89.62 };
 
+const seguimientoTaxi = {
+  en_servicio: true, taxi_latitud: 20.95, taxi_longitud: -89.60,
+  paradero_latitud: 20.98, paradero_longitud: -89.63,
+  punto_latitud: 20.97, punto_longitud: -89.62,
+};
+
+test('las métricas y el trazo de abordaje usan el mismo destino aunque haya un paradero distinto', async () => {
+  const s = servidor({ destino: seguimientoTaxi });
+  const res = await s.llamar({ reservaId: body.paraderoId, destino: 'abordaje' });
+  assert.equal(res.status, 200);
+  const datos = await res.json();
+  assert.equal(datos.destino, 'abordaje');
+  assert.equal(datos.metros, 800);
+  assert.equal(datos.segundos, 600);
+  assert.deepEqual(s.peticiones[0].searchParams.getAll('point'), ['20.95,-89.6', '20.97,-89.62']);
+});
+
+test('rechaza un destino arbitrario en la reserva antes de consultar al proveedor', async () => {
+  const s = servidor({ destino: seguimientoTaxi });
+  assert.equal((await s.llamar({ reservaId: body.paraderoId, destino: 'otro' })).status, 400);
+  assert.equal(s.peticiones.length, 0);
+});
+
+test('el destino paradero mantiene trazo y métricas hacia el paradero aunque el taxi esté junto al cliente', async () => {
+  const s = servidor({ destino: { ...seguimientoTaxi, punto_latitud: seguimientoTaxi.taxi_latitud, punto_longitud: seguimientoTaxi.taxi_longitud } });
+  const res = await s.llamar({ reservaId: body.paraderoId, destino: 'paradero' });
+  assert.equal(res.status, 200);
+  const datos = await res.json();
+  assert.equal(datos.destino, 'paradero');
+  assert.equal(datos.metros, 800);
+  assert.equal(datos.segundos, 600);
+  assert.deepEqual(s.peticiones[0].searchParams.getAll('point'), ['20.95,-89.6', '20.98,-89.63']);
+});
+
+test('un paradero que deja de estar disponible no se sustituye silenciosamente por el cliente', async () => {
+  const s = servidor({ destino: { ...seguimientoTaxi, paradero_latitud: null, paradero_longitud: null } });
+  assert.equal((await s.llamar({ reservaId: body.paraderoId, destino: 'paradero' })).status, 404);
+  assert.equal(s.peticiones.length, 0);
+});
+
+test('el trazo del taxi consulta la reserva con la sesión y usa auto y coordenadas del servidor', async () => {
+  const s = servidor({ destino: seguimientoTaxi });
+  const res = await s.llamar({ reservaId: body.paraderoId, latitud: 0, longitud: 0, modo: 'caminando' });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).modo, 'auto');
+  assert.equal(s.consultas[0].nombre, 'obtener_seguimiento_reserva');
+  assert.equal(s.consultas[0].args.p_reserva_id, body.paraderoId);
+  assert.equal(s.consultas[0].opciones.global.headers.Authorization, 'Bearer sesion');
+  assert.equal(s.peticiones[0].searchParams.get('profile'), 'car');
+  assert.deepEqual(s.peticiones[0].searchParams.getAll('point'), ['20.95,-89.6', '20.98,-89.63']);
+});
+
+test('sin paradero traza hasta el abordaje y no requiere coordenadas del cliente', async () => {
+  const s = servidor({ destino: { ...seguimientoTaxi, paradero_latitud: null, paradero_longitud: null } });
+  assert.equal((await s.llamar({ reservaId: body.paraderoId })).status, 200);
+  assert.deepEqual(s.peticiones[0].searchParams.getAll('point'), ['20.95,-89.6', '20.97,-89.62']);
+});
+
+test('no consulta al proveedor con reserva ajena, ubicación ausente o taxi fuera de servicio', async () => {
+  for (const opciones of [
+    { falloRpc: true, destino: seguimientoTaxi },
+    { destino: { ...seguimientoTaxi, en_servicio: false } },
+    { destino: { ...seguimientoTaxi, taxi_latitud: null } },
+    { destino: { ...seguimientoTaxi, taxi_latitud: null, taxi_longitud: null } },
+    { destino: null },
+  ]) {
+    const s = servidor(opciones);
+    assert.ok((await s.llamar({ reservaId: body.paraderoId })).status >= 400);
+    assert.equal(s.peticiones.length, 0);
+  }
+});
+
 test('la ruta usa el destino real con RLS y devuelve GeoJSON sin intercambiar ejes', async () => {
   const s = servidor();
   const res = await s.llamar(body);

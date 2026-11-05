@@ -29,6 +29,7 @@ const GRAPHHOPPER_URL = (
 const GRAPHHOPPER_API_KEY = Deno.env.get("GRAPHHOPPER_API_KEY") ?? "";
 const PERFIL_PIE = Deno.env.get("GRAPHHOPPER_PERFIL_PIE") ?? "foot";
 const PERFIL_MOTO = Deno.env.get("GRAPHHOPPER_PERFIL_MOTO") ?? "car";
+const PERFIL_AUTO = Deno.env.get("GRAPHHOPPER_PERFIL_AUTO") ?? "car";
 
 const LIMITE_PARADEROS = 5;
 const ESPERA_GRAPHHOPPER_MS = 5_000;
@@ -109,12 +110,16 @@ Deno.serve(async (req) => {
   let origen: Coordenadas;
   let paraderoId: unknown;
   let modo: unknown;
+  let reservaId: unknown;
+  let destinoSolicitado: unknown;
   try {
     const cuerpo = await req.json();
     const { latitud, longitud } = cuerpo;
     paraderoId = cuerpo.paraderoId;
+    reservaId = cuerpo.reservaId;
+    destinoSolicitado = cuerpo.destino;
     modo = cuerpo.modo === undefined ? "caminando" : cuerpo.modo;
-    if (!esCoordenada(latitud, 90) || !esCoordenada(longitud, 180)) {
+    if (reservaId === undefined && (!esCoordenada(latitud, 90) || !esCoordenada(longitud, 180))) {
       throw new Error();
     }
     origen = { latitud, longitud };
@@ -128,21 +133,49 @@ Deno.serve(async (req) => {
     { global: { headers: { Authorization: autorizacion } } }
   );
 
+  // La RPC verifica que la reserva pertenezca al cliente. No se aceptan
+  // coordenadas del teléfono para decidir dónde está el taxi o su destino.
+  let destinoReserva: Coordenadas | undefined;
+  if (reservaId !== undefined) {
+    if (destinoSolicitado !== undefined && destinoSolicitado !== "abordaje" && destinoSolicitado !== "paradero") {
+      return respuesta({ error: "Destino no válido." }, 400);
+    }
+    if (typeof reservaId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reservaId)) {
+      return respuesta({ error: "Reserva no válida." }, 400);
+    }
+    const { data, error } = await supabase.rpc("obtener_seguimiento_reserva", { p_reserva_id: reservaId });
+    if (error) return respuesta({ error: "No se pudo consultar la reserva." }, 403);
+    const seguimiento = data?.[0];
+    if (!seguimiento?.en_servicio || !esCoordenada(seguimiento.taxi_latitud, 90) || !esCoordenada(seguimiento.taxi_longitud, 180)) {
+      return respuesta({ error: "El taxi no tiene una ubicación reciente disponible." }, 404);
+    }
+    origen = { latitud: seguimiento.taxi_latitud, longitud: seguimiento.taxi_longitud };
+    destinoReserva = destinoSolicitado !== "abordaje" && esCoordenada(seguimiento.paradero_latitud, 90) && esCoordenada(seguimiento.paradero_longitud, 180)
+      ? { latitud: seguimiento.paradero_latitud, longitud: seguimiento.paradero_longitud }
+      : { latitud: seguimiento.punto_latitud, longitud: seguimiento.punto_longitud };
+    if (destinoSolicitado === "paradero" && (!esCoordenada(seguimiento.paradero_latitud, 90) || !esCoordenada(seguimiento.paradero_longitud, 180))) {
+      return respuesta({ error: "El paradero no tiene ubicación disponible." }, 404);
+    }
+    modo = "auto";
+  }
+
   // Consulta el destino con el token del cliente y las políticas RLS existentes.
-  if (paraderoId !== undefined) {
-    if (modo !== "caminando" && modo !== "moto") {
+  if (paraderoId !== undefined || reservaId !== undefined) {
+    if (!destinoReserva && modo !== "caminando" && modo !== "moto") {
       return respuesta({ error: "Modo de viaje no válido." }, 400);
     }
-    if (typeof paraderoId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paraderoId)) {
+    if (!destinoReserva && (typeof paraderoId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(paraderoId))) {
       return respuesta({ error: "Paradero no válido." }, 400);
     }
-    const { data, error } = await supabase.rpc("obtener_paradero", { p_paradero_id: paraderoId });
+    const { data, error } = destinoReserva
+      ? { data: [destinoReserva], error: null }
+      : await supabase.rpc("obtener_paradero", { p_paradero_id: paraderoId });
     if (error) return respuesta({ error: "No se pudo consultar el paradero. Verifica tu sesión." }, 403);
     const destino = data?.[0];
     if (!destino || !esCoordenada(destino.latitud, 90) || !esCoordenada(destino.longitud, 180)) {
       return respuesta({ error: "El paradero no está disponible o no tiene ubicación." }, 404);
     }
-    const perfil = modo === "moto" ? PERFIL_MOTO : PERFIL_PIE;
+    const perfil = modo === "auto" ? PERFIL_AUTO : modo === "moto" ? PERFIL_MOTO : PERFIL_PIE;
     const parametros = new URLSearchParams({ profile: perfil, calc_points: "true", points_encoded: "false", instructions: "false" });
     parametros.append("point", `${origen.latitud},${origen.longitud}`);
     parametros.append("point", `${destino.latitud},${destino.longitud}`);
@@ -160,10 +193,11 @@ Deno.serve(async (req) => {
         segundos: Math.round(ruta.time / 1000),
         geometria: ruta.points,
         modo,
+        ...(reservaId !== undefined ? { destino: destinoSolicitado ?? "paradero" } : {}),
         aproximada: modo === "moto" && perfil === "car",
       });
     } catch {
-      return respuesta({ error: `No se pudo calcular la ruta ${modo === "moto" ? "en moto" : "caminando"}. Intenta de nuevo.` }, 502);
+      return respuesta({ error: `No se pudo calcular la ruta ${modo === "auto" ? "en auto" : modo === "moto" ? "en moto" : "caminando"}. Intenta de nuevo.` }, 502);
     }
   }
 
