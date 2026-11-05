@@ -7,7 +7,10 @@ import { distanciaEntre, type SeguimientoReserva } from "../../modules/cliente/s
 import { conTiempoLimite } from "../../modules/cliente/tiempoLimite";
 
 /** Trazo sugerido por calles; no representa el historial del taxi. */
-export function useRutaTaxi(reservaId: string, seguimiento: SeguimientoReserva | null, habilitada: boolean) {
+export function useRutaTaxi(reservaId: string, seguimiento: SeguimientoReserva | null, habilitada: boolean,
+  opciones?: { mapaTaxista: boolean; paraderoId?: string }) {
+  const mapaTaxista = opciones?.mapaTaxista ?? false;
+  const paraderoId = opciones?.paraderoId;
   const [ruta, setRuta] = useState<LineString | null>(null);
   const [estimacion, setEstimacion] = useState<{
     distanciaMetros: number; minutosRestantes: number; llegada: Date; llegando: boolean; calculadaEn: string;
@@ -49,7 +52,10 @@ export function useRutaTaxi(reservaId: string, seguimiento: SeguimientoReserva |
       setCargando(true);
       try {
         const { data, error: fallo } = await conTiempoLimite(
-          supabase.functions.invoke("distancias-paraderos", { body: { reservaId, destino: tipoDestino }, signal: controlador.signal }),
+          supabase.functions.invoke("distancias-paraderos", { body: {
+            ...(reservaId ? { reservaId } : {}), destino: tipoDestino,
+            ...(mapaTaxista ? { mapaTaxista: true, paraderoId } : {}),
+          }, signal: controlador.signal }),
           15_000,
           "No se pudo actualizar el trazo. Reintentaremos automáticamente.",
           () => controlador?.abort(),
@@ -92,7 +98,7 @@ export function useRutaTaxi(reservaId: string, seguimiento: SeguimientoReserva |
       controlador?.abort();
       clearInterval(intervalo);
     };
-  }, [reservaId, disponible, claveDestino, tipoDestino, enfocada, activa]);
+  }, [reservaId, disponible, claveDestino, tipoDestino, enfocada, activa, mapaTaxista, paraderoId]);
 
   return { ruta: disponible ? ruta : null, estimacion: disponible ? estimacion : null, error, cargando };
 }

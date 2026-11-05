@@ -23,6 +23,7 @@ import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
 import Divider from "../../components/Divider";
+import MapaViajeTaxista from "./MapaViajeTaxista";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaInicio">;
 
@@ -241,6 +242,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                         </Pressable>
                     </Card>
                 )}
+                {!reservaId && <Card style={styles.tarjeta}><MapaViajeTaxista rutaId={perfil.ruta?.id} /></Card>}
 
                 <View style={styles.seccion}>
                     <Icono nombre="bookMarks" tamanio={25} color={Colors.primary} />

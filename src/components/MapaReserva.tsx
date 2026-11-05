@@ -6,9 +6,9 @@ import AppText from "./AppText";
 import { Icono } from "./Icono";
 import Colors from "../theme/colors";
 
-type Props = ComponentProps<typeof MapaSeguimiento> & { children?: ReactNode };
+type Props = ComponentProps<typeof MapaSeguimiento> & { children?: ReactNode; titulo?: string };
 
-export default function MapaReserva({ children, style, ...mapa }: Props) {
+export default function MapaReserva({ children, style, titulo = "Tu taxi en el mapa", ...mapa }: Props) {
   const [ampliado, setAmpliado] = useState(false);
   return <View style={style}>
     {!ampliado && <MapaSeguimiento {...mapa} usarPines onMaximizar={() => setAmpliado(true)} />}
@@ -17,7 +17,7 @@ export default function MapaReserva({ children, style, ...mapa }: Props) {
       <SafeAreaView style={styles.pantalla}>
         <View style={styles.encabezado}>
           <View style={styles.titulos}>
-            <AppText weight="bold" style={styles.titulo}>Tu taxi en el mapa</AppText>
+            <AppText weight="bold" style={styles.titulo}>{titulo}</AppText>
             <AppText style={styles.subtitulo}>Ruta hacia {mapa.paradero?.titulo ?? mapa.punto?.titulo ?? "tu punto de abordaje"}</AppText>
           </View>
           <Pressable onPress={() => setAmpliado(false)} accessibilityRole="button" accessibilityLabel="Cerrar mapa ampliado" style={({ pressed }) => [styles.cerrar, pressed && styles.presionado]}>

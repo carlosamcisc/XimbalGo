@@ -112,14 +112,16 @@ Deno.serve(async (req) => {
   let modo: unknown;
   let reservaId: unknown;
   let destinoSolicitado: unknown;
+  let mapaTaxista: unknown;
   try {
     const cuerpo = await req.json();
     const { latitud, longitud } = cuerpo;
     paraderoId = cuerpo.paraderoId;
     reservaId = cuerpo.reservaId;
     destinoSolicitado = cuerpo.destino;
+    mapaTaxista = cuerpo.mapaTaxista;
     modo = cuerpo.modo === undefined ? "caminando" : cuerpo.modo;
-    if (reservaId === undefined && (!esCoordenada(latitud, 90) || !esCoordenada(longitud, 180))) {
+    if (reservaId === undefined && mapaTaxista !== true && (!esCoordenada(latitud, 90) || !esCoordenada(longitud, 180))) {
       throw new Error();
     }
     origen = { latitud, longitud };
@@ -136,7 +138,27 @@ Deno.serve(async (req) => {
   // La RPC verifica que la reserva pertenezca al cliente. No se aceptan
   // coordenadas del teléfono para decidir dónde está el taxi o su destino.
   let destinoReserva: Coordenadas | undefined;
-  if (reservaId !== undefined) {
+  if (mapaTaxista === true) {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof paraderoId !== "string" || !uuid.test(paraderoId) ||
+        (reservaId !== undefined && (typeof reservaId !== "string" || !uuid.test(reservaId)))) {
+      return respuesta({ error: "Paradero o reserva no válidos." }, 400);
+    }
+    const { data: mapa, error } = await supabase.rpc("obtener_mapa_taxista", {
+      p_paradero_id: paraderoId, ...(reservaId !== undefined ? { p_reserva_id: reservaId } : {}),
+    });
+    if (error) return respuesta({ error: "No tienes acceso a este recorrido." }, 403);
+    const taxi = mapa?.taxi?.coordenadas;
+    const destino = mapa?.destino?.coordenadas;
+    if (!esCoordenada(taxi?.latitud, 90) || !esCoordenada(taxi?.longitud, 180) ||
+        !esCoordenada(destino?.latitud, 90) || !esCoordenada(destino?.longitud, 180)) {
+      return respuesta({ error: "Inicia servicio y comparte tu ubicación para calcular el recorrido." }, 404);
+    }
+    origen = taxi;
+    destinoReserva = destino;
+    modo = "auto";
+    destinoSolicitado = "paradero";
+  } else if (reservaId !== undefined) {
     if (destinoSolicitado !== undefined && destinoSolicitado !== "abordaje" && destinoSolicitado !== "paradero") {
       return respuesta({ error: "Destino no válido." }, 400);
     }
@@ -193,7 +215,7 @@ Deno.serve(async (req) => {
         segundos: Math.round(ruta.time / 1000),
         geometria: ruta.points,
         modo,
-        ...(reservaId !== undefined ? { destino: destinoSolicitado ?? "paradero" } : {}),
+        ...(reservaId !== undefined || mapaTaxista === true ? { destino: destinoSolicitado ?? "paradero" } : {}),
         aproximada: modo === "moto" && perfil === "car",
       });
     } catch {

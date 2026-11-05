@@ -35,6 +35,8 @@ import { formatearDistancia } from "../../modules/cliente/ubicacion";
 import { useClienteReserva } from "./useClienteReserva";
 import { useRutaTaxi } from "./useRutaTaxi";
 import { useUbicacionClienteMapa } from "./useUbicacionClienteMapa";
+import { useCompartirConTaxista } from "./useCompartirConTaxista";
+import Chip from "../../components/Chip";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteReserva">;
 
@@ -77,6 +79,8 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
   const rutaTaxi = useRutaTaxi(reservaId, seguimiento, detalle.activa && !reserva?.abordadoEn);
   const estimacion = rutaTaxi.estimacion;
   const ubicacionCliente = useUbicacionClienteMapa(Boolean(reserva && detalle.activa && !reserva.abordadoEn));
+  const compartirTaxista = useCompartirConTaxista(reservaId,
+    reserva?.estado === "aceptada" && !reserva.abordadoEn, ubicacionCliente.coordenadas);
   const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
   const [confirmandoRechazoOferta, setConfirmandoRechazoOferta] = useState(false);
 
@@ -256,6 +260,19 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
             ? { coordenadas: paradero.coordenadas, titulo: paradero.nombre }
             : null}
         >
+        {reserva?.estado === "aceptada" && <View style={styles.avisoMapa}>
+          <View style={styles.avisoContenido}>
+            <AppText weight="semibold" style={styles.avisoTitulo}>Tu ubicación para el taxista</AppText>
+            <AppText style={styles.avisoTexto}>
+              {compartirTaxista.error ?? (compartirTaxista.activada
+                ? compartirTaxista.enviada ? "Tu taxista puede verte mientras tienes abierta esta reserva. Puedes detenerlo cuando quieras." : "Esperando tu ubicación para compartirla."
+                : "Puedes compartir tu ubicación actual con el conductor asignado para que te encuentre. Solo mientras esta reserva esté abierta.")}
+            </AppText>
+            <Chip titulo={compartirTaxista.activada ? "Dejar de compartir" : "Compartir con mi taxista"}
+              icono="locationOn" seleccionado={compartirTaxista.activada} onPress={compartirTaxista.alternar}
+              disabled={!compartirTaxista.activada && !ubicacionCliente.coordenadas} />
+          </View>
+        </View>}
         {ubicacionCliente.error && <View style={styles.avisoMapa} accessibilityLiveRegion="polite">
           <Icono nombre="locationOn" tamanio={22} color={Colors.primary} />
           <View style={styles.avisoContenido}>

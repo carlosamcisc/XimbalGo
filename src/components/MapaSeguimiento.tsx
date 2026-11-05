@@ -24,6 +24,7 @@ interface Props {
   destacarParadero?: boolean;
   mostrarLeyenda?: boolean;
   usarPines?: boolean;
+  etiquetaCliente?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -40,7 +41,7 @@ const ESTILO_MAPA = "https://tiles.openfreemap.org/styles/liberty";
 const VISTA_INICIAL = { center: [-89.62, 20.97] as [number, number], zoom: 11 };
 const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-function Marcador({ tipo, dato, destacado = false, pin = false }: { tipo: TipoMarcador; dato: MarcadorMapa; destacado?: boolean; pin?: boolean }) {
+function Marcador({ tipo, dato, destacado = false, pin = false, etiqueta }: { tipo: TipoMarcador; dato: MarcadorMapa; destacado?: boolean; pin?: boolean; etiqueta?: string }) {
   const mostrarPin = tipo === "paradero" && destacado;
   const color = LEYENDA.find(item => item.tipo === tipo)!.color;
   return (
@@ -48,7 +49,7 @@ function Marcador({ tipo, dato, destacado = false, pin = false }: { tipo: TipoMa
       id={tipo}
       lngLat={aLngLat(dato.coordenadas)}
       anchor={mostrarPin || pin ? "bottom" : "center"}
-      accessibilityLabel={`${LEYENDA.find(item => item.tipo === tipo)!.etiqueta}: ${dato.titulo}`}
+      accessibilityLabel={`${etiqueta ?? LEYENDA.find(item => item.tipo === tipo)!.etiqueta}: ${dato.titulo}`}
     >
       {pin ? <View collapsable={false} style={styles.pinContenedor}>
         <View style={[styles.pinCabeza, { backgroundColor: color }]}>
@@ -70,7 +71,7 @@ function Marcador({ tipo, dato, destacado = false, pin = false }: { tipo: TipoMa
 
 /** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
-  const { taxi, punto, paradero, cliente, style, ruta, onMaximizar, destacarParadero = false, mostrarLeyenda = true, usarPines = false } = props;
+  const { taxi, punto, paradero, cliente, style, ruta, onMaximizar, destacarParadero = false, mostrarLeyenda = true, usarPines = false, etiquetaCliente = "Tú" } = props;
   const camara = useRef<CameraRef>(null);
   const [mapaListo, setMapaListo] = useState(false);
   const [tamanoListo, setTamanoListo] = useState(false);
@@ -139,7 +140,7 @@ export default function MapaSeguimiento(props: Props) {
         </GeoJSONSource>}
         {paradero && <Marcador tipo="paradero" dato={paradero} destacado={destacarParadero} pin={usarPines} />}
         {punto && <Marcador tipo="punto" dato={punto} pin={usarPines} />}
-        {cliente && <Marcador tipo="cliente" dato={cliente} pin={usarPines} />}
+        {cliente && <Marcador tipo="cliente" dato={cliente} pin={usarPines} etiqueta={etiquetaCliente} />}
         {taxi && <Marcador tipo="taxi" dato={taxi} pin={usarPines} />}
       </Map>
       {errorMapa && (
@@ -169,7 +170,7 @@ export default function MapaSeguimiento(props: Props) {
         {LEYENDA.filter(({ tipo }) => Boolean(props[tipo])).map(({ tipo, etiqueta, color }) => (
           <View key={tipo} style={styles.itemLeyenda}>
             <View style={[styles.puntoLeyenda, { backgroundColor: color }]} />
-            <AppText style={styles.textoLeyenda}>{etiqueta}</AppText>
+            <AppText style={styles.textoLeyenda}>{tipo === "cliente" ? etiquetaCliente : etiqueta}</AppText>
           </View>
         ))}
       </View>}

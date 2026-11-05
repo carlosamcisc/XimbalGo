@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 
-function servidor({ destino, falloRpc = false, falloProveedor = false, geometria, entorno = {} } = {}) {
+function servidor({ destino, mapa, falloRpc = false, falloProveedor = false, geometria, entorno = {} } = {}) {
   let handler;
   const consultas = [];
   const peticiones = [];
@@ -15,7 +15,7 @@ function servidor({ destino, falloRpc = false, falloProveedor = false, geometria
     Deno: { env: { get: (nombre) => entorno[nombre] }, serve: (fn) => { handler = fn; } },
     createClient: (_url, _key, opciones) => ({ rpc: async (nombre, args) => {
       consultas.push({ nombre, args, opciones });
-      return { data: destino === null ? [] : [destino ?? { id: 'paradero', nombre: 'Paradero', distancia_metros: 700, latitud: 20.98, longitud: -89.63 }], error: falloRpc ? { code: '42501' } : null };
+      return { data: nombre === 'obtener_mapa_taxista' ? mapa : destino === null ? [] : [destino ?? { id: 'paradero', nombre: 'Paradero', distancia_metros: 700, latitud: 20.98, longitud: -89.63 }], error: falloRpc ? { code: '42501' } : null };
     } }),
     fetch: async (url) => {
       peticiones.push(new URL(url));
@@ -26,6 +26,33 @@ function servidor({ destino, falloRpc = false, falloProveedor = false, geometria
 }
 
 const body = { paraderoId: '12345678-1234-1234-1234-123456789012', latitud: 20.97, longitud: -89.62 };
+
+test('el mapa del taxista valida su ruta con su token y usa coordenadas del servidor', async () => {
+  const s = servidor({ mapa: { taxi: { coordenadas: { latitud: 20.95, longitud: -89.60 } }, destino: { coordenadas: { latitud: 20.98, longitud: -89.63 } } } });
+  const res = await s.llamar({ ...body, mapaTaxista: true, latitud: 0, longitud: 0 });
+  assert.equal(res.status, 200);
+  const datos = await res.json();
+  assert.equal(datos.destino, 'paradero');
+  assert.equal(datos.modo, 'auto');
+  assert.equal(s.consultas[0].nombre, 'obtener_mapa_taxista');
+  assert.equal(s.consultas[0].args.p_paradero_id, body.paraderoId);
+  assert.equal(s.consultas[0].opciones.global.headers.Authorization, 'Bearer sesion');
+  assert.deepEqual(s.peticiones[0].searchParams.getAll('point'), ['20.95,-89.6', '20.98,-89.63']);
+});
+
+test('el taxista no consume rutas si el paradero no está autorizado o no hay GPS', async () => {
+  for (const opciones of [{ falloRpc: true }, { mapa: { taxi: null, destino: null } }]) {
+    const s = servidor(opciones);
+    assert.ok((await s.llamar({ mapaTaxista: true, paraderoId: body.paraderoId })).status >= 400);
+    assert.equal(s.peticiones.length, 0);
+  }
+});
+
+test('el mapa del taxista rechaza identificadores inválidos antes de consultar al servidor', async () => {
+  const s = servidor();
+  assert.equal((await s.llamar({ mapaTaxista: true, paraderoId: 'ajeno' })).status, 400);
+  assert.equal(s.consultas.length, 0);
+});
 
 const seguimientoTaxi = {
   en_servicio: true, taxi_latitud: 20.95, taxi_longitud: -89.60,

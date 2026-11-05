@@ -6,8 +6,9 @@ Se obtiene con permiso de ubicación en primer plano y se observa con umbrales
 de 10 metros y 5 segundos en Android. Se detiene al salir de la pantalla o
 pasar a segundo plano. Al regresar se obtiene una posición nueva. Si falta
 permiso o GPS, se informa sin impedir el seguimiento del taxi.
-Esta posición solo se usa localmente para el pin: no cambia el abordaje,
-el paradero ni los cálculos de ruta y no se envía a Supabase.
+Esta posición no cambia el abordaje, el paradero ni los cálculos de ruta.
+Solo se envía a Supabase si el cliente activa «Compartir con mi taxista» en una
+reserva aceptada. Ver [Mapa del taxista](mapa-taxista.md) para el alcance y la caducidad.
 
 `ClienteReservaScreen` muestra el trayecto sugerido en auto desde la ubicación
 del taxi hasta el paradero cercano. Si no hay paradero disponible, utiliza el
