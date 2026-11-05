@@ -28,6 +28,8 @@ export interface TaxiCercano {
 /** Taxi de la lista completa; sin GPS del cliente no hay distancia. */
 export interface TaxiDisponible extends Omit<TaxiCercano, "distanciaMetros"> {
   distanciaMetros: number | null;
+  origenRuta: string | null;
+  destinoRuta: string | null;
   ruta: string | null;
   precio: number | null;
 }
@@ -38,6 +40,8 @@ export interface TaxiReserva {
   matricula: string;
   vehiculo: string | null;
   nombreTaxista: string;
+  origenRuta: string | null;
+  destinoRuta: string | null;
   ruta: string | null;
   /** Precio por pasajero. */
   precio: number | null;
