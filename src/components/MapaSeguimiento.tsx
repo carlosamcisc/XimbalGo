@@ -12,7 +12,7 @@ export interface MarcadorMapa {
   titulo: string;
 }
 
-// La leyenda solo muestra los marcadores que la pantalla pasa, aunque sean null.
+// La leyenda muestra únicamente los marcadores disponibles.
 interface Props {
   taxi?: MarcadorMapa | null;
   punto?: MarcadorMapa | null;
@@ -23,6 +23,8 @@ interface Props {
   onMaximizar?: () => void;
   destacarParadero?: boolean;
   mostrarLeyenda?: boolean;
+  usarPines?: boolean;
+  etiquetaCliente?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -39,16 +41,22 @@ const ESTILO_MAPA = "https://tiles.openfreemap.org/styles/liberty";
 const VISTA_INICIAL = { center: [-89.62, 20.97] as [number, number], zoom: 11 };
 const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-function Marcador({ tipo, dato, destacado = false }: { tipo: TipoMarcador; dato: MarcadorMapa; destacado?: boolean }) {
+function Marcador({ tipo, dato, destacado = false, pin = false, etiqueta }: { tipo: TipoMarcador; dato: MarcadorMapa; destacado?: boolean; pin?: boolean; etiqueta?: string }) {
   const mostrarPin = tipo === "paradero" && destacado;
+  const color = LEYENDA.find(item => item.tipo === tipo)!.color;
   return (
     <Marker
       id={tipo}
       lngLat={aLngLat(dato.coordenadas)}
-      anchor={mostrarPin ? "bottom" : "center"}
-      accessibilityLabel={dato.titulo}
+      anchor={mostrarPin || pin ? "bottom" : "center"}
+      accessibilityLabel={`${etiqueta ?? LEYENDA.find(item => item.tipo === tipo)!.etiqueta}: ${dato.titulo}`}
     >
-      {mostrarPin ? <View collapsable={false} style={styles.pinParadero}>
+      {pin ? <View collapsable={false} style={styles.pinContenedor}>
+        <View style={[styles.pinCabeza, { backgroundColor: color }]}>
+          <Icono nombre={tipo === "taxi" ? "localTaxi" : tipo === "paradero" ? "business" : tipo === "cliente" ? "person" : "locationOn"} tamanio={21} color={Colors.white} />
+        </View>
+        <View style={[styles.pinPunta, { borderTopColor: color }]} />
+      </View> : mostrarPin ? <View collapsable={false} style={styles.pinParadero}>
         <View style={styles.etiquetaParadero}>
           <AppText weight="semibold" numberOfLines={2} style={styles.nombreParadero}>{dato.titulo}</AppText>
         </View>
@@ -63,7 +71,7 @@ function Marcador({ tipo, dato, destacado = false }: { tipo: TipoMarcador; dato:
 
 /** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
-  const { taxi, punto, paradero, cliente, style, ruta, onMaximizar, destacarParadero = false, mostrarLeyenda = true } = props;
+  const { taxi, punto, paradero, cliente, style, ruta, onMaximizar, destacarParadero = false, mostrarLeyenda = true, usarPines = false, etiquetaCliente = "Tú" } = props;
   const camara = useRef<CameraRef>(null);
   const [mapaListo, setMapaListo] = useState(false);
   const [tamanoListo, setTamanoListo] = useState(false);
@@ -130,13 +138,14 @@ export default function MapaSeguimiento(props: Props) {
           <Layer id="ruta-borde" type="line" paint={{ "line-color": Colors.white, "line-width": 9 }} layout={{ "line-cap": "round", "line-join": "round" }} />
           <Layer id="ruta-linea" type="line" paint={{ "line-color": Colors.primary, "line-width": 5 }} layout={{ "line-cap": "round", "line-join": "round" }} />
         </GeoJSONSource>}
-        {paradero && <Marcador tipo="paradero" dato={paradero} destacado={destacarParadero} />}
-        {punto && <Marcador tipo="punto" dato={punto} />}
-        {cliente && <Marcador tipo="cliente" dato={cliente} />}
-        {taxi && <Marcador tipo="taxi" dato={taxi} />}
+        {paradero && <Marcador tipo="paradero" dato={paradero} destacado={destacarParadero} pin={usarPines} />}
+        {punto && <Marcador tipo="punto" dato={punto} pin={usarPines} />}
+        {cliente && <Marcador tipo="cliente" dato={cliente} pin={usarPines} etiqueta={etiquetaCliente} />}
+        {taxi && <Marcador tipo="taxi" dato={taxi} pin={usarPines} />}
       </Map>
       {errorMapa && (
         <Pressable onPress={reintentar} accessibilityRole="button" style={styles.errorMapa}>
+          <Icono nombre="info" tamanio={22} color={Colors.error} />
           <AppText style={styles.textoError}>No se pudo cargar el mapa. Toca para reintentar.</AppText>
         </Pressable>
       )}
@@ -158,10 +167,10 @@ export default function MapaSeguimiento(props: Props) {
         <Icono nombre="fullscreen" tamanio={24} color={Colors.primary} />
       </Pressable>}
       {mostrarLeyenda && <View style={styles.leyenda} pointerEvents="none">
-        {LEYENDA.filter(({ tipo }) => props[tipo] !== undefined).map(({ tipo, etiqueta, color }) => (
+        {LEYENDA.filter(({ tipo }) => Boolean(props[tipo])).map(({ tipo, etiqueta, color }) => (
           <View key={tipo} style={styles.itemLeyenda}>
             <View style={[styles.puntoLeyenda, { backgroundColor: color }]} />
-            <AppText style={styles.textoLeyenda}>{etiqueta}</AppText>
+            <AppText style={styles.textoLeyenda}>{tipo === "cliente" ? etiquetaCliente : etiqueta}</AppText>
           </View>
         ))}
       </View>}
@@ -180,6 +189,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   errorMapa: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     position: "absolute",
     left: 16,
     right: 16,
@@ -188,7 +200,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.white,
   },
-  textoError: { fontSize: 13, textAlign: "center", color: Colors.brandText },
+  textoError: { flex: 1, fontSize: 13, color: Colors.brandText },
+  pinContenedor: { alignItems: "center", paddingHorizontal: 4, paddingTop: 4 },
+  pinCabeza: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, borderColor: Colors.white, alignItems: "center", justifyContent: "center", elevation: 4, shadowColor: Colors.black, shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 2 } },
+  pinPunta: { marginTop: -2, borderLeftWidth: 7, borderRightWidth: 7, borderTopWidth: 10, borderLeftColor: "transparent", borderRightColor: "transparent" },
   marcador: {
     alignItems: "center",
     justifyContent: "center",
@@ -248,8 +263,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    width: 42,
-    height: 42,
+    width: 48,
+    height: 48,
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
@@ -263,13 +278,15 @@ const styles = StyleSheet.create({
   centrarPresionado: {
     backgroundColor: Colors.primaryContainer,
   },
-  controlRuta: { width: 44, height: 44, borderRadius: 22 },
+  controlRuta: { width: 48, height: 48, borderRadius: 24 },
   maximizar: { top: 64 },
   leyenda: {
     position: "absolute",
     left: 10,
+    right: 68,
     top: 10,
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,

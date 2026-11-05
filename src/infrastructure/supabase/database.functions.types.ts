@@ -1,6 +1,13 @@
 import type { Database } from "./database.types";
 
 type NearbyFunctions = {
+  configurar_paraderos_taxista: { Args: { p_paraderos: string[] }; Returns: undefined };
+  catalogo_paraderos_taxista: { Args: never; Returns: import("./database.types").Json };
+  obtener_mapa_taxista: { Args: { p_reserva_id?: string; p_paradero_id?: string }; Returns: import("./database.types").Json };
+  compartir_ubicacion_reserva: {
+    Args: { p_reserva_id: string; p_latitud?: number; p_longitud?: number; p_compartir?: boolean };
+    Returns: undefined;
+  };
   configurar_asientos_plataforma: {
     Args: { p_vehiculo_id: string; p_cantidad: number };
     Returns: number;

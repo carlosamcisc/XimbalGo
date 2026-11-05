@@ -1,6 +1,6 @@
 import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -8,7 +8,7 @@ import AppText from "../../components/AppText";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
-import MapaSeguimiento from "../../components/MapaSeguimiento";
+import MapaReserva from "../../components/MapaReserva";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
@@ -27,14 +27,16 @@ import {
 } from "../../modules/cliente/reservas";
 import {
   distanciaEntre,
-  estimarLlegada,
   formatearAntiguedad,
   formatearMinutos,
-  type EstimacionLlegada,
   type SeguimientoReserva,
 } from "../../modules/cliente/seguimiento";
 import { formatearDistancia } from "../../modules/cliente/ubicacion";
 import { useClienteReserva } from "./useClienteReserva";
+import { useRutaTaxi } from "./useRutaTaxi";
+import { useUbicacionClienteMapa } from "./useUbicacionClienteMapa";
+import { useCompartirConTaxista } from "./useCompartirConTaxista";
+import Chip from "../../components/Chip";
 
 type Props = NativeStackScreenProps<ClienteStackParamList, "ClienteReserva">;
 
@@ -45,7 +47,7 @@ const MINUTOS_PROGRAMADO = 10;
 
 const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta: string; valor: string }) => (
   <View style={styles.detalleFila}>
-    <Icono nombre={icono} tamanio={20} color={Colors.primary} />
+    <View style={styles.detalleIcono}><Icono nombre={icono} tamanio={20} color={Colors.primary} /></View>
     <View style={styles.detalleTexto}>
       <AppText style={styles.detalleEtiqueta}>{etiqueta}</AppText>
       <AppText weight="medium" style={styles.detalleValor}>{valor}</AppText>
@@ -73,7 +75,12 @@ const textoSinEstimacion = (seguimiento: SeguimientoReserva | null, error: strin
 const ClienteReservaScreen = ({ navigation, route }: Props) => {
   const { reservaId } = route.params;
   const detalle = useClienteReserva(reservaId);
-  const { reserva, seguimiento, estimacion, ahora } = detalle;
+  const { reserva, seguimiento, ahora } = detalle;
+  const rutaTaxi = useRutaTaxi(reservaId, seguimiento, detalle.activa && !reserva?.abordadoEn);
+  const estimacion = rutaTaxi.estimacion;
+  const ubicacionCliente = useUbicacionClienteMapa(Boolean(reserva && detalle.activa && !reserva.abordadoEn));
+  const compartirTaxista = useCompartirConTaxista(reservaId,
+    reserva?.estado === "aceptada" && !reserva.abordadoEn, ubicacionCliente.coordenadas);
   const [confirmandoCancelacion, setConfirmandoCancelacion] = useState(false);
   const [confirmandoRechazoOferta, setConfirmandoRechazoOferta] = useState(false);
 
@@ -177,13 +184,10 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
 
     const paradero = seguimiento?.paraderoCercano ?? null;
     const punto = seguimiento?.punto ?? null;
+    const destinoRuta = paradero ?? punto;
     const paraderoDistinto =
       paradero !== null &&
       (punto === null || distanciaEntre(paradero.coordenadas, punto.coordenadas) > METROS_MISMO_PUNTO);
-    const estimacionParadero: EstimacionLlegada | null =
-      seguimiento && paradero && paraderoDistinto
-        ? estimarLlegada({ ...seguimiento, punto: paradero }, ahora)
-        : null;
     const programado =
       reserva?.fechaViaje && estimacion &&
       new Date(reserva.fechaViaje).getTime() - estimacion.llegada.getTime() > MINUTOS_PROGRAMADO * 60_000;
@@ -204,14 +208,14 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
           <>
             <AppText style={styles.textoLlegada}>
               {estimacion.llegando
-                ? `El taxi está llegando a ${punto?.nombre ?? "tu punto de abordaje"}`
-                : `El taxi pasará por ${punto?.nombre ?? "tu punto de abordaje"}`}
+                ? `El taxi está llegando a ${destinoRuta?.nombre ?? "tu punto de abordaje"}`
+                : `El taxi pasará por ${destinoRuta?.nombre ?? "tu punto de abordaje"}`}
             </AppText>
             <View style={styles.datos}>
               <Dato valor={formatearHora(estimacion.llegada)} etiqueta="Hora estimada" />
               <Dato
-                valor={estimacion.llegando ? "Ya" : formatearMinutos(estimacion.minutosRestantes)}
-                etiqueta="Faltan"
+                valor={formatearMinutos(estimacion.minutosRestantes)}
+                etiqueta="Tiempo estimado"
               />
               <Dato valor={formatearDistancia(estimacion.distanciaMetros)} etiqueta="Distancia" />
             </View>
@@ -223,7 +227,9 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
           </>
         ) : (
           <AppText style={styles.textoAyuda}>
-            {textoSinEstimacion(seguimiento, detalle.errorSeguimiento)}
+            {seguimiento?.enServicio && seguimiento.taxi && destinoRuta
+              ? rutaTaxi.error ?? "Calculando distancia y tiempo por calles…"
+              : textoSinEstimacion(seguimiento, detalle.errorSeguimiento)}
           </AppText>
         )}
 
@@ -234,34 +240,79 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
               <AppText weight="medium" style={styles.detalleValor}>Paradero cercano: {paradero.nombre}</AppText>
               <AppText style={styles.detalleEtiqueta}>
                 {[
-                  punto && `A ${formatearDistancia(distanciaEntre(paradero.coordenadas, punto.coordenadas))} de tu punto`,
-                  estimacionParadero &&
-                  `El taxi pasa ${estimacionParadero.llegando
-                    ? "ya"
-                    : `a las ${formatearHora(estimacionParadero.llegada)} (${formatearMinutos(estimacionParadero.minutosRestantes)})`}`,
+                  punto && `A ${formatearDistancia(distanciaEntre(paradero.coordenadas, punto.coordenadas))} en línea recta de tu punto`,
                 ].filter(Boolean).join(" · ")}
               </AppText>
             </View>
           </View>
         )}
 
-        <MapaSeguimiento
+        <MapaReserva
           style={styles.mapa}
+          cliente={ubicacionCliente.coordenadas ? { coordenadas: ubicacionCliente.coordenadas, titulo: "Tu ubicación actual" } : null}
+          ruta={rutaTaxi.ruta}
           taxi={seguimiento?.taxi ? {
             coordenadas: seguimiento.taxi,
             titulo: reserva?.matricula ? `Taxi ${reserva.matricula}` : "Taxi",
           } : null}
-          punto={punto ? { coordenadas: punto.coordenadas, titulo: punto.nombre } : null}
-          paradero={paradero && paraderoDistinto
+          punto={punto && (!paradero || paraderoDistinto) ? { coordenadas: punto.coordenadas, titulo: punto.nombre } : null}
+          paradero={paradero
             ? { coordenadas: paradero.coordenadas, titulo: paradero.nombre }
             : null}
-        />
+        >
+        {reserva?.estado === "aceptada" && <View style={styles.avisoMapa}>
+          <View style={styles.avisoContenido}>
+            <AppText weight="semibold" style={styles.avisoTitulo}>Tu ubicación para el taxista</AppText>
+            <AppText style={styles.avisoTexto}>
+              {compartirTaxista.error ?? (compartirTaxista.activada
+                ? compartirTaxista.enviada ? "Tu taxista puede verte mientras tienes abierta esta reserva. Puedes detenerlo cuando quieras." : "Esperando tu ubicación para compartirla."
+                : "Puedes compartir tu ubicación actual con el conductor asignado para que te encuentre. Solo mientras esta reserva esté abierta.")}
+            </AppText>
+            <Chip titulo={compartirTaxista.activada ? "Dejar de compartir" : "Compartir con mi taxista"}
+              icono="locationOn" seleccionado={compartirTaxista.activada} onPress={compartirTaxista.alternar}
+              disabled={!compartirTaxista.activada && !ubicacionCliente.coordenadas} />
+          </View>
+        </View>}
+        {ubicacionCliente.error && <View style={styles.avisoMapa} accessibilityLiveRegion="polite">
+          <Icono nombre="locationOn" tamanio={22} color={Colors.primary} />
+          <View style={styles.avisoContenido}>
+            <AppText weight="semibold" style={styles.avisoTitulo}>Tu ubicación no está disponible</AppText>
+            <AppText style={styles.avisoTexto}>{ubicacionCliente.error} El seguimiento del taxi continúa disponible.</AppText>
+          </View>
+        </View>}
+        <View style={[styles.avisoMapa, rutaTaxi.error && styles.avisoMapaError]} accessibilityLiveRegion="polite">
+          {rutaTaxi.cargando && !rutaTaxi.error
+            ? <ActivityIndicator size="small" color={Colors.primary} />
+            : <Icono nombre={rutaTaxi.error ? "info" : rutaTaxi.ruta ? "route" : "locationOn"} tamanio={22} color={rutaTaxi.error ? Colors.error : Colors.primary} />}
+          <View style={styles.avisoContenido}>
+          <AppText weight="semibold" style={styles.avisoTitulo}>
+            {rutaTaxi.error ? "No pudimos actualizar la ruta" : rutaTaxi.cargando ? "Actualizando tu recorrido" : rutaTaxi.ruta ? paradero ? "Ruta al paradero" : "Ruta al punto de abordaje" : "Esperando ubicación del taxi"}
+          </AppText>
+        <AppText style={styles.avisoTexto}>
+          {rutaTaxi.error
+            ? `${rutaTaxi.error}${rutaTaxi.ruta ? " Se conservan el último trazo y la última estimación; pueden estar desactualizados." : ""}`
+            : rutaTaxi.cargando
+              ? "Actualizando el trazo del taxi…"
+              : rutaTaxi.ruta
+                ? `Trayecto sugerido en auto hacia ${destinoRuta?.nombre ?? "tu punto de abordaje"}. Se actualiza al avanzar; puede diferir del camino que tome el taxista.`
+                : "El trazo aparecerá cuando el taxi comparta una ubicación reciente y haya un punto de llegada disponible."}
+        </AppText>
+          </View>
+        </View>
+        {(estimacion || (seguimiento?.ubicacionActualizadaEn && seguimiento.taxi)) ? <View style={styles.actualizacionMapa}>
+          <Icono nombre="schedule" tamanio={16} color={Colors.onSurfaceVariant} />
+          <View style={styles.avisoContenido}>
         {seguimiento?.ubicacionActualizadaEn && seguimiento.taxi && (
-          <AppText style={styles.textoAyuda}>
+          <AppText style={styles.avisoTexto}>
             Ubicación del taxi actualizada {formatearAntiguedad(seguimiento.ubicacionActualizadaEn, ahora)}.
-            Estimación en línea recta con la velocidad promedio de la ruta.
           </AppText>
         )}
+        {estimacion && <AppText style={styles.avisoTexto}>
+          Distancia y duración estimadas por calles. Cálculo actualizado {formatearAntiguedad(estimacion.calculadaEn, ahora)}.
+        </AppText>}
+          </View>
+        </View> : null}
+        </MapaReserva>
       </Card>
     );
   };
@@ -321,11 +372,19 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
 
         {renderSeguimiento()}
 
-        <AppText weight="semibold" style={styles.tituloSeccion}>Detalles</AppText>
-        <Card>
+        <Card style={styles.tarjetaDetalles}>
+          <View style={styles.encabezadoDetalles}>
+            <AppText weight="bold" style={styles.tituloDetalles}>Detalles del viaje</AppText>
+            <AppText style={styles.subtituloDetalles}>Toda la información de tu reservación</AppText>
+          </View>
           {reserva.abordadoEn && <DetalleFila icono="localTaxi" etiqueta="Abordaje confirmado" valor={formatearFecha(reserva.abordadoEn)} />}
+          <View style={styles.trayectoDetalles}>
+            <AppText weight="semibold" style={styles.grupoTitulo}>Tu trayecto</AppText>
           <DetalleFila icono="locationHistory" etiqueta="Origen" valor={reserva.origen ?? "Mi ubicación"} />
           <DetalleFila icono="locationOn" etiqueta="Destino" valor={reserva.destino ?? "Paradero no disponible"} />
+          </View>
+          <View style={styles.grupoDetalles}>
+            <AppText weight="semibold" style={styles.grupoTitulo}>Tu reservación</AppText>
           <DetalleFila
             icono="eventSeat"
             etiqueta={reserva.cantidadAsientos === 1 ? "Asiento" : "Asientos"}
@@ -336,6 +395,9 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
             etiqueta="Fecha y hora del viaje"
             valor={reserva.fechaViaje ? formatearFecha(reserva.fechaViaje) : "Lo antes posible"}
           />
+          </View>
+          <View style={styles.grupoDetalles}>
+            <AppText weight="semibold" style={styles.grupoTitulo}>Taxi y conductor</AppText>
           <DetalleFila
             icono="localTaxi"
             etiqueta="Taxi"
@@ -347,20 +409,32 @@ const ClienteReservaScreen = ({ navigation, route }: Props) => {
                 onPress={() => void llamar(reserva.telefonoTaxista!)}
                 accessibilityRole="button"
                 accessibilityLabel={`Llamar a ${reserva.nombreTaxista}`}
+                style={({ pressed }) => [styles.contactoTaxista, pressed && styles.contactoPresionado]}
               >
                 <DetalleFila
                   icono="phone"
-                  etiqueta="Taxista (toca para llamar)"
+                  etiqueta="Taxista"
                   valor={`${reserva.nombreTaxista} · ${reserva.telefonoTaxista}`}
                 />
+                <View style={styles.accionLlamar}>
+                  <Icono nombre="phone" tamanio={16} color={Colors.primary} />
+                  <AppText weight="semibold" style={styles.textoLlamar}>Llamar al taxista</AppText>
+                </View>
               </Pressable>
             ) : (
               <DetalleFila icono="person" etiqueta="Taxista" valor={reserva.nombreTaxista} />
             )
           )}
-          {precio && <DetalleFila icono="payments" etiqueta="Precio total" valor={precio} />}
+          </View>
+          {precio && <View style={styles.totalDetalles}>
+            <View style={styles.totalEtiqueta}>
+              <Icono nombre="payments" tamanio={23} color={Colors.primary} />
+              <AppText weight="semibold" style={styles.grupoTitulo}>Precio total</AppText>
+            </View>
+            <AppText weight="bold" style={styles.totalValor}>{precio}</AppText>
+          </View>}
           <DetalleFila icono="schedule" etiqueta="Solicitada" valor={formatearFecha(reserva.fechaReserva)} />
-          {reserva.notas && <DetalleFila icono="notes" etiqueta="Notas" valor={reserva.notas} />}
+          {reserva.notas && <View style={styles.notasDetalles}><DetalleFila icono="notes" etiqueta="Tus notas" valor={reserva.notas} /></View>}
 
           {/* Con una oferta pendiente, «No acepto» ya cancela la solicitud. */}
           {puedeCancelarse(reserva.estado) && !reserva.abordadoEn && !oferta && (
@@ -593,14 +667,34 @@ const styles = StyleSheet.create({
   mapa: {
     marginTop: 6,
   },
+  avisoMapa: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, marginTop: 12, borderRadius: 16, backgroundColor: Colors.primaryContainer },
+  avisoMapaError: { backgroundColor: Colors.errorContainerSoft },
+  avisoContenido: { flex: 1, gap: 4 },
+  avisoTitulo: { fontSize: 13, color: Colors.brandDeep },
+  avisoTexto: { fontSize: 12, lineHeight: 18, color: Colors.onSurfaceVariant },
+  actualizacionMapa: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 6, paddingTop: 10 },
   detalleFila: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
+    paddingVertical: 10,
+    alignItems: "flex-start",
   },
+  detalleIcono: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: Colors.brandSoft },
+  tarjetaDetalles: { padding: 16, gap: 8 },
+  encabezadoDetalles: { gap: 4, paddingBottom: 8 },
+  tituloDetalles: { fontSize: 19, color: Colors.brandDeep },
+  subtituloDetalles: { fontSize: 12, lineHeight: 18, color: Colors.onSurfaceVariant },
+  grupoTitulo: { fontSize: 13, color: Colors.brandDeep },
+  trayectoDetalles: { padding: 12, borderRadius: 16, backgroundColor: Colors.surfaceMuted },
+  grupoDetalles: { paddingTop: 12, borderTopWidth: 1, borderTopColor: Colors.divider },
+  contactoTaxista: { paddingHorizontal: 10, paddingBottom: 10, borderRadius: 14, backgroundColor: Colors.primaryContainer },
+  contactoPresionado: { opacity: 0.65 },
+  accionLlamar: { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 50, minHeight: 28 },
+  textoLlamar: { fontSize: 13, color: Colors.primary },
+  totalDetalles: { padding: 16, borderRadius: 16, backgroundColor: Colors.primaryContainer, flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  totalEtiqueta: { flexDirection: "row", alignItems: "center", gap: 8 },
+  totalValor: { fontSize: 26, color: Colors.brandDeep, flexShrink: 1 },
+  notasDetalles: { paddingHorizontal: 10, borderRadius: 14, backgroundColor: Colors.surfaceSoft },
   detalleTexto: {
     flex: 1,
   },

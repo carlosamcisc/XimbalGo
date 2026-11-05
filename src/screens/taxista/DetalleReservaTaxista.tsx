@@ -23,6 +23,7 @@ import { textoAsientos } from "../../modules/cliente/reservas";
 import { useTaxista } from "./TaxistaContext";
 import type { AccionesReserva } from "./useAccionReserva";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
+import MapaViajeTaxista from "./MapaViajeTaxista";
 
 const DetalleFila = ({ icono, etiqueta, valor }: { icono: NombreIcono; etiqueta: string; valor: string }) => (
   <View style={styles.detalleFila}>
@@ -75,6 +76,8 @@ export default function DetalleReservaTaxista({ reservaId, onClose, acciones }: 
               : DESCRIPCION_ESTADO_TAXISTA[reserva.estado]}
           </AppText>
           <KeyboardAwareScroll contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator>
+            {(reserva.estado === "pendiente" || reserva.estado === "aceptada") && !reserva.abordadoEn &&
+              <MapaViajeTaxista key={reserva.id} reservaId={reserva.id} />}
             {esperaRespuestaOferta(reserva) && (
               <View style={styles.aviso}>
                 <AppText style={styles.textoAviso}>
