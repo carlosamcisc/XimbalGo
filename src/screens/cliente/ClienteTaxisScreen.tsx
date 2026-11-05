@@ -1,3 +1,4 @@
+import { taxiCompatible, MENSAJE_TAXI_INCOMPATIBLE } from "../../modules/cliente/compatibilidadTaxi";
 import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
@@ -40,11 +41,17 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
   const { origen, destino } = viaje;
   const [busqueda, setBusqueda] = useState("");
 
-  const taxis = lista.taxis.filter((taxi) => coincide(taxi, busqueda));
+  const taxis = lista.taxis.filter((taxi) =>
+    coincide(taxi, busqueda) && (!origen || !destino || taxiCompatible(taxi, origen, destino))
+  );
 
   const elegir = (taxi: TaxiDisponible) => {
     if (!origen || !destino) {
       ToastMessage.show("Elige tu origen y destino para reservar en este taxi.");
+      return;
+    }
+    if (!taxiCompatible(taxi, origen, destino)) {
+      ToastMessage.show(MENSAJE_TAXI_INCOMPATIBLE);
       return;
     }
     navigation.navigate("ClienteReservar", {
@@ -81,7 +88,7 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
           <AppText style={styles.textoEstado}>
             {busqueda.trim()
               ? `No hay taxis que coincidan con «${busqueda.trim()}».`
-              : "Ahora no hay taxis en servicio con asientos disponibles."}
+              : "Ahora no hay taxis disponibles para el viaje seleccionado."}
           </AppText>
         </View>
       );
@@ -108,7 +115,7 @@ const ClienteTaxisScreen = ({ navigation, route }: Props) => {
       <View style={styles.pantalla}>
         <EncabezadoPantalla
           titulo="Taxis disponibles"
-          subtitulo="Elige tu viaje y cualquier taxi para reservar"
+          subtitulo="Elige tu viaje y un taxi de la ruta"
           onBack={() => navigation.goBack()}
         />
         <KeyboardAwareScroll

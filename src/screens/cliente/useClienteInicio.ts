@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { obtenerParaderosCercanos } from "../../infrastructure/supabase/repositories/cliente.repository";
 import { obtenerTaxisCercanos } from "../../infrastructure/supabase/repositories/vehiculos.repository";
+import { escucharDisponibilidadRutas } from "../../infrastructure/supabase/repositories/rutas.repository";
 import { obtenerUbicacionActual } from "../../infrastructure/location/location.service";
 import type {
   Coordenadas,
@@ -102,6 +103,23 @@ export function useClienteInicio() {
       solicitudCercanos.current += 1;
     };
   }, [usarUbicacionActual]);
+
+  // Refleja al taxista que se acerca sin exigir una recarga manual.
+  useEffect(() => {
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    const detener = escucharDisponibilidadRutas(() => {
+      if (espera !== undefined) return;
+      espera = setTimeout(() => {
+        espera = undefined;
+        void buscarCercanos();
+      }, 800);
+    });
+    return () => {
+      clearTimeout(espera);
+      detener();
+      solicitudCercanos.current += 1;
+    };
+  }, [buscarCercanos]);
 
   return {
     saludo: obtenerSaludo(),

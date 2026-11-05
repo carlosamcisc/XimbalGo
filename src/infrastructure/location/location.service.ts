@@ -39,7 +39,7 @@ export async function obtenerUbicacionActual(
 ): Promise<Coordenadas> {
   await asegurarUbicacionDisponible(mensajePermiso, pedirPermiso);
 
-  const posicion = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+  const posicion = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
   const ubicacion = tiempoEsperaMs === undefined
     ? await posicion
     : await conTiempoLimite(
@@ -66,7 +66,7 @@ export async function observarUbicacion(
 
   const suscripcion = await Location.watchPositionAsync(
     {
-      accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.High,
       distanceInterval: distanciaMetros,
       timeInterval: intervaloMs,
     },

@@ -65,7 +65,7 @@ function servicioUbicacion(r, getCurrentPositionAsync) {
         requestForegroundPermissionsAsync: async () => { throw new Error('No debe volver a solicitar un permiso ya concedido'); },
         hasServicesEnabledAsync: async () => true,
         getCurrentPositionAsync,
-        Accuracy: { Balanced: 3 },
+        Accuracy: { Balanced: 3, High: 4 },
       };
       if (nombre.endsWith('tiempoLimite')) return r;
       if (nombre === 'react-native') return { Platform: {} };
@@ -105,4 +105,15 @@ test('Inicio y los demás consumidores no heredan el límite de la ruta', async 
   const ubicacion = await pendiente;
   assert.equal(ubicacion.latitud, 20.97);
   assert.equal(ubicacion.longitud, -89.62);
+});
+
+test('el GPS solicita precisión alta y conserva el orden de las coordenadas', async () => {
+  const r = reloj();
+  const servicio = servicioUbicacion(r, async (opciones) => {
+    assert.equal(opciones.accuracy, 4);
+    return { coords: { latitude: 20.97, longitude: -89.62 } };
+  });
+  const punto = await servicio.obtenerUbicacionActual();
+  assert.equal(punto.latitud, 20.97);
+  assert.equal(punto.longitud, -89.62);
 });

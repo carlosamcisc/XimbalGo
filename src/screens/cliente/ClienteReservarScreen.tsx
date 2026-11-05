@@ -1,3 +1,4 @@
+import { taxiCompatible, MENSAJE_TAXI_INCOMPATIBLE } from "../../modules/cliente/compatibilidadTaxi";
 import AnimacionEstado from "../../components/AnimacionEstado";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Pressable, RefreshControl, StyleSheet, TextInput, View } from "react-native";
@@ -65,7 +66,8 @@ const ClienteReservarScreen = ({ navigation, route }: Props) => {
 
   const total = taxi?.precio !== null && taxi?.precio !== undefined ? taxi.precio * cantidad : null;
   const sinAsientos = taxi !== null && taxi.asientosDisponibles === 0;
-  const puedeReservar = taxi !== null && taxi.enServicio && !sinAsientos && !reservar.reservando;
+  const compatible = taxi !== null && taxiCompatible(taxi, origen, destino);
+  const puedeReservar = compatible && taxi !== null && taxi.enServicio && !sinAsientos && !reservar.reservando;
 
   const confirmar = async () => {
     if (!taxi) {
@@ -186,6 +188,7 @@ const ClienteReservarScreen = ({ navigation, route }: Props) => {
               valor={precioTotal}
             />
           )}
+          {!compatible && <AppText style={styles.textoAviso}>{MENSAJE_TAXI_INCOMPATIBLE}</AppText>}
           {!taxi.enServicio && (
             <AppText style={styles.textoAviso}>
               El taxista dejó de estar en servicio. Elige otro taxi.

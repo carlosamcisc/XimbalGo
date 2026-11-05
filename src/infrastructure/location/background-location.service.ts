@@ -123,7 +123,7 @@ export function iniciarUbicacionSegundoPlano(destino: DestinoUbicacion): Promise
     try {
       await esperarPrimerPlano();
       await Location.startLocationUpdatesAsync(TAREA, {
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
         distanceInterval: 0,
         timeInterval: 30_000,
         pausesUpdatesAutomatically: false,
