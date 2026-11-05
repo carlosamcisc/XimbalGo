@@ -89,5 +89,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceContainer,
     borderColor: Colors.outlineVariant,
   },
-  texto: { fontSize: 13, flexShrink: 1 },
+  texto: { fontSize: 13, minWidth: 0, flexShrink: 1 },
 });

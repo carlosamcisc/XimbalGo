@@ -157,6 +157,9 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
     paradero={{ coordenadas: destino, titulo: nombre }}
     cliente={origen ? { coordenadas: origen, titulo: "Tu ubicación actual" } : null}
     ruta={ruta?.geometria}
+    destacarParadero
+    mostrarLeyenda={Boolean(origen)}
+    onMaximizar={completo ? undefined : () => setAmpliado(true)}
     style={completo ? styles.completo : undefined}
   />;
 
@@ -166,7 +169,7 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
   const duracion = ruta ? `${Math.max(1, Math.ceil(ruta.segundos / 60))} min` : "";
   const seguimientoActivo = automatico && enfocado && activa;
 
-  const estado = <View style={styles.estado}>
+  const estado = <>
     {ruta ? <>
       <View style={styles.metricas}>
         <View style={styles.metrica} accessible accessibilityLabel={`Distancia: ${distancia}`}>
@@ -222,16 +225,18 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
         </AppText>}
       </View>
     </View>}
-  </View>;
+  </>;
 
-  const mapaExterno = <Chip
-    titulo="Mapa externo"
-    icono="openInNew"
+  const mapaExterno = <Pressable
+    accessibilityRole="button"
     accessibilityLabel="Ver el paradero en un mapa externo"
     accessibilityHint="Abre la aplicación de mapas del dispositivo o el navegador."
     onPress={onAbrirMapaExterno}
-    style={styles.mapaExterno}
-  />;
+    style={({ pressed }) => [styles.mapaExterno, pressed && styles.presionado]}
+  >
+    <AppText weight="semibold" style={styles.textoMapaExterno}>Abrir en mapas</AppText>
+    <Icono nombre="openInNew" tamanio={21} color={Colors.primary} />
+  </Pressable>;
 
   const seleccionarModo = (nuevoModo: ModoRuta) => {
     if (cargando || (automatico && modo === nuevoModo && !error)) return;
@@ -256,35 +261,27 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
         titulo={`${seleccionado && error ? "Reintentar" : "Cómo llegar"} ${etiqueta}`}
         icono={opcion === "moto" ? "twoWheeler" : "directionsWalk"}
         seleccionado={seleccionado}
+        style={styles.chipModo}
         accessibilityLabel={`${seleccionado && error ? "Reintentar ruta" : "Cómo llegar"} ${etiqueta} al paradero`}
         cargando={seleccionado && cargando}
         disabled={!seleccionado && cargando}
         onPress={() => seleccionarModo(opcion)}
       />;
     })}
-    {ampliado && mapaExterno}
+  </View>;
+
+  const tarjetaRuta = <View style={styles.estado}>
+    {estado}
+    {accionesMapa}
   </View>;
 
   return <View style={styles.contenedor}>
-    <AppText weight="semibold">Ruta al paradero</AppText>
+    <AppText weight="semibold" style={styles.textoRutaAlParadero}>Ruta al paradero</AppText>
     {!ampliado && <View style={styles.bloqueMapa}>
       {mapa(false)}
-      <View style={styles.accionesBajoMapa}>
       {mapaExterno}
-      <Pressable
-        onPress={() => setAmpliado(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Maximizar mapa de la ruta"
-        accessibilityHint="Abre el mapa a pantalla completa para moverlo y cambiar el zoom"
-        style={({ pressed }) => [styles.maximizarMapa, pressed && styles.presionado]}
-      >
-        <Icono nombre="fullscreen" tamanio={24} color={Colors.primary} />
-        <AppText weight="semibold" style={styles.textoMaximizar}>Maximizar mapa</AppText>
-      </Pressable>
-      </View>
     </View>}
-    {estado}
-    {accionesMapa}
+    {tarjetaRuta}
     <Modal visible={ampliado} animationType="slide" onRequestClose={() => setAmpliado(false)}>
       <SafeAreaView style={styles.modal}>
         <View style={styles.encabezadoModal}>
@@ -292,8 +289,8 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
           <Chip titulo="Cerrar" icono="close" accessibilityLabel="Cerrar mapa ampliado" onPress={() => setAmpliado(false)} />
         </View>
         {ampliado && mapa(true)}
-        {estado}
-        {accionesMapa}
+        {tarjetaRuta}
+        {mapaExterno}
       </SafeAreaView>
     </Modal>
   </View>;
@@ -301,22 +298,23 @@ export default function RutaParadero({ id, nombre, destino, onAbrirMapaExterno }
 
 const styles = StyleSheet.create({
   contenedor: { margin: 12, gap: 12 },
-  bloqueMapa: { gap: 8 },
-  accionesBajoMapa: { flexDirection: "row", alignItems: "stretch", gap: 8 },
-  mapaExterno: { flex: 1, alignSelf: "stretch", minHeight: 48, borderRadius: 16, paddingHorizontal: 10 },
-  maximizarMapa: {
-    flex: 1.2,
+  bloqueMapa: { gap: 4, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: Colors.divider },
+  mapaExterno: {
+    alignSelf: "flex-end",
+    maxWidth: "100%",
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 4,
     paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: Colors.primaryContainer,
   },
-  textoMaximizar: { fontSize: 15, color: Colors.primary, flexShrink: 1 },
+  textoRutaAlParadero:{
+    fontSize: 16,
+    color: Colors.brandText,
+  },
+  textoMapaExterno: { fontSize: 14, color: Colors.primary, flexShrink: 1 },
   presionado: { opacity: 0.7 },
   estado: {
     padding: 14,
@@ -342,7 +340,17 @@ const styles = StyleSheet.create({
   iconoEstado: { width: 40, height: 40, borderRadius: 14, backgroundColor: Colors.primaryContainer, alignItems: "center", justifyContent: "center" },
   iconoEstadoError: { backgroundColor: Colors.errorContainerSoft },
   tituloEstado: { fontSize: 14, color: Colors.brandText },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chips: { flexDirection: "row", flexWrap: "nowrap", width: "100%", minWidth: 0, gap: 8 },
+  chipModo: {
+    // Reparte el ancho de la tarjeta sin usar el ancho natural del texto.
+    width: 0,
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
+    alignSelf: "stretch",
+    paddingHorizontal: 10,
+  },
   encabezadoModal: { flexDirection: "row", alignItems: "center", gap: 12 },
   nombreParadero: { flex: 1, color: Colors.brandText, fontSize: 16 },
   modal: { flex: 1, backgroundColor: Colors.surface, padding: 12, gap: 10 },

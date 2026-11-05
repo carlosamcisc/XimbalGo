@@ -20,6 +20,9 @@ interface Props {
   /** El propio cliente. */
   cliente?: MarcadorMapa | null;
   ruta?: import("geojson").LineString | null;
+  onMaximizar?: () => void;
+  destacarParadero?: boolean;
+  mostrarLeyenda?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -36,24 +39,31 @@ const ESTILO_MAPA = "https://tiles.openfreemap.org/styles/liberty";
 const VISTA_INICIAL = { center: [-89.62, 20.97] as [number, number], zoom: 11 };
 const MARGEN_ENCUADRE = { top: 64, right: 48, bottom: 48, left: 48 };
 
-function Marcador({ tipo, dato }: { tipo: TipoMarcador; dato: MarcadorMapa }) {
+function Marcador({ tipo, dato, destacado = false }: { tipo: TipoMarcador; dato: MarcadorMapa; destacado?: boolean }) {
+  const mostrarPin = tipo === "paradero" && destacado;
   return (
     <Marker
       id={tipo}
       lngLat={aLngLat(dato.coordenadas)}
-      anchor="center"
+      anchor={mostrarPin ? "bottom" : "center"}
       accessibilityLabel={dato.titulo}
     >
-      <View collapsable={false} style={[styles.marcador, styles[tipo]]}>
+      {mostrarPin ? <View collapsable={false} style={styles.pinParadero}>
+        <View style={styles.etiquetaParadero}>
+          <AppText weight="semibold" numberOfLines={2} style={styles.nombreParadero}>{dato.titulo}</AppText>
+        </View>
+        <View style={styles.puntaEtiqueta} />
+        <Icono nombre="locationOn" tamanio={32} color={Colors.brandDeep} />
+      </View> : <View collapsable={false} style={[styles.marcador, styles[tipo]]}>
         {tipo === "taxi" && <Icono nombre="localTaxi" tamanio={18} color={Colors.white} />}
-      </View>
+      </View>}
     </Marker>
   );
 }
 
 /** Mapa con el taxi, el punto de abordaje, el paradero y el cliente. */
 export default function MapaSeguimiento(props: Props) {
-  const { taxi, punto, paradero, cliente, style, ruta } = props;
+  const { taxi, punto, paradero, cliente, style, ruta, onMaximizar, destacarParadero = false, mostrarLeyenda = true } = props;
   const camara = useRef<CameraRef>(null);
   const [mapaListo, setMapaListo] = useState(false);
   const [tamanoListo, setTamanoListo] = useState(false);
@@ -78,9 +88,12 @@ export default function MapaSeguimiento(props: Props) {
     if ("center" in encuadre) {
       camara.current.easeTo({ ...encuadre, duration: 400 });
     } else {
-      camara.current.fitBounds(encuadre.bounds, { padding: MARGEN_ENCUADRE, duration: 400 });
+      camara.current.fitBounds(encuadre.bounds, {
+        padding: destacarParadero ? { top: 100, right: 90, bottom: 48, left: 90 } : MARGEN_ENCUADRE,
+        duration: 400,
+      });
     }
-  }, [mapaListo, tamanoListo, encuadre]);
+  }, [mapaListo, tamanoListo, encuadre, destacarParadero]);
 
   // Solo se encuadra la primera vez: después el cliente mueve el mapa.
   useEffect(() => {
@@ -117,7 +130,7 @@ export default function MapaSeguimiento(props: Props) {
           <Layer id="ruta-borde" type="line" paint={{ "line-color": Colors.white, "line-width": 9 }} layout={{ "line-cap": "round", "line-join": "round" }} />
           <Layer id="ruta-linea" type="line" paint={{ "line-color": Colors.primary, "line-width": 5 }} layout={{ "line-cap": "round", "line-join": "round" }} />
         </GeoJSONSource>}
-        {paradero && <Marcador tipo="paradero" dato={paradero} />}
+        {paradero && <Marcador tipo="paradero" dato={paradero} destacado={destacarParadero} />}
         {punto && <Marcador tipo="punto" dato={punto} />}
         {cliente && <Marcador tipo="cliente" dato={cliente} />}
         {taxi && <Marcador tipo="taxi" dato={taxi} />}
@@ -131,18 +144,27 @@ export default function MapaSeguimiento(props: Props) {
         onPress={centrar}
         accessibilityRole="button"
         accessibilityLabel="Centrar el mapa"
-        style={({ pressed }) => [styles.centrar, pressed && styles.centrarPresionado]}
+        style={({ pressed }) => [styles.centrar, destacarParadero && styles.controlRuta, pressed && styles.centrarPresionado]}
       >
         <Icono nombre="myLocation" tamanio={22} color={Colors.primary} />
       </Pressable>
-      <View style={styles.leyenda} pointerEvents="none">
+      {onMaximizar && <Pressable
+        onPress={onMaximizar}
+        accessibilityRole="button"
+        accessibilityLabel="Maximizar mapa de la ruta"
+        accessibilityHint="Abre el mapa a pantalla completa para moverlo y cambiar el zoom"
+        style={({ pressed }) => [styles.centrar, styles.controlRuta, styles.maximizar, pressed && styles.centrarPresionado]}
+      >
+        <Icono nombre="fullscreen" tamanio={24} color={Colors.primary} />
+      </Pressable>}
+      {mostrarLeyenda && <View style={styles.leyenda} pointerEvents="none">
         {LEYENDA.filter(({ tipo }) => props[tipo] !== undefined).map(({ tipo, etiqueta, color }) => (
           <View key={tipo} style={styles.itemLeyenda}>
             <View style={[styles.puntoLeyenda, { backgroundColor: color }]} />
             <AppText style={styles.textoLeyenda}>{etiqueta}</AppText>
           </View>
         ))}
-      </View>
+      </View>}
     </View>
   );
 }
@@ -191,6 +213,31 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     backgroundColor: Colors.brandDeep,
   },
+  pinParadero: { alignItems: "center", paddingTop: 5, paddingHorizontal: 5 },
+  etiquetaParadero: {
+    maxWidth: 170,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: Colors.white,
+    elevation: 3,
+    shadowColor: Colors.black,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  nombreParadero: { fontSize: 12, color: Colors.brandDeep, textAlign: "center" },
+  puntaEtiqueta: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderTopWidth: 5,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: Colors.white,
+    marginBottom: 3,
+  },
   cliente: {
     width: 22,
     height: 22,
@@ -216,6 +263,8 @@ const styles = StyleSheet.create({
   centrarPresionado: {
     backgroundColor: Colors.primaryContainer,
   },
+  controlRuta: { width: 44, height: 44, borderRadius: 22 },
+  maximizar: { top: 64 },
   leyenda: {
     position: "absolute",
     left: 10,
