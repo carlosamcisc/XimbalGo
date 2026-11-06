@@ -52,3 +52,20 @@ Las credenciales del servidor nunca deben incluirse en la aplicación móvil.
 
 No se espera recibir un push todavía. Las credenciales, registro móvil y envío
 se incorporarán en las siguientes partes.
+
+### Validación remota realizada
+
+El 5 de noviembre de 2026 se aplicó la migración al proyecto vinculado
+`ximbalgo` (`hjtaifvwshwjmzlhortg`, entorno identificado por CLI: producción),
+con autorización del propietario.
+
+- `npx supabase db push --remote --dry-run`: únicamente estaba pendiente esta migración.
+- `npx supabase db push --remote --yes`: migración aplicada correctamente.
+- `npx supabase db query --remote --yes --file supabase/tests/notificaciones_push.sql`:
+  prueba completada sin errores; los datos temporales se revirtieron con `ROLLBACK`.
+- Verificación final con `db push --remote --dry-run`: base al día, sin migraciones pendientes.
+
+Se verificaron el aislamiento entre cuentas, los permisos de las tablas, la
+actualización y eliminación por el propietario, el rechazo de transferencias,
+la inserción desde `service_role`, la deduplicación y el borrado en cascada.
+Esto valida la base de datos; todavía no acredita recepción push en teléfonos.
