@@ -14,6 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      dispositivos_push: {
+        Row: {
+          id: string
+          usuario_id: string
+          instalacion_id: string
+          expo_push_token: string
+          plataforma: string
+          proyecto_id: string
+          entorno: string
+          activo: boolean
+          creado_en: string
+          actualizado_en: string
+        }
+        Insert: {
+          id?: string
+          usuario_id: string
+          instalacion_id: string
+          expo_push_token: string
+          plataforma: string
+          proyecto_id: string
+          entorno: string
+          activo?: boolean
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: {
+          id?: string
+          usuario_id?: string
+          instalacion_id?: string
+          expo_push_token?: string
+          plataforma?: string
+          proyecto_id?: string
+          entorno?: string
+          activo?: boolean
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispositivos_push_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      envios_push: {
+        Row: {
+          id: string
+          notificacion_id: string
+          dispositivo_id: string
+          estado: string
+          intentos: number
+          proximo_intento_en: string
+          bloqueado_hasta: string | null
+          ticket_expo: string | null
+          ultimo_error: string | null
+          creado_en: string
+          enviado_en: string | null
+          confirmado_en: string | null
+        }
+        Insert: {
+          id?: string
+          notificacion_id: string
+          dispositivo_id: string
+          estado?: string
+          intentos?: number
+          proximo_intento_en?: string
+          bloqueado_hasta?: string | null
+          ticket_expo?: string | null
+          ultimo_error?: string | null
+          creado_en?: string
+          enviado_en?: string | null
+          confirmado_en?: string | null
+        }
+        Update: {
+          id?: string
+          notificacion_id?: string
+          dispositivo_id?: string
+          estado?: string
+          intentos?: number
+          proximo_intento_en?: string
+          bloqueado_hasta?: string | null
+          ticket_expo?: string | null
+          ultimo_error?: string | null
+          creado_en?: string
+          enviado_en?: string | null
+          confirmado_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_push_notificacion_id_fkey"
+            columns: ["notificacion_id"]
+            isOneToOne: false
+            referencedRelation: "notificaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_push_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos_push"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       administradores: {
         Row: {
           id: string
