@@ -16,7 +16,8 @@
     },
     "android": {
       "permissions": [
-        "android.permission.RECEIVE_BOOT_COMPLETED"
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
@@ -29,6 +30,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#34618D",
+          "defaultChannel": "reservas"
+        }
+      ],
       [
         "expo-splash-screen",
         {

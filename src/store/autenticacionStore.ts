@@ -8,6 +8,7 @@ import {
 } from "../infrastructure/supabase/auth/auth.service";
 import { supabase } from "../infrastructure/supabase/client";
 import type { RolUsuario } from "../modules/usuarios/types";
+import { desvincularDispositivoPush, establecerUsuarioPush } from "../infrastructure/notifications/registroPush.service";
 
 const BIENVENIDA_COMPLETADA_KEY = "@ximbalgo/bienvenida-completada";
 const RECUPERACION_PENDIENTE_KEY = "@ximbalgo/recuperacion-pendiente";
@@ -67,6 +68,9 @@ export function inicializarAutenticacion(): Promise<void> {
   authEventReceived = false;
   authSubscription = supabase.auth.onAuthStateChange((event, session) => {
     authEventReceived = true;
+    if (event === "SIGNED_OUT" || event === "PASSWORD_RECOVERY" || session?.user.id !== state.usuario?.id) {
+      establecerUsuarioPush(null);
+    }
     if (event === "PASSWORD_RECOVERY") {
       iniciarRecuperacionContrasena();
     }
@@ -191,8 +195,20 @@ export async function finalizarRecuperacionContrasena(): Promise<void> {
 }
 
 export async function cerrarSesionUsuario(): Promise<void> {
-  await detenerUbicacionSegundoPlano();
-  await cerrarSesionSupabase();
+  const usuarioId = state.usuario?.id;
+  try {
+    if (usuarioId) await desvincularDispositivoPush(usuarioId);
+  } catch {
+    establecerUsuarioPush(usuarioId ?? null);
+    throw new Error("No se pudo desvincular este teléfono de los avisos. Comprueba tu conexión y vuelve a cerrar sesión.");
+  }
+  try {
+    await detenerUbicacionSegundoPlano();
+    await cerrarSesionSupabase();
+  } catch (error: unknown) {
+    establecerUsuarioPush(state.usuario?.id ?? null);
+    throw error;
+  }
   updateState({
     sesion: null,
     usuario: null,
