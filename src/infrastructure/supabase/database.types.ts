@@ -465,6 +465,7 @@ export type Database = {
       }
       reservas: {
         Row: {
+          llegada_notificada_en: string | null
           abordado_en: string | null
           asiento_id: string | null
           asientos_ofrecidos: number | null
@@ -487,6 +488,7 @@ export type Database = {
           vehiculo_id: string
         }
         Insert: {
+          llegada_notificada_en?: string | null
           abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
@@ -509,6 +511,7 @@ export type Database = {
           vehiculo_id: string
         }
         Update: {
+          llegada_notificada_en?: string | null
           abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
