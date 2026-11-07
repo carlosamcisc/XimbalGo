@@ -167,7 +167,8 @@ Cada INSERT en `notificaciones` crea un trabajo por dispositivo activo del
 destinatario. Esto aprovecha los eventos existentes de solicitudes, respuestas,
 ofertas, cancelaciones, abordaje y finalización para clientes y taxistas. Los
 registros antiguos no se encolan al registrar un teléfono nuevo. «Taxi llegando»
-y los recordatorios siguen pendientes de su propia lógica de negocio.
+se incorporó después según [taxi-llegando.md](./taxi-llegando.md). Los
+recordatorios de viajes programados siguen pendientes.
 
 El trabajo conserva token, proyecto y entorno originales. Si cambia el destino
 o se desactiva el dispositivo, se cancelan sus trabajos pendientes. El backend
@@ -385,6 +386,7 @@ TypeScript, Deno, las 97 pruebas automatizadas y ambos scripts SQL de push.
 La prueba de borrado en cascada quedó aislada al dispositivo ficticio para
 permitir ejecutarla también cuando ya existen teléfonos reales registrados.
 
-Esta entrega incluye registro de dispositivos, envío programado, recibos y
-presentación en primer plano. El aviso «taxi llegando» se trabajará después;
-no está implementado en esta entrega.
+Esta entrega inicial incluyó registro de dispositivos, envío programado,
+recibos y presentación en primer plano. Posteriormente se incorporó el aviso
+[«taxi llegando»](./taxi-llegando.md), con detección a 150 metros, una sola vez
+por reserva, y validación de vigencia antes del envío.
