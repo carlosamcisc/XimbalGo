@@ -392,6 +392,10 @@ deno_version = 2
 [functions.distancias-paraderos]
 verify_jwt = false
 
+# Servicio interno: valida PUSH_WORKER_SECRET, nunca un JWT de cliente.
+[functions.enviar-notificaciones]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

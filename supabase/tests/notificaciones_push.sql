@@ -66,11 +66,15 @@ begin
   values (v_usuario, 'Prueba push', 'Se revierte al terminar.', 'reserva_aceptada')
   returning id into v_notificacion;
   set local role service_role;
-  insert into public.envios_push (notificacion_id, dispositivo_id)
-  values (v_notificacion, v_dispositivo);
+  -- El trigger de notificaciones ya lo crea desde la parte 3. En la parte 1
+  -- el dispositivo de esta prueba está inactivo, por lo que se inserta aquí.
+  insert into public.envios_push (notificacion_id, dispositivo_id, token_destino, proyecto_id, entorno)
+  select v_notificacion, id, expo_push_token, proyecto_id, entorno
+  from public.dispositivos_push where id = v_dispositivo;
   begin
-    insert into public.envios_push (notificacion_id, dispositivo_id)
-    values (v_notificacion, v_dispositivo);
+    insert into public.envios_push (notificacion_id, dispositivo_id, token_destino, proyecto_id, entorno)
+    select v_notificacion, id, expo_push_token, proyecto_id, entorno
+    from public.dispositivos_push where id = v_dispositivo;
     raise exception 'Se permitió duplicar un envío para el mismo dispositivo.';
   exception when unique_violation then null;
   end;
@@ -82,7 +86,8 @@ begin
   get diagnostics v_total = row_count;
   if v_total <> 1 then raise exception 'El propietario no puede eliminar su dispositivo.'; end if;
   reset role;
-  if exists (select 1 from public.envios_push where notificacion_id = v_notificacion) then
+  if exists (select 1 from public.envios_push
+    where notificacion_id = v_notificacion and dispositivo_id = v_dispositivo) then
     raise exception 'Eliminar el dispositivo no eliminó sus envíos.';
   end if;
 end;

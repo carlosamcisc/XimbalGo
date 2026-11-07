@@ -63,6 +63,11 @@ export type Database = {
       }
       envios_push: {
         Row: {
+          token_destino: string
+          proyecto_id: string
+          entorno: string
+          bloqueo_id: string | null
+          intentos_recibo: number
           id: string
           notificacion_id: string
           dispositivo_id: string
@@ -77,6 +82,11 @@ export type Database = {
           confirmado_en: string | null
         }
         Insert: {
+          token_destino: string
+          proyecto_id: string
+          entorno: string
+          bloqueo_id?: string | null
+          intentos_recibo?: number
           id?: string
           notificacion_id: string
           dispositivo_id: string
@@ -91,6 +101,11 @@ export type Database = {
           confirmado_en?: string | null
         }
         Update: {
+          token_destino?: string
+          proyecto_id?: string
+          entorno?: string
+          bloqueo_id?: string | null
+          intentos_recibo?: number
           id?: string
           notificacion_id?: string
           dispositivo_id?: string
@@ -858,6 +873,29 @@ export type Database = {
       }
     }
     Functions: {
+      reclamar_envios_push: {
+        Args: { p_proyecto_id: string; p_entorno: string; p_recibos?: boolean; p_limite?: number }
+        Returns: {
+          id: string
+          bloqueo_id: string
+          token_destino: string
+          notificacion_id: string
+          reserva_id: string | null
+          tipo: string
+          titulo: string
+          mensaje: string
+          ticket_expo: string | null
+          vence_en: string
+        }[]
+      }
+      resolver_envio_push: {
+        Args: { p_id: string; p_bloqueo_id: string; p_accion: string; p_ticket?: string; p_codigo?: string }
+        Returns: boolean
+      }
+      invocar_procesador_push: {
+        Args: never
+        Returns: number
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
