@@ -272,3 +272,34 @@ test('el evento provocado por obtener el token inicial no genera un bucle de ren
   assert.equal(h.llamadas.length, 2);
   h.limpiar();
 });
+
+test('al arrancar instala la presentación de la aceptación antes de montar la app', async () => {
+  const eventos = [];
+  let handler;
+  const compilar = archivo => ts.transpileModule(fs.readFileSync(archivo, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  vm.runInNewContext(compilar('index.ts'), {
+    exports: {}, require: nombre => {
+      if (nombre === 'expo') return { registerRootComponent: () => eventos.push('montar') };
+      if (nombre === './src/infrastructure/location/background-location.service') return {};
+      if (nombre === './App') return { default: () => {} };
+      assert.equal(nombre, './src/infrastructure/notifications/presentacionPush');
+      vm.runInNewContext(compilar('src/infrastructure/notifications/presentacionPush.ts'), {
+        exports: {}, require: dependencia => {
+          if (dependencia === 'react-native') return { Platform: { OS: 'android' } };
+          assert.equal(dependencia, 'expo-notifications');
+          return { setNotificationHandler: valor => { handler = valor; eventos.push('presentacion'); } };
+        },
+      });
+      return {};
+    },
+  });
+  assert.deepEqual(eventos, ['presentacion', 'montar']);
+  const comportamiento = await handler.handleNotification({ request: { content: {
+    title: 'Reserva aceptada', data: { tipo: 'reserva_aceptada', reservaId: 'reserva' },
+  } } });
+  assert.equal(comportamiento.shouldShowBanner, true);
+  assert.equal(comportamiento.shouldShowList, true);
+  assert.equal(comportamiento.shouldPlaySound, true);
+});
