@@ -8,7 +8,7 @@
     "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.carlosmay.XimbalGo",
+      "bundleIdentifier": "com.carlosmay.ximbalgo",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
@@ -24,7 +24,7 @@
         "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.carlosmay.XimbalGo"
+      "package": "com.carlosmay.ximbalgo"
     },
     "web": {
       "favicon": "./assets/favicon.png"

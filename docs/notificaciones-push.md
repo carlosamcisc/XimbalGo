@@ -102,15 +102,19 @@ La revocación del permiso desde Ajustes se refleja al volver a la app.
   predeterminado es `development`; se serializa como `extra.pushEnvironment`.
 - El proyecto EAS se obtiene de la configuración existente de Ximbal Go.
 - Android requiere un proyecto Firebase con la aplicación
-  `com.carlosmay.XimbalGo`. Definir `GOOGLE_SERVICES_JSON` con la ruta al
+  `com.carlosmay.ximbalgo`. Definir `GOOGLE_SERVICES_JSON` con la ruta al
   archivo `google-services.json` (o como variable de tipo File en EAS).
   `app.config.ts` lo usa como `android.googleServicesFile`.
 - Las credenciales FCM v1 del servicio de envío y la clave APNs de iOS deben
   configurarse en el proyecto EAS. La cuenta de servicio de Firebase y las
   claves de Apple nunca se incluyen en JavaScript ni en el repositorio.
-- La instalación de dependencias no crea estas credenciales. En el workspace
-  no se encontró `google-services.json`; no se ha verificado la configuración
-  remota de credenciales EAS ni la recepción en un teléfono.
+- La instalación de dependencias no crea estas credenciales. El 6 de noviembre
+  de 2026 se incorporó localmente `google-services.json` con el paquete
+  `com.carlosmay.ximbalgo` y se definió `GOOGLE_SERVICES_JSON` en `.env`.
+  Ambos archivos permanecen fuera de Git. También se actualizó el identificador
+  iOS en `app.json`. No se ha verificado la configuración remota de credenciales
+  EAS ni la recepción en un teléfono. Para EAS Build se debe configurar también
+  la variable File `GOOGLE_SERVICES_JSON` en el entorno de la compilación.
 
 ### Cómo probar esta parte
 
