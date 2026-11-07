@@ -62,7 +62,11 @@ async function explicarPermiso(): Promise<boolean> {
   });
 }
 
-export async function sincronizarDispositivoPush(usuarioId: string, pedirPermiso = false): Promise<void> {
+export async function sincronizarDispositivoPush(
+  usuarioId: string,
+  pedirPermiso = false,
+  devicePushToken?: Notifications.DevicePushToken,
+): Promise<void> {
   if (Platform.OS !== "android" && Platform.OS !== "ios") return;
   if (Constants.appOwnership === "expo") return;
   const actual = revision;
@@ -77,7 +81,8 @@ export async function sincronizarDispositivoPush(usuarioId: string, pedirPermiso
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync(CANAL_RESERVAS, {
       name: "Reservaciones", importance: Notifications.AndroidImportance.HIGH,
-      sound: "default", vibrationPattern: [0, 250, 250, 250],
+      // Omitir sound usa el sonido del sistema; un string nombra un recurso.
+      vibrationPattern: [0, 250, 250, 250],
     });
   }
   let permisos = await Notifications.getPermissionsAsync();
@@ -100,7 +105,9 @@ export async function sincronizarDispositivoPush(usuarioId: string, pedirPermiso
 
   const id = await obtenerInstalacion();
   const token = await conTiempoLimite(
-    Notifications.getExpoPushTokenAsync({ projectId: proyectoId }), 20_000,
+    // Dentro del listener hay que reutilizar el token recibido: pedir otro
+    // token nativo vuelve a emitir el evento y puede producir un bucle.
+    Notifications.getExpoPushTokenAsync({ projectId: proyectoId, devicePushToken }), 20_000,
     "No se pudo obtener el token de notificaciones a tiempo.",
   );
   if (!vigente()) return;

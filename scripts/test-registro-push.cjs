@@ -18,16 +18,19 @@ function entorno(opciones = {}) {
   let permiso = opciones.permiso ?? { granted: true, canAskAgain: true };
   const notificaciones = {
     AndroidImportance: { HIGH: 4 }, IosAuthorizationStatus: { PROVISIONAL: 3 },
-    setNotificationChannelAsync: async () => eventos.push('canal'),
+    setNotificationChannelAsync: async (_id, canal) => {
+      assert.equal(Object.hasOwn(canal, 'sound'), false, 'El sonido del sistema se solicita omitiendo sound');
+      eventos.push('canal');
+    },
     getPermissionsAsync: async () => permiso,
     requestPermissionsAsync: async () => {
       eventos.push('permiso');
       permiso = { granted: true, canAskAgain: true };
       return permiso;
     },
-    getExpoPushTokenAsync: async () => {
+    getExpoPushTokenAsync: async config => {
       eventos.push('token');
-      return opciones.token ? opciones.token() : { data: 'ExpoPushToken[prueba]' };
+      return opciones.token ? opciones.token(config) : { data: 'ExpoPushToken[prueba]' };
     },
   };
   const modulos = {
@@ -191,7 +194,9 @@ function hook(estadoInicial = 'active', operacion = async () => {}) {
     '../../components/ToastMessaje': { ToastMessage: { show: () => {} } },
     './registroPush.service': {
       establecerUsuarioPush: () => {},
-      sincronizarDispositivoPush: async (id, pedir) => { llamadas.push({ id, pedir }); await operacion(); },
+      sincronizarDispositivoPush: async (id, pedir, tokenNativo) => {
+        llamadas.push({ id, pedir, tokenNativo }); await operacion(tokenNativo);
+      },
     },
   };
   const exports = {};
@@ -202,7 +207,8 @@ function hook(estadoInicial = 'active', operacion = async () => {}) {
     return modulos[nombre];
   } });
   exports.useRegistroPush('cliente');
-  return { llamadas, estado: valor => alCambiar?.(valor), rotar: () => alRotar?.(), limpiar: () => limpiar() };
+  return { llamadas, estado: valor => alCambiar?.(valor),
+    rotar: (token = { type: 'ios', data: 'token-nativo' }) => alRotar?.(token), limpiar: () => limpiar() };
 }
 
 test('espera el primer plano si se restaura la sesión con la app inactiva', async () => {
@@ -237,9 +243,32 @@ test('agrupa rotaciones de token pendientes y elimina listeners al desmontarse',
   await new Promise(setImmediate);
   assert.equal(h.llamadas.length, 2);
   assert.equal(h.llamadas[1].pedir, false);
+  assert.equal(h.llamadas[1].tokenNativo.data, 'token-nativo');
   h.limpiar();
   h.rotar();
   h.estado('background');
   h.estado('active');
   assert.equal(h.llamadas.length, 2);
+});
+
+test('reutiliza el token nativo del listener al solicitar el token Expo', async () => {
+  const nativo = { type: 'android', data: 'fcm-renovado' };
+  const e = entorno({ token: async config => {
+    assert.equal(config.devicePushToken, nativo);
+    return { data: 'ExpoPushToken[renovado]' };
+  } });
+  await e.api.sincronizarDispositivoPush('cliente', false, nativo);
+  assert.equal(e.registros.length, 1);
+});
+
+test('el evento provocado por obtener el token inicial no genera un bucle de renovaciones', async () => {
+  let consultasNativas = 0;
+  const h = hook('active', async tokenNativo => {
+    await Promise.resolve();
+    if (!tokenNativo && ++consultasNativas < 5) h.rotar();
+  });
+  await new Promise(setImmediate);
+  assert.equal(consultasNativas, 1);
+  assert.equal(h.llamadas.length, 2);
+  h.limpiar();
 });

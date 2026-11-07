@@ -146,3 +146,15 @@ el canal FCM, el entitlement APNs de iOS y el entorno serializado.
 
 Fuentes: [Expo Notifications SDK 57](https://docs.expo.dev/versions/v57.0.0/sdk/notifications/)
 y [configuración de push de Expo](https://docs.expo.dev/push-notifications/push-notifications-setup/).
+
+### Corrección del canal Android y la renovación de tokens
+
+El 7 de noviembre de 2026 se corrigieron dos problemas detectados al probar la
+compilación Android. El canal omitirá `sound` para usar el sonido del sistema:
+el SDK instalado interpretaba `sound: "default"` como un archivo personalizado
+inexistente. El listener también reutiliza el token nativo recibido al pedir
+el token Expo, evitando que otra consulta nativa dispare el listener en bucle.
+
+La corrección es de JavaScript: basta con recargar la aplicación conectada a
+Metro. No requiere regenerar Android ni aplicar migraciones. Se conserva el
+canal `reservas` y los ajustes de notificación elegidos por el usuario.

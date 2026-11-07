@@ -13,14 +13,19 @@ export function useRegistroPush(usuarioId: string | null): void {
     let activo = true;
     let sincronizando = false;
     let repetir = false;
+    let tokenPendiente: Notifications.DevicePushToken | undefined;
     let avisoMostrado = false;
 
-    const sincronizar = async (pedirPermiso = false) => {
+    const sincronizar = async (pedirPermiso = false, tokenNativo?: Notifications.DevicePushToken) => {
       if (!activo) return;
-      if (sincronizando) { repetir = true; return; }
+      if (sincronizando) {
+        repetir = true;
+        if (tokenNativo) tokenPendiente = tokenNativo;
+        return;
+      }
       sincronizando = true;
       try {
-        await sincronizarDispositivoPush(usuarioId, pedirPermiso);
+        await sincronizarDispositivoPush(usuarioId, pedirPermiso, tokenNativo);
       } catch {
         if (activo && !avisoMostrado) {
           avisoMostrado = true;
@@ -28,7 +33,12 @@ export function useRegistroPush(usuarioId: string | null): void {
         }
       } finally {
         sincronizando = false;
-        if (activo && repetir) { repetir = false; void sincronizar(); }
+        if (activo && repetir) {
+          repetir = false;
+          const siguienteToken = tokenPendiente;
+          tokenPendiente = undefined;
+          void sincronizar(false, siguienteToken);
+        }
       }
     };
     // No iniciar diálogos mientras la app está en segundo plano.
@@ -43,7 +53,7 @@ export function useRegistroPush(usuarioId: string | null): void {
         void sincronizar(true);
       }
     });
-    const token = Notifications.addPushTokenListener(() => { void sincronizar(); });
+    const token = Notifications.addPushTokenListener(tokenNativo => { void sincronizar(false, tokenNativo); });
     return () => {
       activo = false;
       establecerUsuarioPush(null);
