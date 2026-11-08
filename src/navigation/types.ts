@@ -44,6 +44,7 @@ export type ClienteStackParamList ={
     ClienteRutas: { origen?: string; destino?: string } | undefined;
     ClientePerfil: undefined;
     ClienteNotificaciones: undefined;
+    ClientePreferenciasNotificaciones: undefined;
     ClienteSeguridad: undefined;
     ClienteAyuda: undefined;
     ClienteYo: undefined;
@@ -53,6 +54,8 @@ export type TaxistaStackParamList = {
     TaxistaInicio: undefined;
     TaxistaViajes: undefined;
     TaxistaReserva: { reservaId: string; notificacionId?: string };
+    TaxistaNotificaciones: undefined;
+    TaxistaPreferenciasNotificaciones: undefined;
     TaxistaVehiculo: undefined;
     TaxistaPerfil: undefined;
 };

@@ -66,6 +66,7 @@ export async function sincronizarDispositivoPush(
   usuarioId: string,
   pedirPermiso = false,
   devicePushToken?: Notifications.DevicePushToken,
+  solicitudExplicita = false,
 ): Promise<void> {
   if (Platform.OS !== "android" && Platform.OS !== "ios") return;
   if (Constants.appOwnership === "expo") return;
@@ -87,7 +88,7 @@ export async function sincronizarDispositivoPush(
   }
   let permisos = await Notifications.getPermissionsAsync();
   if (vigente() && !permisoConcedido(permisos) && permisos.canAskAgain && pedirPermiso
-      && await explicarPermiso() && vigente()) {
+      && (solicitudExplicita || await explicarPermiso()) && vigente()) {
     permisos = await Notifications.requestPermissionsAsync({
       ios: { allowAlert: true, allowSound: true, allowBadge: true },
     });

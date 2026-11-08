@@ -1,6 +1,10 @@
 import type { Database } from "./database.types";
 
 type NearbyFunctions = {
+  guardar_preferencia_push: {
+    Args: { p_usuario_id: string; p_campo: string; p_valor: boolean };
+    Returns: Database["public"]["Tables"]["preferencias_notificaciones"]["Row"][];
+  };
   obtener_reserva_taxista: {
     Args: { p_reserva_id: string };
     Returns: NearbyFunctions["obtener_reservas_taxista"]["Returns"];

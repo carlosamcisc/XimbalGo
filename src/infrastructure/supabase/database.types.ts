@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      preferencias_notificaciones: {
+        Row: { usuario_id: string; push_habilitado: boolean; reservas: boolean; llegada: boolean; viajes: boolean }
+        Insert: { usuario_id: string; push_habilitado?: boolean; reservas?: boolean; llegada?: boolean; viajes?: boolean }
+        Update: { push_habilitado?: boolean; reservas?: boolean; llegada?: boolean; viajes?: boolean }
+        Relationships: [{ foreignKeyName: "preferencias_notificaciones_usuario_id_fkey"; columns: ["usuario_id"]; isOneToOne: true; referencedRelation: "usuarios"; referencedColumns: ["id"] }]
+      }
       dispositivos_push: {
         Row: {
           id: string

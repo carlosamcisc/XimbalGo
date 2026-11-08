@@ -4,6 +4,8 @@ import TaxistaViajesScreen from "../../screens/taxista/TaxistaViajesScreen";
 import TaxistaVehiculoScreen from "../../screens/taxista/TaxistaVehiculoScreen";
 import TaxistaPerfilScreen from "../../screens/taxista/TaxistaPerfilScreen";
 import TaxistaReservaScreen from "../../screens/taxista/TaxistaReservaScreen";
+import TaxistaNotificacionesScreen from "../../screens/taxista/TaxistaNotificacionesScreen";
+import PreferenciasNotificacionesScreen from "../../screens/compartidas/PreferenciasNotificacionesScreen";
 import { TaxistaProvider } from "../../screens/taxista/TaxistaContext";
 import type { TaxistaStackParamList } from "../types";
 
@@ -20,6 +22,8 @@ export default function TaxistaNavigator() {
             >
                 <Stack.Screen name="TaxistaInicio" component={TaxistaInicioScreen} />
                 <Stack.Screen name="TaxistaViajes" component={TaxistaViajesScreen} />
+                <Stack.Screen name="TaxistaNotificaciones" component={TaxistaNotificacionesScreen} />
+                <Stack.Screen name="TaxistaPreferenciasNotificaciones" component={PreferenciasNotificacionesScreen} />
                 <Stack.Screen name="TaxistaReserva" component={TaxistaReservaScreen}
                     getId={({ params }) => params.reservaId} />
                 <Stack.Screen name="TaxistaVehiculo" component={TaxistaVehiculoScreen} />

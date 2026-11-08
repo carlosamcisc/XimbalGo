@@ -11,20 +11,18 @@ import { AppState } from "react-native";
 import {
   escucharCliente,
   guardarPerfilCliente,
-  marcarNotificacionesLeidas,
-  obtenerNotificaciones,
   obtenerPerfilCliente,
   obtenerResumenViajes,
 } from "../../infrastructure/supabase/repositories/cliente.repository";
 import { useAutenticacionStore } from "../../store/autenticacionStore";
 import type {
   DatosPerfilCliente,
-  NotificacionCliente,
   PerfilCliente,
   ResumenViajesCliente,
 } from "../../modules/cliente/types";
 import { mensajeError } from "./useClienteInicio";
 import { useCompartirUbicacion } from "./useCompartirUbicacion";
+import { useBandejaNotificaciones } from "../compartidas/useBandejaNotificaciones";
 
 // Una reserva y su notificación cambian casi al mismo tiempo.
 const ESPERA_TIEMPO_REAL_MS = 500;
@@ -36,7 +34,7 @@ function useClienteEstado() {
 
   const [perfil, setPerfil] = useState<PerfilCliente | null>(null);
   const [resumen, setResumen] = useState<ResumenViajesCliente>(RESUMEN_VACIO);
-  const [notificaciones, setNotificaciones] = useState<NotificacionCliente[]>([]);
+  const bandeja = useBandejaNotificaciones(clienteId);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,15 +54,13 @@ function useClienteEstado() {
     }
 
     try {
-      const [perfilCliente, resumenViajes, notificacionesCliente] = await Promise.all([
+      const [perfilCliente, resumenViajes] = await Promise.all([
         obtenerPerfilCliente(clienteId),
         obtenerResumenViajes(clienteId),
-        obtenerNotificaciones(clienteId),
       ]);
       if (actual === solicitud.current) {
         setPerfil(perfilCliente);
         setResumen(resumenViajes);
-        setNotificaciones(notificacionesCliente);
       }
     } catch (e: unknown) {
       if (actual === solicitud.current) {
@@ -100,30 +96,7 @@ function useClienteEstado() {
     [clienteId, cargar]
   );
 
-  /** Sin `notificacionId` marca todas. Devuelve un mensaje de error, o null. */
-  const marcarLeidas = useCallback(
-    async (notificacionId?: string): Promise<string | null> => {
-      if (!clienteId) {
-        return "No se encontró una sesión de cliente activa.";
-      }
-      // Se refleja de inmediato; si falla, se recarga el estado real.
-      setNotificaciones((actuales) =>
-        actuales.map((notificacion) =>
-          !notificacionId || notificacion.id === notificacionId
-            ? { ...notificacion, leida: true }
-            : notificacion
-        )
-      );
-      try {
-        await marcarNotificacionesLeidas(clienteId, notificacionId);
-        return null;
-      } catch (e: unknown) {
-        void cargar();
-        return mensajeError(e, "No se pudieron marcar las notificaciones.");
-      }
-    },
-    [clienteId, cargar]
-  );
+  const marcarLeidas = bandeja.marcarLeidas;
 
   useEffect(() => {
     void cargar();
@@ -160,8 +133,9 @@ function useClienteEstado() {
     nombreCompleto: perfil ? `${perfil.nombres} ${perfil.apellidos}`.trim() : "Cliente",
     inicial: primerNombre.charAt(0).toUpperCase(),
     resumen,
-    notificaciones,
-    noLeidas: notificaciones.filter((notificacion) => !notificacion.leida).length,
+    bandeja,
+    notificaciones: bandeja.notificaciones,
+    noLeidas: bandeja.noLeidas,
     cargando,
     refrescando,
     error,

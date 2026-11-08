@@ -41,6 +41,7 @@ import {
   type VehiculoTaxista,
 } from "../../modules/taxista/types";
 import { mensajeError } from "../cliente/useClienteInicio";
+import { useBandejaNotificaciones } from "../compartidas/useBandejaNotificaciones";
 
 const MENSAJE_PERMISO =
   "Se necesita permiso de ubicación para que los clientes te encuentren mientras estás en servicio.";
@@ -53,6 +54,7 @@ const REENVIO_UBICACION_MS = 5 * 60_000;
 function useTaxistaEstado() {
   const { usuario } = useAutenticacionStore();
   const taxistaId = usuario?.id ?? null;
+  const bandeja = useBandejaNotificaciones(taxistaId);
 
   const [perfil, setPerfil] = useState<PerfilTaxista | null>(null);
   const [vehiculo, setVehiculo] = useState<VehiculoTaxista | null>(null);
@@ -398,6 +400,7 @@ function useTaxistaEstado() {
   }, [enServicio, cargar, taxistaId]);
 
   return {
+    bandeja,
     perfil,
     vehiculo,
     reservas,

@@ -252,6 +252,14 @@ const TaxistaPerfilScreen = ({ navigation }: Props) => {
         </Card>
 
         <Button
+          titulo={`Notificaciones${taxista.bandeja.noLeidas > 0 ? ` (${taxista.bandeja.noLeidas} sin leer)` : ""}`}
+          icono="notifications" posicionIcono="izquierda"
+          onPress={() => navigation.navigate("TaxistaNotificaciones")}
+        />
+        <Button titulo="Preferencias de notificaciones" icono="settings" posicionIcono="izquierda"
+          onPress={() => navigation.navigate("TaxistaPreferenciasNotificaciones")} />
+
+        <Button
           titulo={cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
           colorTitulo={Colors.danger}
           icono="logout"

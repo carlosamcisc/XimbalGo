@@ -101,6 +101,15 @@ test('Ahora no no registra ni vuelve a mostrar el diálogo al regresar', async (
   assert.ok(!e.eventos.includes('permiso'));
 });
 
+test('activar desde preferencias permite pedir permiso después de Ahora no', async () => {
+  const e = entorno({ permiso: { granted: false, canAskAgain: true }, acepta: false });
+  await e.api.sincronizarDispositivoPush('cliente', true);
+  await e.api.sincronizarDispositivoPush('cliente', true, undefined, true);
+  assert.equal(e.eventos.filter(x => x === 'explicacion').length, 1);
+  assert.equal(e.eventos.filter(x => x === 'permiso').length, 1);
+  assert.equal(e.registros.length, 1);
+});
+
 test('no insiste con permisos bloqueados', async () => {
   const e = entorno({ permiso: { granted: false, canAskAgain: false } });
   await e.api.sincronizarDispositivoPush('cliente', true);

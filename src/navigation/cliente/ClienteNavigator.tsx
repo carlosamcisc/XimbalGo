@@ -4,6 +4,7 @@ import ClienteReservacionesScreen from "../../screens/cliente/ClienteReservacion
 import ClienteRutasScreen from "../../screens/cliente/ClienteRutasScreen";
 import ClientePerfilScreen from "../../screens/cliente/ClientePerfilScreen";
 import ClienteNotificacionesScreen from "../../screens/cliente/ClienteNotificacionesScreen";
+import PreferenciasNotificacionesScreen from "../../screens/compartidas/PreferenciasNotificacionesScreen";
 import ClienteSeguridadScreen from "../../screens/cliente/ClienteSeguridadScreen";
 import ClienteAyudaScreen from "../../screens/cliente/ClienteAyudaScreen";
 import ClienteParaderosScreen from "../../screens/cliente/ClienteParaderosScreen";
@@ -39,6 +40,7 @@ export default function ClienteNavigator(){
                 />
                 <Stack.Screen name="ClientePerfil" component={ClientePerfilScreen}/>
                 <Stack.Screen name="ClienteNotificaciones" component={ClienteNotificacionesScreen}/>
+                <Stack.Screen name="ClientePreferenciasNotificaciones" component={PreferenciasNotificacionesScreen}/>
                 <Stack.Screen name="ClienteSeguridad" component={ClienteSeguridadScreen}/>
                 <Stack.Screen name="ClienteAyuda" component={ClienteAyudaScreen}/>
                 <Stack.Screen name="ClienteParaderos" component={ClienteParaderosScreen}/>
