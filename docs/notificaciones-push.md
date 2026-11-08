@@ -483,4 +483,135 @@ la Edge Function.
 
 Referencia de las APIs de respuesta y del listener:
 [Expo Notifications SDK 57](https://docs.expo.dev/versions/v57.0.0/sdk/notifications/).
-La parte 5 (preferencias y bandeja del taxista) sigue pendiente.
+La parte 5 (preferencias y bandeja del taxista) se describe a continuación.
+
+## Parte 5: preferencias y bandeja del taxista
+
+### Acceso y comportamiento
+
+Ambos roles tienen bandeja de notificaciones con actualización Realtime,
+recarga al volver al primer plano, reintento y lectura individual o de todos
+los avisos propios. Se muestran los 50 más recientes, ordenados por fecha e ID;
+el contador incluye **todos** los avisos sin leer, también los anteriores a
+esos 50. Tocar un aviso abre el detalle correspondiente usando las rutas de
+la parte 4; si ya no tiene reserva, se informa en pantalla.
+
+El cliente conserva la entrada «Notificaciones» del menú lateral. El taxista
+tiene una entrada en Inicio y otra en Perfil, ambas con el total sin leer.
+La consulta de la bandeja es independiente de la carga del perfil y de los
+viajes: un fallo al obtener avisos no bloquea esas funciones. Las consultas
+tardías de una sesión anterior se descartan y se retiran sus listeners.
+
+El engranaje de ambas bandejas abre «Preferencias de avisos». El taxista
+también puede entrar directamente desde Perfil. La pantalla distingue:
+
+- **Permiso de este teléfono:** permite consultar su estado, pedirlo mediante
+  «Activar notificaciones», abrir los ajustes del sistema o volver a sincronizar
+  el registro. La solicitud explícita permite reconsiderar «Ahora no» de la
+  explicación inicial. Un permiso bloqueado se cambia desde Ajustes; un permiso
+  provisional de iOS se identifica como tal.
+- **Preferencias de la cuenta:** un interruptor general silencia o activa los
+  push de todos sus teléfonos. «Reservas» controla solicitudes, respuestas,
+  cancelaciones y ofertas. El cliente dispone además de «Taxi llegando» y
+  «Avance del viaje» (abordaje y finalización). Se muestran las categorías que
+  reciben los eventos actuales de cada rol.
+
+Los cambios de preferencias se guardan en Supabase. La pantalla espera la
+confirmación del servidor y bloquea cambios simultáneos; si falla la petición,
+informa y vuelve a consultar el estado real. Solo se modifica el campo elegido,
+conservando elecciones hechas desde otro teléfono. El usuario esperado también
+se valida en la RPC para evitar aplicar una acción pendiente a una cuenta nueva.
+Las elecciones se actualizan al volver a la pantalla o al primer plano.
+
+### Aplicación en el servidor
+
+Migración: `20261107150000_preferencias_notificaciones.sql`.
+
+`preferencias_notificaciones` guarda una fila por usuario. RLS permite leer,
+crear y modificar únicamente la propia; la app no puede transferirla a otra
+cuenta. La RPC `guardar_preferencia_push` conserva RLS (`security invoker`) y
+valida usuario, campo y valor. Sin fila, todas las categorías permanecen activas,
+por lo que la migración conserva el comportamiento de las cuentas existentes.
+
+Silenciar los push no borra avisos ni desactiva tokens. El productor deja de
+encolar las categorías silenciadas y cancela sus trabajos `pendiente` o
+`procesando` en todos los dispositivos y entornos de esa cuenta. La reclamación
+vuelve a validar las preferencias, incluidos los reintentos y las inserciones
+administrativas. Los recibos de avisos ya enviados se siguen consultando.
+Reactivar no reenvía los avisos antiguos ni revive trabajos cancelados.
+
+Un aviso que ya estaba en tránsito hacia Expo o el sistema operativo puede
+aparecer después de silenciarlo: no se pueden retirar envíos externos ya
+iniciados. Las reglas de «taxi llegando», su deduplicación y su TTL se conservan;
+si se generó mientras estaba silenciado, seguirá en la bandeja y no se reenvía
+al habilitar esa categoría más tarde.
+
+No cambió el contrato de la Edge Function ni se incorporaron módulos nativos.
+Los cambios móviles se cargan desde Metro, sin recompilar Android/iOS. La
+configuración del servidor continúa enviando únicamente a `development`.
+
+### Validación realizada
+
+El 7 de noviembre de 2026 se probó la migración con los scripts SQL de
+dispositivos, procesador, taxi llegando, apertura y preferencias, dentro de una
+transacción con `ROLLBACK`. Se verificó después que la tabla no había quedado
+creada y que el invocador HTTP real se había restaurado. La migración se aplicó
+al proyecto vinculado `ximbalgo` y se repitieron las pruebas sobre el esquema
+aplicado, revirtiendo los datos temporales.
+
+La comprobación final confirmó la base al día, el invocador HTTP real intacto
+y ninguna preferencia de prueba persistida.
+
+`supabase/tests/preferencias_notificaciones.sql` comprueba valores predeterminados,
+aislamiento entre cuentas, permisos, validación de la RPC, conservación de otros
+campos, categorías, cancelación en varios dispositivos/entornos, invalidación de
+leases, continuidad de recibos, reintentos silenciados y ausencia de reenvío
+histórico. Los dispositivos de prueba usan un proyecto aleatorio; no se conservan
+sus avisos ni se contacta Expo desde las pruebas.
+
+Pasaron TypeScript y las **140 pruebas automatizadas**, incluidas 22 nuevas de
+preferencias, permiso explícito y bandeja: errores de red, cambios de cuenta,
+respuestas tardías, reintentos, contador global, agrupación Realtime y limpieza
+de listeners. La prueba en teléfonos queda pendiente. El propietario autorizó
+crear los commits y subir esta parte a `feature/XG-0030-notificaciones-push`.
+
+Con esa autorización también se desplegó `enviar-notificaciones`, que quedó
+activa en su versión 6. Pasó `deno check` y la invocación real desde Vault y
+`pg_net` respondió HTTP 200, sin errores ni timeout y sin trabajos pendientes
+en ese momento. Una petición sin autorización respondió HTTP 401. El cron
+continúa activo y la comprobación de migraciones confirmó la base al día.
+
+```sh
+npm run typecheck
+npm test
+npx supabase db query --remote --yes --file supabase/tests/preferencias_notificaciones.sql
+npx supabase db push --remote --dry-run
+```
+
+### Prueba en teléfonos
+
+1. Recargar ambas apps desde Metro. En el taxista, abrir «Notificaciones» desde
+   Inicio o Perfil. Comprobar lista, contador, lectura individual, lectura de
+   todos los avisos y apertura del detalle del viaje.
+2. Abrir el engranaje de la bandeja del cliente. Desactivar «Reservas», dejarlo
+   en segundo plano y aceptar una solicitud nueva desde el taxista. La aceptación
+   debe quedar en la bandeja del cliente sin un push nuevo para ese evento.
+3. Reactivar «Reservas» y repetir con otra reserva: debe recibir el push. La
+   aceptación silenciada anteriormente no debe enviarse al reactivar.
+4. En el taxista, silenciar todos los push y crear una nueva solicitud desde
+   el cliente. La bandeja y el contador deben actualizarse sin un push nuevo.
+   Reactivar y repetir con una solicitud nueva.
+5. En el cliente, probar por separado «Taxi llegando» y «Avance del viaje» con
+   aproximación real, abordaje y finalización. Confirmar el silencio únicamente
+   de las categorías elegidas y restaurar los ajustes al terminar.
+6. Revocar el permiso desde los ajustes del teléfono y regresar a la pantalla.
+   Debe reflejar el bloqueo; habilitarlo y regresar debe permitir sincronizar
+   el teléfono. Si se eligió «Ahora no» al inicio, usar «Activar notificaciones».
+7. Sin conexión, intentar cambiar una preferencia o actualizar la bandeja.
+   Debe informar el fallo y permitir reintentar al recuperar la conexión.
+8. Si se dispone de dos teléfonos con la misma cuenta, comprobar que el silencio
+   afecta a ambos y que las elecciones se reflejan al volver a Preferencias.
+
+Las pruebas anteriores de navegación del punto 4 y de aproximación real de
+«taxi llegando» también requieren confirmación en los teléfonos; los resultados
+SQL y automatizados no acreditan su presentación nativa.
