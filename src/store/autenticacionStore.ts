@@ -50,6 +50,8 @@ function getSnapshot() {
   return state;
 }
 
+export const obtenerEstadoAutenticacion = getSnapshot;
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);

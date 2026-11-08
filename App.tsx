@@ -10,13 +10,14 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { ToastHost } from './src/components/ToastMessaje';
-import type { AuthStackParamList } from './src/navigation/types';
+import type { AppStackParamList } from './src/navigation/types';
 import {
   obtenerEnlaceRecuperacionInvalido,
   prepararEnlaceAutenticacion,
 } from './src/infrastructure/supabase/auth/auth.deep-link';
+import { navegacionPush, useAperturaPush } from './src/infrastructure/notifications/useAperturaPush';
 
-const linking: LinkingOptions<AuthStackParamList> = {
+const linking: LinkingOptions<AppStackParamList> = {
   prefixes: ['ximbalgo://'],
   config: {
     screens: {
@@ -83,6 +84,7 @@ const linking: LinkingOptions<AuthStackParamList> = {
 };
 
 export default function App() {
+  const actualizarAperturaPush = useAperturaPush();
 
   const [fontsLoaded] = useFonts({
     InterRegular: require("./assets/fonts/Inter_18pt-Regular.ttf"),
@@ -98,7 +100,8 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <NavigationContainer linking={linking}>
+      <NavigationContainer linking={linking} ref={navegacionPush}
+        onReady={actualizarAperturaPush} onStateChange={actualizarAperturaPush}>
         <RootNavigator />
       </NavigationContainer>
       <ToastHost />

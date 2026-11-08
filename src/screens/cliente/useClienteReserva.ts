@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   cancelarReserva,
   escucharReserva,
@@ -17,7 +18,7 @@ const INTERVALO_RELOJ_MS = 15_000;
 const ESPERA_TIEMPO_REAL_MS = 400;
 
 /** Una reservación del cliente con el seguimiento del taxi en tiempo real. */
-export function useClienteReserva(reservaId: string) {
+export function useClienteReserva(reservaId: string, notificacionId?: string) {
   const [reserva, setReserva] = useState<ReservaCliente | null>(null);
   const [seguimiento, setSeguimiento] = useState<SeguimientoReserva | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -48,6 +49,7 @@ export function useClienteReserva(reservaId: string) {
     if (datosReserva.status === "fulfilled") {
       setReserva(datosReserva.value);
     } else {
+      setReserva(null);
       setError(mensajeError(datosReserva.reason, "No se pudo cargar la reservación."));
     }
     if (datosSeguimiento.status === "fulfilled") {
@@ -101,12 +103,12 @@ export function useClienteReserva(reservaId: string) {
     [reservaId, cargar]
   );
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     void cargar();
     return () => {
       solicitud.current += 1;
     };
-  }, [cargar]);
+  }, [cargar, notificacionId]));
 
   // El taxista acepta o cierra la reserva, o envía una ubicación nueva.
   const taxistaId = seguimiento?.taxistaId ?? null;

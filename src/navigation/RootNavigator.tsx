@@ -59,11 +59,11 @@ export default function RootNavigator() {
     }
 
     if (usuario && rol === "cliente") {
-        return <ClienteNavigator />;
+        return <ClienteNavigator key={usuario.id} />;
     }
 
     if (usuario && rol === "taxista") {
-        return <TaxistaNavigator />;
+        return <TaxistaNavigator key={usuario.id} />;
     }
 
     if (usuario && rol === "administrador") {

@@ -45,7 +45,8 @@ export default function ClienteNavigator(){
                 <Stack.Screen name="ClienteParadero" component={ClienteParaderoScreen}/>
                 <Stack.Screen name="ClienteTaxis" component={ClienteTaxisScreen}/>
                 <Stack.Screen name="ClienteReservar" component={ClienteReservarScreen}/>
-                <Stack.Screen name="ClienteReserva" component={ClienteReservaScreen}/>
+                <Stack.Screen name="ClienteReserva" component={ClienteReservaScreen}
+                    getId={({ params }) => params.reservaId}/>
                 <Stack.Screen name="ClienteYo" component={ClienteYoScreen}/>
             </Stack.Navigator>
         </ClienteProvider>

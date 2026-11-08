@@ -1,7 +1,7 @@
 import type { TaxistaTabId } from "../../components/BottomTabBar";
 import type { TaxistaStackParamList } from "../../navigation/types";
 
-const PANTALLA_POR_PESTANIA: Record<TaxistaTabId, keyof TaxistaStackParamList> = {
+const PANTALLA_POR_PESTANIA: Record<TaxistaTabId, Exclude<keyof TaxistaStackParamList, "TaxistaReserva">> = {
   inicio: "TaxistaInicio",
   viajes: "TaxistaViajes",
   vehiculo: "TaxistaVehiculo",

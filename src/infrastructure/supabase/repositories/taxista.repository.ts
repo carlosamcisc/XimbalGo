@@ -1,4 +1,5 @@
 import { supabase } from "../client";
+import type { DatabaseWithNearbyFunctions } from "../database.functions.types";
 import type { Coordenadas } from "../../../modules/cliente/ubicacion";
 import type { EstadoReserva } from "../../../modules/cliente/reservas";
 import type {
@@ -212,7 +213,11 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
     throw error;
   }
 
-  return data.map((reserva) => ({
+  return data.map(aReservaTaxista);
+}
+
+function aReservaTaxista(reserva: DatabaseWithNearbyFunctions["public"]["Functions"]["obtener_reservas_taxista"]["Returns"][number]): ReservaTaxista {
+  return {
     id: reserva.id,
     estado: reserva.estado as EstadoReserva,
     abordadoEn: reserva.abordado_en,
@@ -230,7 +235,20 @@ export async function obtenerReservasTaxista(): Promise<ReservaTaxista[]> {
     telefonoCliente: reserva.telefono_cliente,
     motivoTaxista: reserva.motivo_taxista,
     asientosOfrecidos: reserva.asientos_ofrecidos,
-  }));
+  };
+}
+
+export async function obtenerReservaTaxista(reservaId: string): Promise<ReservaTaxista | null> {
+  const controller = new AbortController();
+  const limite = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const { data, error } = await supabase.rpc("obtener_reserva_taxista", { p_reserva_id: reservaId })
+      .abortSignal(controller.signal);
+    if (error) throw error;
+    return data?.[0] ? aReservaTaxista(data[0]) : null;
+  } finally {
+    clearTimeout(limite);
+  }
 }
 
 /** `motivo` llega al cliente al rechazar o cancelar. */

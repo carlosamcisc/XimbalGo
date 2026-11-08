@@ -1221,6 +1221,28 @@ export type Database = {
           referencia: string
         }[]
       }
+      obtener_reserva_taxista: {
+        Args: { p_reserva_id: string }
+        Returns: {
+          abordado_en: string | null
+          asientos_ofrecidos: number
+          cantidad_asientos: number
+          destino: string
+          estado: string
+          fecha_hora_reserva: string
+          fecha_hora_viaje: string
+          id: string
+          matricula: string
+          motivo_taxista: string
+          nombre_cliente: string
+          notas: string
+          numero_asiento: number
+          numeros_asientos: number[]
+          origen: string
+          precio: number
+          telefono_cliente: string
+        }[]
+      }
       obtener_reservas_taxista: {
         Args: never
         Returns: {
