@@ -390,3 +390,97 @@ Esta entrega inicial incluyó registro de dispositivos, envío programado,
 recibos y presentación en primer plano. Posteriormente se incorporó el aviso
 [«taxi llegando»](./taxi-llegando.md), con detección a 150 metros, una sola vez
 por reserva, y validación de vigencia antes del envío.
+
+## Parte 4: abrir la reserva al tocar un push
+
+Al tocar el aviso del sistema, el cliente abre `ClienteReserva` y el taxista
+abre la nueva pantalla `TaxistaReserva`, con los detalles y las mismas acciones
+disponibles en «Mis viajes». Recibir el aviso sin tocarlo conserva la pantalla
+actual; la presentación en primer plano sigue usando el manejador existente.
+
+El listener se instala antes de terminar de cargar las fuentes. Consulta
+también la última respuesta nativa para recuperar el toque que inició la app
+cerrada. La intención espera a que estén listos la sesión, el rol y su navegador;
+no interrumpe la recuperación de contraseña. Si el toque ya estaba vinculado
+a una cuenta y se cierra esa sesión o cambia la cuenta, se descarta. Los
+navegadores también se reinician al cambiar de usuario.
+
+Se validan los UUID y el tipo de aviso. La app consulta `notificaciones` con
+el ID recibido y el propietario activo, bajo RLS. El destino se obtiene de
+esa fila, sin confiar en el `reservaId` ni en URLs del payload. Si el aviso
+se eliminó, pertenece a otra cuenta o ya no tiene reserva, se informa al usuario.
+Las pantallas vuelven a consultar el estado actual de la reserva; un aviso
+antiguo puede abrir un viaje ya cancelado o completado.
+
+El mismo toque recibido por la consulta inicial y por el listener se procesa
+una vez. Si llegan varios toques mientras se consulta Supabase, se conserva
+el último. Se limpia la respuesta nativa al consumirla para evitar volver a
+abrirla al recargar. Un fallo de conexión ofrece «Reintentar». Abrir la reserva
+marca únicamente ese aviso propio como leído; un fallo de esa escritura se
+informa sin impedir la navegación. Esto no modifica los recibos del proveedor.
+
+Las pantallas se identifican por reserva y actualizan sus datos al recibir
+otro aviso o recuperar el foco. Las consultas tardías se descartan. El detalle
+y los paneles del taxista se ocultan cuando su pantalla deja de estar enfocada,
+para que un panel previo no tape la reserva abierta desde el push.
+
+### Migración y validación
+
+`20261107140000_abrir_reserva_desde_push.sql` agrega
+`obtener_reserva_taxista(p_reserva_id)`. Solo devuelve la reserva asignada a
+`auth.uid()`, mantiene la ocultación del teléfono del cliente en viajes cerrados
+y permite consultar viajes que quedaron fuera del límite de 200 de la lista.
+No altera la función de listado ni las reglas de envío de push.
+
+El 7 de noviembre de 2026 se probó la migración junto con
+`supabase/tests/abrir_reserva_desde_push.sql` dentro de una transacción con
+`ROLLBACK`. Se comprobó que la función no quedó creada por esa prueba; después
+se aplicó al proyecto vinculado `ximbalgo` y se repitió el script sobre el
+esquema aplicado. La comprobación final informó la base al día.
+
+La prueba SQL crea más de 200 viajes sintéticos y comprueba la consulta puntual,
+el aislamiento entre cliente, taxista, otra cuenta y una sesión sin usuario,
+las reservas inexistentes, la lectura del aviso propio y el teléfono oculto
+en el historial. Todo se revierte, sin conservar datos ni enviar esos avisos.
+
+Pasaron `npm run typecheck` y las 118 pruebas de `npm test`, incluidas 21 nuevas
+de apertura, sesión, deduplicación, errores de red, filtros del repositorio,
+integración con el listener y actualización de ambos detalles. La recepción
+y la navegación reales en teléfonos quedan pendientes de la prueba siguiente.
+El propietario autorizó crear los commits y subir esta parte en la rama
+`feature/XG-0030-notificaciones-push`. Antes de versionarla se confirmó de nuevo
+que la base vinculada está al día, sin migraciones pendientes.
+
+```sh
+npm run typecheck
+npm test
+npx supabase db query --remote --yes --file supabase/tests/abrir_reserva_desde_push.sql
+npx supabase db push --remote --dry-run
+```
+
+### Prueba en teléfonos
+
+No se agregaron dependencias ni configuración nativa: basta recargar ambas
+apps desde Metro. No es necesario regenerar Android ni volver a desplegar
+la Edge Function.
+
+1. Con el taxista en segundo plano, crear una solicitud desde el cliente.
+   Tocar «Nueva solicitud de reserva»: debe abrir el detalle de ese viaje,
+   permitir responder y regresar con la flecha o el botón Atrás del sistema.
+2. Aceptar desde el taxista con el cliente bloqueado. Tocar «Reserva aceptada»:
+   debe abrir esa reserva y su seguimiento. Repetir con «Taxi llegando» cuando
+   se pueda hacer la prueba de aproximación pendiente.
+3. Repetir tocando un banner con la app abierta y un aviso con la app cerrada
+   desde recientes. Con Metro, mantener el servidor accesible al teléfono.
+4. Abrir un segundo aviso de la misma reserva: debe actualizar el estado sin
+   añadir otra pantalla de esa reserva. Recibirlo sin tocarlo no debe navegar.
+5. Tocar un aviso de una reserva que posteriormente se canceló o completó:
+   debe mostrar el estado actual y sus acciones vigentes.
+6. Sin conexión, tocar un aviso; restablecer la conexión y pulsar «Reintentar».
+   Comprobar también el botón de reintento del detalle si falla su consulta.
+7. Con un aviso anterior aún visible en el sistema, cerrar sesión y entrar con
+   otra cuenta. Al tocarlo no debe abrir datos de la cuenta anterior.
+
+Referencia de las APIs de respuesta y del listener:
+[Expo Notifications SDK 57](https://docs.expo.dev/versions/v57.0.0/sdk/notifications/).
+La parte 5 (preferencias y bandeja del taxista) sigue pendiente.
