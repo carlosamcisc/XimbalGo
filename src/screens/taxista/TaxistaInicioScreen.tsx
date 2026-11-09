@@ -317,6 +317,13 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                         saludoTextColor={Colors.white}
                         buenasTextColor={Colors.white}
                     />
+                    <View style={{ paddingHorizontal: 20 }}>
+                        <Button
+                            titulo={taxista.bandeja.noLeidas > 0 ? `Notificaciones (${taxista.bandeja.noLeidas} sin leer)` : "Notificaciones"}
+                            icono="notifications" posicionIcono="izquierda"
+                            onPress={() => navigation.navigate("TaxistaNotificaciones")}
+                        />
+                    </View>
                     {renderContenido()}
                 </ScrollView>
             </View>

@@ -24,4 +24,15 @@ test('el manifiesto Android permite los trabajos persistentes de TaskManager', a
   );
   assert.ok(permission, 'TaskManager usa setPersisted(true), que requiere RECEIVE_BOOT_COMPLETED');
   assert.equal(permission.$['android:maxSdkVersion'], undefined);
+
+  assert.ok(manifest['uses-permission'].some(
+    entry => entry.$['android:name'] === 'android.permission.POST_NOTIFICATIONS'
+  ), 'Android 13+ necesita POST_NOTIFICATIONS');
+  const metadata = manifest.application[0]['meta-data'];
+  assert.ok(metadata.some(entry =>
+    entry.$['android:name'] === 'com.google.firebase.messaging.default_notification_channel_id'
+    && entry.$['android:value'] === 'reservas'
+  ), 'FCM debe usar el canal de reservaciones');
+  assert.equal(config._internal.modResults.ios.entitlements['aps-environment'], 'development');
+  assert.equal(config.extra.pushEnvironment, process.env.EXPO_PUBLIC_PUSH_ENVIRONMENT ?? 'development');
 });

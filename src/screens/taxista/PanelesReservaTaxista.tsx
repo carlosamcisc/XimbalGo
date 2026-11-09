@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from "react-native";
 import AppText from "../../components/AppText";
 import BottomSheet from "../../components/BottomSheet";
@@ -159,10 +160,15 @@ function PanelOferta({ reserva, procesando, onConfirmar, onCerrar }: {
 }
 
 /** Paneles de motivo y de oferta de asientos que abre `useAccionReserva`. */
-export default function PanelesReservaTaxista({ acciones }: { acciones: AccionesReserva }) {
+export default function PanelesReservaTaxista({ acciones, reservaActual }: {
+  acciones: AccionesReserva;
+  reservaActual?: ReservaTaxista | null;
+}) {
+  const enfocada = useIsFocused();
   const { reservas, procesandoReservaId } = useTaxista();
   const { panel } = acciones;
-  const reserva = panel ? reservas.find((item) => item.id === panel.reservaId) : undefined;
+  const reserva = panel ? (reservaActual?.id === panel.reservaId
+    ? reservaActual : reservas.find((item) => item.id === panel.reservaId)) : undefined;
   const procesando = reserva !== undefined && procesandoReservaId === reserva.id;
 
   // Si la reserva cambia en tiempo real (el cliente cancela, otra pantalla la
@@ -180,7 +186,7 @@ export default function PanelesReservaTaxista({ acciones }: { acciones: Acciones
   }, [panel, vigente, procesando, cerrarPanel]);
 
   return (
-    <BottomSheet visible={panel !== null && vigente} onClose={() => !procesando && cerrarPanel()}>
+    <BottomSheet visible={enfocada && panel !== null && vigente} onClose={() => !procesando && cerrarPanel()}>
       {reserva && panel?.tipo === "motivo" && (
         <PanelMotivo
           key={`${panel.reservaId}-${panel.accion}`}

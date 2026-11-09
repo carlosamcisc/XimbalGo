@@ -74,7 +74,7 @@ const textoSinEstimacion = (seguimiento: SeguimientoReserva | null, error: strin
 
 const ClienteReservaScreen = ({ navigation, route }: Props) => {
   const { reservaId } = route.params;
-  const detalle = useClienteReserva(reservaId);
+  const detalle = useClienteReserva(reservaId, route.params.notificacionId);
   const { reserva, seguimiento, ahora } = detalle;
   const rutaTaxi = useRutaTaxi(reservaId, seguimiento, detalle.activa && !reserva?.abordadoEn);
   const estimacion = rutaTaxi.estimacion;

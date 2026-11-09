@@ -10,6 +10,7 @@ import AdminNavigator from "./aministrador/AdminNavigator";
 import AutenticacionNavigator from "./autenticacion/AutenticacionNavigator";
 import ClienteNavigator from "./cliente/ClienteNavigator";
 import TaxistaNavigator from "./taxista/TaxistaNavigator";
+import { useRegistroPush } from "../infrastructure/notifications/useRegistroPush";
 
 export default function RootNavigator() {
     const {
@@ -20,6 +21,9 @@ export default function RootNavigator() {
         rol,
         usuario,
     } = useAutenticacionStore();
+
+    useRegistroPush(!inicializando && !recuperandoContrasena &&
+        (rol === "cliente" || rol === "taxista") ? usuario?.id ?? null : null);
 
     useEffect(() => {
         void inicializarAutenticacion();
@@ -55,11 +59,11 @@ export default function RootNavigator() {
     }
 
     if (usuario && rol === "cliente") {
-        return <ClienteNavigator />;
+        return <ClienteNavigator key={usuario.id} />;
     }
 
     if (usuario && rol === "taxista") {
-        return <TaxistaNavigator />;
+        return <TaxistaNavigator key={usuario.id} />;
     }
 
     if (usuario && rol === "administrador") {

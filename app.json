@@ -8,7 +8,7 @@
     "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.carlosmay.XimbalGo",
+      "bundleIdentifier": "com.carlosmay.ximbalgo",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
@@ -16,19 +16,28 @@
     },
     "android": {
       "permissions": [
-        "android.permission.RECEIVE_BOOT_COMPLETED"
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.carlosmay.XimbalGo"
+      "package": "com.carlosmay.ximbalgo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#34618D",
+          "defaultChannel": "reservas"
+        }
+      ],
       [
         "expo-splash-screen",
         {

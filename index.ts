@@ -1,5 +1,6 @@
 import { registerRootComponent } from 'expo';
 import './src/infrastructure/location/background-location.service';
+import './src/infrastructure/notifications/presentacionPush';
 
 import App from './App';
 
