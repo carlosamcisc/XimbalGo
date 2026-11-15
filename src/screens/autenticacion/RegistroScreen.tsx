@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import TextInputField from "../../components/TextInputField";
 import Button from "../../components/Button";
+import HeaderBack from "../../components/HeaderBack";
 import { Icono } from "../../components/Icono";
 import AppText from "../../components/AppText";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
@@ -232,31 +233,41 @@ const RegistroScreen = ({ navigation, route }: Props) => {
             <StatusBar style="light" />
             <View style={styles.pantalla}>
                 <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                    <View style={styles.contentNavegacion}>
-                        <Pressable
-                            style={styles.botonAtras}
-                            onPress={() => navigation.goBack()}
-                            accessibilityRole="button"
-                            accessibilityLabel="Regresar a selección de rol"
-                        >
-                            <Icono nombre="arrowBack" tamanio={26} color={Colors.white} />
-                        </Pressable>
-                        <AppText weight="semibold" style={styles.textPasos}>
-                            Paso 2 de 2
-                        </AppText>
-                    </View>
+                    <HeaderBack
+                        onPress={() => navigation.goBack()}
+                        label="Paso 2 de 2"
+                        accessibilityLabel="Regresar a selección de rol"
+                    />
 
                     <View style={styles.contentEncabezado}>
-                        <AppText weight="bold" style={styles.TextEncabezado}>
+                        <View style={styles.progresoRegistro}>
+                            <View style={styles.pasoRegistro}>
+                                <View style={styles.segmentoCompletado} />
+                                <View style={styles.etiquetaPaso}>
+                                    <Icono nombre="done" tamanio={16} color={Colors.brandSubtitle} />
+                                    <AppText style={styles.textoPasoCompletado}>Tipo de cuenta</AppText>
+                                </View>
+                            </View>
+                            <View style={styles.pasoRegistro}>
+                                <View style={styles.segmentoActual} />
+                                <AppText weight="semibold" style={styles.textoPasoActual}>2. Tus datos</AppText>
+                            </View>
+                        </View>
+                        <View style={styles.etiquetaRol}>
+                            <Icono nombre={rol === "cliente" ? "person" : "localTaxi"} tamanio={18} color={Colors.white} />
+                            <AppText weight="medium" style={styles.textoRol}>Cuenta de {ROL_LABELS[rol].toLowerCase()}</AppText>
+                        </View>
+                        <AppText accessibilityRole="header" weight="bold" style={styles.TextEncabezado}>
                             Crea tu cuenta
                         </AppText>
                         <AppText style={styles.subTextEncabezado}>
-                            Te estás registrando como {ROL_LABELS[rol]}
+                            {rol === "cliente"
+                                ? "Regístrate y empieza a planear tus viajes."
+                                : "Regístrate y prepara tu próximo servicio."}
                         </AppText>
                     </View>
                     {rol === "cliente" && (
                         <View style={styles.introduccionCliente}>
-                            <AppText weight="bold" style={styles.tituloIntroduccion}>Tu próximo viaje empieza aquí</AppText>
                             <AppText style={styles.descripcionCliente}>Completa tus datos. Los campos con * son obligatorios.</AppText>
                         </View>
                     )}
@@ -457,10 +468,6 @@ const styles = StyleSheet.create({
         maxWidth: 560,
         alignSelf: "center",
     },
-    tituloIntroduccion: {
-        fontSize: 19,
-        color: Colors.brandDeep,
-    },
     descripcionCliente: {
         fontSize: 13,
         lineHeight: 20,
@@ -515,39 +522,70 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingBottom: 32,
     },
-    contentNavegacion: {
-        backgroundColor: Colors.primary,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingRight: 20,
-    },
-    botonAtras: {
-        marginTop: 10,
-        marginLeft: 10,
-        alignSelf: "flex-start",
-        padding: 6,
-    },
-    textPasos: {
-        color: Colors.surface,
-        fontSize: 17,
-    },
     contentEncabezado: {
         backgroundColor: Colors.primary,
-        alignItems: "center",
+        alignItems: "flex-start",
         paddingHorizontal: 24,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-        paddingBottom: 20,
+        borderBottomLeftRadius: 28,
+        borderBottomRightRadius: 28,
+        paddingBottom: 28,
+    },
+    progresoRegistro: {
+        flexDirection: "row",
+        gap: 12,
+        width: "100%",
+        marginBottom: 28,
+    },
+    pasoRegistro: {
+        flex: 1,
+        gap: 8,
+    },
+    segmentoCompletado: {
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: Colors.brandSubtitle,
+    },
+    segmentoActual: {
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: Colors.brandAccent,
+    },
+    etiquetaPaso: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+    },
+    textoPasoCompletado: {
+        fontSize: 12,
+        color: Colors.brandSubtitle,
+    },
+    textoPasoActual: {
+        fontSize: 12,
+        color: Colors.white,
+    },
+    etiquetaRol: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        marginBottom: 12,
+    },
+    textoRol: {
+        color: Colors.white,
+        fontSize: 12,
     },
     TextEncabezado: {
         color: Colors.surface,
-        fontSize: 25,
+        fontSize: 30,
     },
     subTextEncabezado: {
-        color: Colors.surface,
-        fontSize: 14,
-        marginTop: 6,
+        color: Colors.brandSubtitle,
+        fontSize: 15,
+        lineHeight: 23,
+        marginTop: 8,
     },
     contenedor: {
         justifyContent: "center",
