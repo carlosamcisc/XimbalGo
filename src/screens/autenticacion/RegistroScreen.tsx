@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import TextInputField from "../../components/TextInputField";
 import Button from "../../components/Button";
+import HeaderBack from "../../components/HeaderBack";
 import { Icono } from "../../components/Icono";
 import AppText from "../../components/AppText";
 import KeyboardAwareScroll from "../../components/KeyboardAwareScroll";
@@ -228,187 +229,291 @@ const RegistroScreen = ({ navigation, route }: Props) => {
     };
 
     return (
-        <SafeAreaView style={styles.pantalla}>
-            <StatusBar style="dark" />
-            <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
-                <View style={styles.contentNavegacion}>
-                    <Pressable
-                        style={styles.botonAtras}
+        <SafeAreaView style={styles.statusBar} edges={["top", "bottom"]}>
+            <StatusBar style="light" />
+            <View style={styles.pantalla}>
+                <KeyboardAwareScroll contentContainerStyle={styles.scrollContent}>
+                    <HeaderBack
                         onPress={() => navigation.goBack()}
-                        accessibilityRole="button"
+                        label="Paso 2 de 2"
                         accessibilityLabel="Regresar a selección de rol"
-                    >
-                        <Icono nombre="arrowBack" tamanio={26} color={Colors.black} />
-                    </Pressable>
-                    <AppText weight="bold" style={styles.textPasos}>
-                        Paso 2 de 2
-                    </AppText>
-                </View>
-
-                <View style={styles.contentEncabezado}>
-                    <AppText weight="bold" style={styles.encabezado}>
-                        Crea tu cuenta
-                    </AppText>
-                    <AppText style={styles.subEncabezado}>
-                        Te estás registrando como {ROL_LABELS[rol]}
-                    </AppText>
-                </View>
-
-                <View style={styles.contenedor}>
-                    <TextInputField
-                        label="Nombre(s) *"
-                        value={nombres}
-                        placeholder="Escribe tu nombre..."
-                        onChangeText={setNombres}
-                        autoCapitalize="words"
-                        maxLength={LARGO_NOMBRE}
-                    />
-                    <TextInputField
-                        label="Apellidos *"
-                        value={apellidos}
-                        placeholder="Escribe tus apellidos..."
-                        onChangeText={setApellidos}
-                        autoCapitalize="words"
-                        maxLength={LARGO_NOMBRE}
-                    />
-                    <TextInputField
-                        label="Correo electrónico *"
-                        value={correo}
-                        placeholder="Escribe tu correo..."
-                        onChangeText={setCorreo}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
-                    <TextInputField
-                        label="Teléfono *"
-                        value={telefono}
-                        placeholder="Escribe tu teléfono..."
-                        onChangeText={setTelefono}
-                        keyboardType="phone-pad"
-                        maxLength={LARGO_TELEFONO}
                     />
 
-                    {rol === "cliente" && (
-                        <TextInputField
-                            label="Edad (opcional)"
-                            value={edad}
-                            placeholder="Escribe tu edad..."
-                            onChangeText={setEdad}
-                            keyboardType="number-pad"
-                            maxLength={3}
-                        />
-                    )}
-
-                    <TextInputField
-                        label="Dirección (opcional)"
-                        value={direccion}
-                        placeholder="Escribe tu dirección..."
-                        onChangeText={setDireccion}
-                        autoCapitalize="sentences"
-                    />
-
-                    {rol === "taxista" && (
-                        <>
-                            <AppText weight="bold" style={styles.subtituloCampos}>
-                                Datos de tu servicio
-                            </AppText>
-                            <SelectInput
-                                label="Ruta *"
-                                value={ruta ? `${ruta.origen} → ${ruta.destino}` : ""}
-                                placeholder={cargandoRutas ? "Cargando rutas..." : "Selecciona tu ruta"}
-                                onPress={() => setSelectorRutaVisible(true)}
-                                active={selectorRutaVisible}
-                                iconLeft="map"
-                                iconRight="ArrowDown"
-                            />
-                            {errorRutas && (
-                                <Pressable
-                                    onPress={() => void cargarRutas()}
-                                    accessibilityRole="button"
-                                    style={styles.reintentarRutas}
-                                >
-                                    <AppText weight="semibold" style={styles.textoReintentar}>
-                                        No se pudieron cargar las rutas. Reintentar
-                                    </AppText>
-                                </Pressable>
-                            )}
-                            <BottomSheet
-                                visible={selectorRutaVisible}
-                                onClose={() => setSelectorRutaVisible(false)}
-                            >
-                                <View>
-                                    <AppText weight="semibold" style={styles.tituloSelector}>
-                                        Elige tu ruta
-                                    </AppText>
-                                    <OptionList
-                                        data={opcionesRutas}
-                                        style={styles.listaRutas}
-                                        emptyText={textoSinRutas}
-                                        onSelect={seleccionarRuta}
-                                        onClose={() => setSelectorRutaVisible(false)}
-                                    />
+                    <View style={styles.contentEncabezado}>
+                        <View style={styles.progresoRegistro}>
+                            <View style={styles.pasoRegistro}>
+                                <View style={styles.segmentoCompletado} />
+                                <View style={styles.etiquetaPaso}>
+                                    <Icono nombre="done" tamanio={16} color={Colors.brandSubtitle} />
+                                    <AppText style={styles.textoPasoCompletado}>Tipo de cuenta</AppText>
                                 </View>
-                            </BottomSheet>
-                            <TextInputField
-                                label="Horario de trabajo"
-                                value={horarioTrabajo}
-                                placeholder="Ej. Lunes a viernes, 8:00 a 17:00"
-                                onChangeText={setHorarioTrabajo}
-                                autoCapitalize="sentences"
-                                maxLength={LARGO_HORARIO}
-                            />
-                            <TextInputField
-                                label="Precio por pasajero"
-                                value={precioRuta}
-                                placeholder={ruta ? `Tarifa base: ${ruta.precioBase}` : "Escribe el precio..."}
-                                onChangeText={setPrecioRuta}
-                                keyboardType="decimal-pad"
-                            />
-                        </>
-                    )}
-
-                    <TextInputField
-                        label="Contraseña *"
-                        value={contrasenia}
-                        placeholder="Crea una contraseña..."
-                        onChangeText={setContrasenia}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        icono="lock"
-                    />
-                    <TextInputField
-                        label="Confirmar contraseña *"
-                        value={confirmarContrasenia}
-                        placeholder="Escribe de nuevo tu contraseña..."
-                        onChangeText={setConfirmarContrasenia}
-                        secureTextEntry
-                        autoCapitalize="none"
-                        icono="lock"
-                    />
-
-                    <View style={styles.contenBoton}>
-                        <Button
-                            titulo={cargando ? "Creando cuenta..." : "Registrarse"}
-                            onPress={handleRegistro}
-                            disabled={cargando}
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.contentOpciones}>
-                    <AppText>¿Ya tienes una cuenta?</AppText>
-                    <Pressable onPress={() => navigation.navigate("InicioSesion")}>
-                        <AppText weight="bold" style={styles.iniciarSesion}>
-                            Inicia sesión
+                            </View>
+                            <View style={styles.pasoRegistro}>
+                                <View style={styles.segmentoActual} />
+                                <AppText weight="semibold" style={styles.textoPasoActual}>2. Tus datos</AppText>
+                            </View>
+                        </View>
+                        <View style={styles.etiquetaRol}>
+                            <Icono nombre={rol === "cliente" ? "person" : "localTaxi"} tamanio={18} color={Colors.white} />
+                            <AppText weight="medium" style={styles.textoRol}>Cuenta de {ROL_LABELS[rol].toLowerCase()}</AppText>
+                        </View>
+                        <AppText accessibilityRole="header" weight="bold" style={styles.TextEncabezado}>
+                            Crea tu cuenta
                         </AppText>
-                    </Pressable>
-                </View>
-            </KeyboardAwareScroll>
+                        <AppText style={styles.subTextEncabezado}>
+                            {rol === "cliente"
+                                ? "Regístrate y empieza a planear tus viajes."
+                                : "Regístrate y prepara tu próximo servicio."}
+                        </AppText>
+                    </View>
+                    {rol === "cliente" && (
+                        <View style={styles.introduccionCliente}>
+                            <AppText style={styles.descripcionCliente}>Completa tus datos. Los campos con * son obligatorios.</AppText>
+                        </View>
+                    )}
+                    <View style={rol === "cliente" ? styles.formularioCliente : styles.contenedor}>
+                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
+                        {rol === "cliente" && (
+                            <View style={styles.encabezadoSeccion}>
+                                <Icono nombre="person" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
+                                <View style={styles.textosSeccion}>
+                                    <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Datos personales</AppText>
+                                    <AppText style={styles.descripcionCliente}>Cuéntanos un poco sobre ti.</AppText>
+                                </View>
+                            </View>
+                        )}
+                        <TextInputField
+                            label="Nombre(s) *"
+                            value={nombres}
+                            placeholder="Escribe tu nombre..."
+                            onChangeText={setNombres}
+                            autoCapitalize="words"
+                            maxLength={LARGO_NOMBRE}
+                            icono={rol === "cliente" ? "person" : undefined}
+                        />
+                        <TextInputField
+                            label="Apellidos *"
+                            value={apellidos}
+                            placeholder="Escribe tus apellidos..."
+                            onChangeText={setApellidos}
+                            autoCapitalize="words"
+                            maxLength={LARGO_NOMBRE}
+                            icono={rol === "cliente" ? "badge" : undefined}
+                        />
+                        {rol === "cliente" && (
+                            <TextInputField
+                                label="Edad (opcional)" value={edad} onChangeText={setEdad}
+                                placeholder="Escribe tu edad..." keyboardType="number-pad" maxLength={3} icono="cake"
+                            />
+                        )}
+                        </View>
+                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
+                        {rol === "cliente" && (
+                            <View style={styles.encabezadoSeccion}>
+                                <Icono nombre="phone" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
+                                <View style={styles.textosSeccion}>
+                                    <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Información de contacto</AppText>
+                                    <AppText style={styles.descripcionCliente}>Los datos para tu cuenta y tus viajes.</AppText>
+                                </View>
+                            </View>
+                        )}
+                        <TextInputField
+                            label="Correo electrónico *"
+                            value={correo}
+                            placeholder="Escribe tu correo..."
+                            onChangeText={setCorreo}
+                            keyboardType="email-address"
+                            icono={rol === "cliente" ? "email" : undefined}
+                            autoCapitalize="none"
+                        />
+                        <TextInputField
+                            label="Teléfono *"
+                            value={telefono}
+                            placeholder="Escribe tu teléfono..."
+                            onChangeText={setTelefono}
+                            keyboardType="phone-pad"
+                            maxLength={LARGO_TELEFONO}
+                            icono={rol === "cliente" ? "phone" : undefined}
+                        />
+
+                        <TextInputField
+                            label="Dirección (opcional)"
+                            value={direccion}
+                            placeholder="Escribe tu dirección..."
+                            onChangeText={setDireccion}
+                            autoCapitalize="sentences"
+                            icono={rol === "cliente" ? "locationOn" : undefined}
+                        />
+                        </View>
+
+                        {rol === "taxista" && (
+                            <>
+                                <AppText weight="bold" style={styles.subtituloCampos}>
+                                    Datos de tu servicio
+                                </AppText>
+                                <SelectInput
+                                    label="Ruta *"
+                                    value={ruta ? `${ruta.origen} → ${ruta.destino}` : ""}
+                                    placeholder={cargandoRutas ? "Cargando rutas..." : "Selecciona tu ruta"}
+                                    onPress={() => setSelectorRutaVisible(true)}
+                                    active={selectorRutaVisible}
+                                    iconLeft="map"
+                                    iconRight="ArrowDown"
+                                />
+                                {errorRutas && (
+                                    <Pressable
+                                        onPress={() => void cargarRutas()}
+                                        accessibilityRole="button"
+                                        style={styles.reintentarRutas}
+                                    >
+                                        <AppText weight="semibold" style={styles.textoReintentar}>
+                                            No se pudieron cargar las rutas. Reintentar
+                                        </AppText>
+                                    </Pressable>
+                                )}
+                                <BottomSheet
+                                    visible={selectorRutaVisible}
+                                    onClose={() => setSelectorRutaVisible(false)}
+                                >
+                                    <View>
+                                        <AppText weight="semibold" style={styles.tituloSelector}>
+                                            Elige tu ruta
+                                        </AppText>
+                                        <OptionList
+                                            data={opcionesRutas}
+                                            style={styles.listaRutas}
+                                            emptyText={textoSinRutas}
+                                            onSelect={seleccionarRuta}
+                                            onClose={() => setSelectorRutaVisible(false)}
+                                        />
+                                    </View>
+                                </BottomSheet>
+                                <TextInputField
+                                    label="Horario de trabajo"
+                                    value={horarioTrabajo}
+                                    placeholder="Ej. Lunes a viernes, 8:00 a 17:00"
+                                    onChangeText={setHorarioTrabajo}
+                                    autoCapitalize="sentences"
+                                    maxLength={LARGO_HORARIO}
+                                />
+                                <TextInputField
+                                    label="Precio por pasajero"
+                                    value={precioRuta}
+                                    placeholder={ruta ? `Tarifa base: ${ruta.precioBase}` : "Escribe el precio..."}
+                                    onChangeText={setPrecioRuta}
+                                    keyboardType="decimal-pad"
+                                />
+                            </>
+                        )}
+
+                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
+                        {rol === "cliente" && (
+                            <View style={styles.encabezadoSeccion}>
+                                <Icono nombre="lock" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
+                                <View style={styles.textosSeccion}>
+                                    <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Seguridad de tu cuenta</AppText>
+                                    <AppText style={styles.descripcionCliente}>Usa al menos {LARGO_MINIMO_CONTRASENIA} caracteres.</AppText>
+                                </View>
+                            </View>
+                        )}
+                        <TextInputField
+                            label="Contraseña *"
+                            value={contrasenia}
+                            placeholder="Crea una contraseña..."
+                            onChangeText={setContrasenia}
+                            secureTextEntry
+                            autoCapitalize="none"
+                            icono="lock"
+                        />
+                        <TextInputField
+                            label="Confirmar contraseña *"
+                            value={confirmarContrasenia}
+                            placeholder="Escribe de nuevo tu contraseña..."
+                            onChangeText={setConfirmarContrasenia}
+                            secureTextEntry
+                            autoCapitalize="none"
+                            icono="lock"
+                        />
+
+                        </View>
+                        <View style={styles.contenBoton}>
+                            <Button
+                                titulo={cargando ? "Creando cuenta..." : "Registrarse"}
+                                onPress={handleRegistro}
+                                disabled={cargando}
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.contentOpciones}>
+                        <AppText>¿Ya tienes una cuenta?</AppText>
+                        <Pressable onPress={() => navigation.navigate("InicioSesion")}>
+                            <AppText weight="bold" style={styles.iniciarSesion}>
+                                Inicia sesión
+                            </AppText>
+                        </Pressable>
+                    </View>
+                </KeyboardAwareScroll>
+            </View>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    introduccionCliente: {
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        gap: 6,
+        width: "100%",
+        maxWidth: 560,
+        alignSelf: "center",
+    },
+    descripcionCliente: {
+        fontSize: 13,
+        lineHeight: 20,
+        color: Colors.onSurfaceVariant,
+    },
+    formularioCliente: {
+        width: "100%",
+        maxWidth: 560,
+        alignSelf: "center",
+        padding: 20,
+        gap: 16,
+    },
+    seccionCliente: {
+        backgroundColor: Colors.white,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: Colors.cardBorder,
+        paddingBottom: 10,
+        elevation: 1,
+        shadowColor: Colors.brandDeep,
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+    },
+    encabezadoSeccion: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginHorizontal: 10,
+        paddingVertical: 14,
+        marginBottom: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.divider,
+    },
+    textosSeccion: {
+        flex: 1,
+        gap: 3,
+    },
+    tituloSeccion: {
+        fontSize: 17,
+        color: Colors.brandDeep,
+    },
+    statusBar: {
+        flex: 1,
+        backgroundColor: Colors.primary,
+    },
     pantalla: {
         flex: 1,
         backgroundColor: Colors.surface,
@@ -417,35 +522,70 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingBottom: 32,
     },
-    contentNavegacion: {
+    contentEncabezado: {
+        backgroundColor: Colors.primary,
+        alignItems: "flex-start",
+        paddingHorizontal: 24,
+        borderBottomLeftRadius: 28,
+        borderBottomRightRadius: 28,
+        paddingBottom: 28,
+    },
+    progresoRegistro: {
+        flexDirection: "row",
+        gap: 12,
+        width: "100%",
+        marginBottom: 28,
+    },
+    pasoRegistro: {
+        flex: 1,
+        gap: 8,
+    },
+    segmentoCompletado: {
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: Colors.brandSubtitle,
+    },
+    segmentoActual: {
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: Colors.brandAccent,
+    },
+    etiquetaPaso: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        paddingRight: 20,
+        gap: 4,
     },
-    botonAtras: {
-        marginTop: 10,
-        marginLeft: 10,
-        alignSelf: "flex-start",
-        padding: 6,
+    textoPasoCompletado: {
+        fontSize: 12,
+        color: Colors.brandSubtitle,
     },
-    textPasos: {
-        color: Colors.black,
-        fontSize: 17,
+    textoPasoActual: {
+        fontSize: 12,
+        color: Colors.white,
     },
-    contentEncabezado: {
-        marginTop: 10,
+    etiquetaRol: {
+        flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 24,
+        gap: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        marginBottom: 12,
     },
-    encabezado: {
-        color: Colors.black,
-        fontSize: 25,
+    textoRol: {
+        color: Colors.white,
+        fontSize: 12,
     },
-    subEncabezado: {
-        color: Colors.onSurfaceVariant,
-        fontSize: 14,
-        marginTop: 6,
+    TextEncabezado: {
+        color: Colors.surface,
+        fontSize: 30,
+    },
+    subTextEncabezado: {
+        color: Colors.brandSubtitle,
+        fontSize: 15,
+        lineHeight: 23,
+        marginTop: 8,
     },
     contenedor: {
         justifyContent: "center",
