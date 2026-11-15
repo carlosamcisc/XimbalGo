@@ -266,22 +266,18 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                                 : "Regístrate y prepara tu próximo servicio."}
                         </AppText>
                     </View>
-                    {rol === "cliente" && (
-                        <View style={styles.introduccionCliente}>
-                            <AppText style={styles.descripcionCliente}>Completa tus datos. Los campos con * son obligatorios.</AppText>
-                        </View>
-                    )}
-                    <View style={rol === "cliente" ? styles.formularioCliente : styles.contenedor}>
-                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
-                        {rol === "cliente" && (
-                            <View style={styles.encabezadoSeccion}>
+                    <View style={styles.introduccionRegistro}>
+                        <AppText style={styles.descripcionRegistro}>Completa tus datos. Los campos con * son obligatorios.</AppText>
+                    </View>
+                    <View style={styles.formularioRegistro}>
+                        <View style={styles.seccionRegistro}>
+                        <View style={styles.encabezadoSeccion}>
                                 <Icono nombre="person" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
                                 <View style={styles.textosSeccion}>
                                     <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Datos personales</AppText>
-                                    <AppText style={styles.descripcionCliente}>Cuéntanos un poco sobre ti.</AppText>
+                                    <AppText style={styles.descripcionRegistro}>Cuéntanos un poco sobre ti.</AppText>
                                 </View>
                             </View>
-                        )}
                         <TextInputField
                             label="Nombre(s) *"
                             value={nombres}
@@ -289,7 +285,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             onChangeText={setNombres}
                             autoCapitalize="words"
                             maxLength={LARGO_NOMBRE}
-                            icono={rol === "cliente" ? "person" : undefined}
+                            icono="person"
                         />
                         <TextInputField
                             label="Apellidos *"
@@ -298,7 +294,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             onChangeText={setApellidos}
                             autoCapitalize="words"
                             maxLength={LARGO_NOMBRE}
-                            icono={rol === "cliente" ? "badge" : undefined}
+                            icono="badge"
                         />
                         {rol === "cliente" && (
                             <TextInputField
@@ -307,23 +303,21 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             />
                         )}
                         </View>
-                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
-                        {rol === "cliente" && (
-                            <View style={styles.encabezadoSeccion}>
+                        <View style={styles.seccionRegistro}>
+                        <View style={styles.encabezadoSeccion}>
                                 <Icono nombre="phone" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
                                 <View style={styles.textosSeccion}>
                                     <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Información de contacto</AppText>
-                                    <AppText style={styles.descripcionCliente}>Los datos para tu cuenta y tus viajes.</AppText>
+                                    <AppText style={styles.descripcionRegistro}>Los datos para tu cuenta y tus viajes.</AppText>
                                 </View>
                             </View>
-                        )}
                         <TextInputField
                             label="Correo electrónico *"
                             value={correo}
                             placeholder="Escribe tu correo..."
                             onChangeText={setCorreo}
                             keyboardType="email-address"
-                            icono={rol === "cliente" ? "email" : undefined}
+                            icono="email"
                             autoCapitalize="none"
                         />
                         <TextInputField
@@ -333,7 +327,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             onChangeText={setTelefono}
                             keyboardType="phone-pad"
                             maxLength={LARGO_TELEFONO}
-                            icono={rol === "cliente" ? "phone" : undefined}
+                            icono="phone"
                         />
 
                         <TextInputField
@@ -342,15 +336,19 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                             placeholder="Escribe tu dirección..."
                             onChangeText={setDireccion}
                             autoCapitalize="sentences"
-                            icono={rol === "cliente" ? "locationOn" : undefined}
+                            icono="locationOn"
                         />
                         </View>
 
                         {rol === "taxista" && (
-                            <>
-                                <AppText weight="bold" style={styles.subtituloCampos}>
-                                    Datos de tu servicio
-                                </AppText>
+                            <View style={styles.seccionRegistro}>
+                                <View style={styles.encabezadoSeccion}>
+                                    <Icono nombre="localTaxi" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
+                                    <View style={styles.textosSeccion}>
+                                        <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Datos de tu servicio</AppText>
+                                        <AppText style={styles.descripcionRegistro}>Define tu ruta, horario y tarifa.</AppText>
+                                    </View>
+                                </View>
                                 <SelectInput
                                     label="Ruta *"
                                     value={ruta ? `${ruta.origen} → ${ruta.destino}` : ""}
@@ -360,10 +358,15 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                                     iconLeft="map"
                                     iconRight="ArrowDown"
                                 />
+                                <View style={styles.avisoServicio}>
+                                    <Icono nombre="info" tamanio={18} color={Colors.primary} />
+                                    <AppText style={styles.textoAvisoServicio}>Selecciona la ruta en la que trabajarás para que los clientes puedan encontrarte.</AppText>
+                                </View>
                                 {errorRutas && (
                                     <Pressable
                                         onPress={() => void cargarRutas()}
                                         accessibilityRole="button"
+                                        accessibilityLabel="Reintentar carga de rutas"
                                         style={styles.reintentarRutas}
                                     >
                                         <AppText weight="semibold" style={styles.textoReintentar}>
@@ -389,33 +392,34 @@ const RegistroScreen = ({ navigation, route }: Props) => {
                                     </View>
                                 </BottomSheet>
                                 <TextInputField
-                                    label="Horario de trabajo"
+                                    label="Horario de trabajo (opcional)"
                                     value={horarioTrabajo}
                                     placeholder="Ej. Lunes a viernes, 8:00 a 17:00"
                                     onChangeText={setHorarioTrabajo}
                                     autoCapitalize="sentences"
                                     maxLength={LARGO_HORARIO}
+                                    icono="schedule"
                                 />
                                 <TextInputField
-                                    label="Precio por pasajero"
+                                    label="Precio por pasajero (opcional)"
                                     value={precioRuta}
                                     placeholder={ruta ? `Tarifa base: ${ruta.precioBase}` : "Escribe el precio..."}
                                     onChangeText={setPrecioRuta}
                                     keyboardType="decimal-pad"
+                                    icono="payments"
                                 />
-                            </>
+                                <AppText style={styles.ayudaTarifa}>Al elegir una ruta se sugiere su tarifa base. Puedes ajustarla antes de registrarte.</AppText>
+                            </View>
                         )}
 
-                        <View style={rol === "cliente" ? styles.seccionCliente : undefined}>
-                        {rol === "cliente" && (
-                            <View style={styles.encabezadoSeccion}>
+                        <View style={styles.seccionRegistro}>
+                        <View style={styles.encabezadoSeccion}>
                                 <Icono nombre="lock" color={Colors.primary} backgroundColor={Colors.primaryContainer} />
                                 <View style={styles.textosSeccion}>
                                     <AppText accessibilityRole="header" weight="bold" style={styles.tituloSeccion}>Seguridad de tu cuenta</AppText>
-                                    <AppText style={styles.descripcionCliente}>Usa al menos {LARGO_MINIMO_CONTRASENIA} caracteres.</AppText>
+                                    <AppText style={styles.descripcionRegistro}>Usa al menos {LARGO_MINIMO_CONTRASENIA} caracteres.</AppText>
                                 </View>
                             </View>
-                        )}
                         <TextInputField
                             label="Contraseña *"
                             value={contrasenia}
@@ -460,7 +464,7 @@ const RegistroScreen = ({ navigation, route }: Props) => {
 };
 
 const styles = StyleSheet.create({
-    introduccionCliente: {
+    introduccionRegistro: {
         paddingHorizontal: 24,
         paddingTop: 24,
         gap: 6,
@@ -468,19 +472,19 @@ const styles = StyleSheet.create({
         maxWidth: 560,
         alignSelf: "center",
     },
-    descripcionCliente: {
+    descripcionRegistro: {
         fontSize: 13,
         lineHeight: 20,
         color: Colors.onSurfaceVariant,
     },
-    formularioCliente: {
+    formularioRegistro: {
         width: "100%",
         maxWidth: 560,
         alignSelf: "center",
         padding: 20,
         gap: 16,
     },
-    seccionCliente: {
+    seccionRegistro: {
         backgroundColor: Colors.white,
         borderRadius: 20,
         borderWidth: 1,
@@ -587,26 +591,28 @@ const styles = StyleSheet.create({
         lineHeight: 23,
         marginTop: 8,
     },
-    contenedor: {
-        justifyContent: "center",
-        alignItems: "stretch",
-        paddingVertical: 20,
-        margin: 20,
-        backgroundColor: Colors.onPrimary,
-        borderColor: Colors.onPrimary,
-        borderWidth: 1,
-        borderRadius: 20,
-        elevation: 2,
-        shadowColor: Colors.brandDeep,
-        shadowOpacity: 0.08,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 4 },
+    avisoServicio: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 8,
+        marginHorizontal: 10,
+        marginBottom: 8,
+        padding: 12,
+        borderRadius: 14,
+        backgroundColor: Colors.primaryContainer,
     },
-    subtituloCampos: {
-        color: Colors.black,
-        fontSize: 16,
-        marginHorizontal: 20,
-        marginTop: 8,
+    textoAvisoServicio: {
+        flex: 1,
+        fontSize: 12,
+        lineHeight: 18,
+        color: Colors.onPrimaryContainer,
+    },
+    ayudaTarifa: {
+        marginHorizontal: 12,
+        marginBottom: 6,
+        fontSize: 12,
+        lineHeight: 18,
+        color: Colors.onSurfaceVariant,
     },
     contenBoton: {
         margin: 10,
