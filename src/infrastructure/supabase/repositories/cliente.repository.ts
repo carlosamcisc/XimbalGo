@@ -6,11 +6,9 @@ import type {
 import type {
   DatosPerfilCliente,
   DetalleParadero,
-  NotificacionCliente,
   ParaderoResumen,
   PerfilCliente,
   ResumenViajesCliente,
-  TipoNotificacion,
 } from "../../../modules/cliente/types";
 import { esReservaActiva, type EstadoReserva } from "../../../modules/cliente/reservas";
 
@@ -94,67 +92,13 @@ export async function obtenerResumenViajes(
   };
 }
 
-const LIMITE_NOTIFICACIONES = 50;
-
-export async function obtenerNotificaciones(
-  usuarioId: string
-): Promise<NotificacionCliente[]> {
-  const { data, error } = await supabase
-    .from("notificaciones")
-    .select("id, tipo, titulo, mensaje, leida, fecha_envio, reserva_id")
-    .eq("usuario_id", usuarioId)
-    .order("fecha_envio", { ascending: false })
-    .limit(LIMITE_NOTIFICACIONES);
-
-  if (error) {
-    throw error;
-  }
-
-  return data.map((notificacion) => ({
-    id: notificacion.id,
-    tipo: notificacion.tipo as TipoNotificacion,
-    titulo: notificacion.titulo,
-    mensaje: notificacion.mensaje,
-    leida: notificacion.leida,
-    fecha: notificacion.fecha_envio,
-    reservaId: notificacion.reserva_id,
-  }));
-}
-
-/** Sin `notificacionId` marca como leídas todas las del usuario. */
-export async function marcarNotificacionesLeidas(
-  usuarioId: string,
-  notificacionId?: string
-): Promise<void> {
-  let consulta = supabase
-    .from("notificaciones")
-    .update({ leida: true })
-    .eq("usuario_id", usuarioId)
-    .eq("leida", false);
-
-  if (notificacionId) {
-    consulta = consulta.eq("id", notificacionId);
-  }
-
-  const { error } = await consulta;
-
-  if (error) {
-    throw error;
-  }
-}
-
 let suscripciones = 0;
 
-/** Avisa cuando llegan notificaciones o cambian las reservas del cliente. */
+/** Las reservas actualizan el resumen; la bandeja tiene su propia suscripción. */
 export function escucharCliente(clienteId: string, onChange: () => void) {
   // Nombre único por suscripción: ver `escucharReservasCliente`.
   const channel = supabase
     .channel(`cliente-${clienteId}-${++suscripciones}`)
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "notificaciones", filter: `usuario_id=eq.${clienteId}` },
-      onChange
-    )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "reservas", filter: `cliente_id=eq.${clienteId}` },

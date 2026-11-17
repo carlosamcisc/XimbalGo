@@ -1,3 +1,4 @@
+import { taxiCompatible, MENSAJE_TAXI_INCOMPATIBLE } from "../../modules/cliente/compatibilidadTaxi";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { crearReserva } from "../../infrastructure/supabase/repositories/reservas.repository";
 import {
@@ -67,6 +68,11 @@ export function useClienteReservar(vehiculoId: string) {
       reservandoRef.current = true;
       setReservando(true);
       try {
+        const actual = await obtenerTaxiReserva(vehiculoId);
+        setTaxi(actual);
+        if (!taxiCompatible(actual, datos.origen, datos.destino)) {
+          throw new Error(MENSAJE_TAXI_INCOMPATIBLE);
+        }
         return await crearReserva({
           vehiculoId,
           destino: datos.destino,

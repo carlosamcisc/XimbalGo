@@ -22,7 +22,7 @@ function entorno() {
     removeItem: async k => valores.delete(k),
   };
   const location = {
-    Accuracy: { Balanced: 3 },
+    Accuracy: { Balanced: 3, High: 4 },
     getBackgroundPermissionsAsync: async () => ({ granted: true }),
     hasStartedLocationUpdatesAsync: async () => iniciado,
     startLocationUpdatesAsync: async () => { iniciado = true; eventos.push('iniciar'); },

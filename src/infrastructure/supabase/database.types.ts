@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      preferencias_notificaciones: {
+        Row: { usuario_id: string; push_habilitado: boolean; reservas: boolean; llegada: boolean; viajes: boolean }
+        Insert: { usuario_id: string; push_habilitado?: boolean; reservas?: boolean; llegada?: boolean; viajes?: boolean }
+        Update: { push_habilitado?: boolean; reservas?: boolean; llegada?: boolean; viajes?: boolean }
+        Relationships: [{ foreignKeyName: "preferencias_notificaciones_usuario_id_fkey"; columns: ["usuario_id"]; isOneToOne: true; referencedRelation: "usuarios"; referencedColumns: ["id"] }]
+      }
+      dispositivos_push: {
+        Row: {
+          id: string
+          usuario_id: string
+          instalacion_id: string
+          expo_push_token: string
+          plataforma: string
+          proyecto_id: string
+          entorno: string
+          activo: boolean
+          creado_en: string
+          actualizado_en: string
+        }
+        Insert: {
+          id?: string
+          usuario_id: string
+          instalacion_id: string
+          expo_push_token: string
+          plataforma: string
+          proyecto_id: string
+          entorno: string
+          activo?: boolean
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: {
+          id?: string
+          usuario_id?: string
+          instalacion_id?: string
+          expo_push_token?: string
+          plataforma?: string
+          proyecto_id?: string
+          entorno?: string
+          activo?: boolean
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispositivos_push_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      envios_push: {
+        Row: {
+          token_destino: string
+          proyecto_id: string
+          entorno: string
+          bloqueo_id: string | null
+          intentos_recibo: number
+          id: string
+          notificacion_id: string
+          dispositivo_id: string
+          estado: string
+          intentos: number
+          proximo_intento_en: string
+          bloqueado_hasta: string | null
+          ticket_expo: string | null
+          ultimo_error: string | null
+          creado_en: string
+          enviado_en: string | null
+          confirmado_en: string | null
+        }
+        Insert: {
+          token_destino: string
+          proyecto_id: string
+          entorno: string
+          bloqueo_id?: string | null
+          intentos_recibo?: number
+          id?: string
+          notificacion_id: string
+          dispositivo_id: string
+          estado?: string
+          intentos?: number
+          proximo_intento_en?: string
+          bloqueado_hasta?: string | null
+          ticket_expo?: string | null
+          ultimo_error?: string | null
+          creado_en?: string
+          enviado_en?: string | null
+          confirmado_en?: string | null
+        }
+        Update: {
+          token_destino?: string
+          proyecto_id?: string
+          entorno?: string
+          bloqueo_id?: string | null
+          intentos_recibo?: number
+          id?: string
+          notificacion_id?: string
+          dispositivo_id?: string
+          estado?: string
+          intentos?: number
+          proximo_intento_en?: string
+          bloqueado_hasta?: string | null
+          ticket_expo?: string | null
+          ultimo_error?: string | null
+          creado_en?: string
+          enviado_en?: string | null
+          confirmado_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_push_notificacion_id_fkey"
+            columns: ["notificacion_id"]
+            isOneToOne: false
+            referencedRelation: "notificaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_push_dispositivo_id_fkey"
+            columns: ["dispositivo_id"]
+            isOneToOne: false
+            referencedRelation: "dispositivos_push"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       administradores: {
         Row: {
           id: string
@@ -343,6 +471,7 @@ export type Database = {
       }
       reservas: {
         Row: {
+          llegada_notificada_en: string | null
           abordado_en: string | null
           asiento_id: string | null
           asientos_ofrecidos: number | null
@@ -365,6 +494,7 @@ export type Database = {
           vehiculo_id: string
         }
         Insert: {
+          llegada_notificada_en?: string | null
           abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
@@ -387,6 +517,7 @@ export type Database = {
           vehiculo_id: string
         }
         Update: {
+          llegada_notificada_en?: string | null
           abordado_en?: string | null
           asiento_id?: string | null
           asientos_ofrecidos?: number | null
@@ -751,6 +882,29 @@ export type Database = {
       }
     }
     Functions: {
+      reclamar_envios_push: {
+        Args: { p_proyecto_id: string; p_entorno: string; p_recibos?: boolean; p_limite?: number }
+        Returns: {
+          id: string
+          bloqueo_id: string
+          token_destino: string
+          notificacion_id: string
+          reserva_id: string | null
+          tipo: string
+          titulo: string
+          mensaje: string
+          ticket_expo: string | null
+          vence_en: string
+        }[]
+      }
+      resolver_envio_push: {
+        Args: { p_id: string; p_bloqueo_id: string; p_accion: string; p_ticket?: string; p_codigo?: string }
+        Returns: boolean
+      }
+      invocar_procesador_push: {
+        Args: never
+        Returns: number
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -1071,6 +1225,28 @@ export type Database = {
           id: string
           nombre: string
           referencia: string
+        }[]
+      }
+      obtener_reserva_taxista: {
+        Args: { p_reserva_id: string }
+        Returns: {
+          abordado_en: string | null
+          asientos_ofrecidos: number
+          cantidad_asientos: number
+          destino: string
+          estado: string
+          fecha_hora_reserva: string
+          fecha_hora_viaje: string
+          id: string
+          matricula: string
+          motivo_taxista: string
+          nombre_cliente: string
+          notas: string
+          numero_asiento: number
+          numeros_asientos: number[]
+          origen: string
+          precio: number
+          telefono_cliente: string
         }[]
       }
       obtener_reservas_taxista: {

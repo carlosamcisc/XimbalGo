@@ -5,23 +5,39 @@
     "scheme": "ximbalgo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.carlosmay.ximbalgo",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.carlosmay.XimbalGo"
+      "package": "com.carlosmay.ximbalgo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#34618D",
+          "defaultChannel": "reservas"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -38,13 +54,19 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos.",
+          "locationWhenInUsePermission": "Permite que XimbalGo use tu ubicación para encontrar taxis y paraderos cercanos, y para compartirla con un familiar cuando tú lo decidas.",
           "locationAlwaysAndWhenInUsePermission": "Permite que Ximbal Go actualice tu ubicación mientras estás en servicio o compartiéndola, incluso con la pantalla bloqueada.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4cd2f8ae-8267-4756-a608-c7fe9711ccc4"
+      }
+    },
+    "owner": "ximbalgos-team"
   }
 }

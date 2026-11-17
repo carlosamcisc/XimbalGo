@@ -7,7 +7,7 @@ Este documento describe el trabajo de la rama `feature/XG-0017-Calculo-ETA-Maps`
 - En Inicio, cada paradero de **Paraderos cercanos a ti** muestra «850 m · 11 min caminando · 3 min en moto». La distancia es por calle caminando, y la lista se ordena por ella.
 - Si el paradero está a más de 2 km caminando, ya no se muestra el tiempo caminando: se muestra la distancia y el tiempo en moto («17.9 km · 22 min en moto»).
 - El detalle del paradero repite esos datos («A 850 m · 11 min caminando · 3 min en moto de ti») cuando se abre desde Inicio.
-- Las distancias no coinciden exactamente con Google Maps: GraphHopper usa el mapa de OpenStreetMap, y a pie puede tomar atajos que un auto no puede. Google Maps abre en modo auto.
+- GraphHopper usa OpenStreetMap para las rutas. Caminando puede tomar atajos que un auto no puede; el mapa base se muestra con MapLibre y OpenFreeMap.
 - Si GraphHopper no responde, falla una ruta o la Edge Function no está disponible, se muestra la distancia en línea recta sin tiempos, como antes.
 - La distancia se mide desde el GPS del cliente, igual que antes.
 
@@ -46,7 +46,7 @@ npx supabase functions deploy distancias-paraderos
 
 ## Límites
 
-- **El plan gratis de GraphHopper Cloud es solo para uso no comercial** y solo incluye `car`, `bike` y `foot`: la moto se aproxima con `car`. Sirve para desarrollo; en producción se usa el servidor propio.
+- **El plan gratis de GraphHopper Cloud es solo para uso no comercial** y solo incluye `car`, `bike` y `foot`: la moto se aproxima con `car`. Puede usarse dentro de su cuota para el proyecto no comercial; un servidor propio es una alternativa si se necesita más capacidad.
 - Cada consulta usa 10 rutas (5 paraderos × 2 perfiles). Si cada ruta cuesta 1 crédito, los 500 créditos diarios alcanzan para unas 50 consultas sin caché. Si se acaban, la app muestra la línea recta.
 - La lista completa de paraderos sigue sin distancias.
 

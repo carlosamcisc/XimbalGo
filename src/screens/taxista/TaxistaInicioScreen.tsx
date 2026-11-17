@@ -23,6 +23,7 @@ import { pantallaDePestania } from "./navegacion";
 import DetalleReservaTaxista from "./DetalleReservaTaxista";
 import PanelesReservaTaxista from "./PanelesReservaTaxista";
 import Divider from "../../components/Divider";
+import MapaViajeTaxista from "./MapaViajeTaxista";
 
 type Props = NativeStackScreenProps<TaxistaStackParamList, "TaxistaInicio">;
 
@@ -241,6 +242,7 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                         </Pressable>
                     </Card>
                 )}
+                {!reservaId && <Card style={styles.tarjeta}><MapaViajeTaxista rutaId={perfil.ruta?.id} /></Card>}
 
                 <View style={styles.seccion}>
                     <Icono nombre="bookMarks" tamanio={25} color={Colors.primary} />
@@ -315,6 +317,13 @@ const TaxistaInicioScreen = ({ navigation }: Props) => {
                         saludoTextColor={Colors.white}
                         buenasTextColor={Colors.white}
                     />
+                    <View style={{ paddingHorizontal: 20 }}>
+                        <Button
+                            titulo={taxista.bandeja.noLeidas > 0 ? `Notificaciones (${taxista.bandeja.noLeidas} sin leer)` : "Notificaciones"}
+                            icono="notifications" posicionIcono="izquierda"
+                            onPress={() => navigation.navigate("TaxistaNotificaciones")}
+                        />
+                    </View>
                     {renderContenido()}
                 </ScrollView>
             </View>

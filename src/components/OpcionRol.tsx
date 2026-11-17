@@ -50,6 +50,10 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 16,
         elevation: 2,
+        shadowColor: Colors.brandDeep,
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
     },
     opcionSeleccionada: {
         borderColor: Colors.primary,

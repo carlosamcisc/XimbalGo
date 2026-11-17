@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Ubicación compartida · Xímbal Go</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.css">
   <style>
     :root {
       --primary: #123A8C;
@@ -78,11 +78,12 @@
   <section id="panel" aria-live="polite">
     <div id="estado"><span id="punto"></span><span id="textoEstado">Cargando...</span></div>
     <p id="detalle"></p>
-    <a id="abrir" target="_blank" rel="noopener" hidden>Abrir en Google Maps</a>
+    <a id="abrir" target="_blank" rel="noopener" hidden>Abrir en OpenStreetMap</a>
   </section>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script>
+  <script type="module">
+    import * as maplibregl from "https://unpkg.com/maplibre-gl@6.16.0/dist/maplibre-gl.mjs";
+
     // El flujo de GitHub Pages reemplaza estos valores (ver
     // docs/cliente-compartir-ubicacion.md). La key publicable puede ser
     // pública: la RPC solo devuelve la ubicación con el id del enlace.
@@ -97,11 +98,14 @@
     const id = new URLSearchParams(location.search).get("id");
     const $ = (selector) => document.querySelector(selector);
 
-    const mapa = L.map("mapa", { zoomControl: true }).setView([20.97, -89.62], 12);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(mapa);
+    const mapa = new maplibregl.Map({
+      container: "mapa",
+      style: "https://tiles.openfreemap.org/styles/liberty",
+      center: [-89.62, 20.97],
+      zoom: 12,
+      attributionControl: true,
+    });
+    mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
     let marcador = null;
     // Se sigue a la persona hasta que el familiar mueve el mapa.
@@ -149,16 +153,18 @@
         return false;
       }
 
-      const posicion = [datos.latitud, datos.longitud];
+      const posicion = [datos.longitud, datos.latitud];
       if (!marcador) {
-        marcador = L.marker(posicion, {
-          icon: L.divIcon({ className: "", html: '<div class="marcador"></div>', iconSize: [22, 22] }),
-          title: nombre,
-        }).addTo(mapa);
-        mapa.setView(posicion, ZOOM);
+        const elemento = document.createElement("div");
+        elemento.className = "marcador";
+        elemento.title = nombre;
+        elemento.setAttribute("aria-label", nombre);
+        marcador = new maplibregl.Marker({ element: elemento, anchor: "center" })
+          .setLngLat(posicion).addTo(mapa);
+        mapa.jumpTo({ center: posicion, zoom: ZOOM });
       } else {
-        marcador.setLatLng(posicion);
-        if (seguir) mapa.panTo(posicion);
+        marcador.setLngLat(posicion);
+        if (seguir) mapa.easeTo({ center: posicion, duration: 500 });
       }
 
       const minutos = (Date.now() - new Date(datos.ubicacion_actualizada_en).getTime()) / 60_000;
@@ -170,7 +176,7 @@
           (atrasada ? ` Puede que ${nombre} haya cerrado la app o no tenga internet.` : "")
       );
       const abrir = $("#abrir");
-      abrir.href = `https://www.google.com/maps/search/?api=1&query=${datos.latitud},${datos.longitud}`;
+      abrir.href = `https://www.openstreetmap.org/?mlat=${datos.latitud}&mlon=${datos.longitud}#map=16/${datos.latitud}/${datos.longitud}`;
       abrir.hidden = false;
       return true;
     }

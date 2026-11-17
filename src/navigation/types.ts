@@ -29,7 +29,7 @@ export type ClienteStackParamList ={
         distanciaMetros?: number;
     };
     /** Detalle de una reservación con el seguimiento del taxi. */
-    ClienteReserva: { reservaId: string };
+    ClienteReserva: { reservaId: string; notificacionId?: string };
     /** Todos los paraderos activos. */
     ClienteParaderos: undefined;
     /** La distancia y los tiempos llegan desde los paraderos cercanos. */
@@ -44,6 +44,7 @@ export type ClienteStackParamList ={
     ClienteRutas: { origen?: string; destino?: string } | undefined;
     ClientePerfil: undefined;
     ClienteNotificaciones: undefined;
+    ClientePreferenciasNotificaciones: undefined;
     ClienteSeguridad: undefined;
     ClienteAyuda: undefined;
     ClienteYo: undefined;
@@ -52,6 +53,9 @@ export type ClienteStackParamList ={
 export type TaxistaStackParamList = {
     TaxistaInicio: undefined;
     TaxistaViajes: undefined;
+    TaxistaReserva: { reservaId: string; notificacionId?: string };
+    TaxistaNotificaciones: undefined;
+    TaxistaPreferenciasNotificaciones: undefined;
     TaxistaVehiculo: undefined;
     TaxistaPerfil: undefined;
 };
@@ -59,3 +63,5 @@ export type TaxistaStackParamList = {
 export type AdminStackParamList = {
     AdminInicio: undefined;
 };
+
+export type AppStackParamList = AuthStackParamList & ClienteStackParamList & TaxistaStackParamList & AdminStackParamList;

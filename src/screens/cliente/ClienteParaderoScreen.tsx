@@ -8,6 +8,7 @@ import Button from "../../components/Button";
 import Card from "../../components/Card";
 import EncabezadoPantalla from "../../components/EncabezadoPantalla";
 import FotoParadero from "../../components/FotoParadero";
+import RutaParadero from "../../components/RutaParadero";
 import { Icono, type NombreIcono } from "../../components/Icono";
 import { ToastMessage } from "../../components/ToastMessaje";
 import Colors from "../../theme/colors";
@@ -140,14 +141,14 @@ const ClienteParaderoScreen = ({ navigation, route }: Props) => {
             valor={paradero.referencia?.trim() || "Sin referencia registrada"}
           />
         </Card>
+        {coordenadas && <RutaParadero
+          key={paradero.id}
+          id={paradero.id}
+          nombre={paradero.nombre}
+          destino={coordenadas}
+          onAbrirMapaExterno={() => void verEnMapa()}
+        />}
         <View style={styles.acciones}>
-          <Button
-            titulo="Ver en el mapa"
-            color={Colors.brandDeep}
-            borderColor={Colors.brandDeep}
-            disabled={!coordenadas}
-            onPress={() => void verEnMapa()}
-          />
           <Button titulo="Seleccionar como origen" onPress={seleccionarComoOrigen} />
         </View>
       </>

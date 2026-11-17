@@ -1,14 +1,17 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
-// Extiende app.json con la key de Google Maps, que vive en `.env` para no
-// subirla al repositorio. Solo se usa al compilar: queda en el manifest.
-export default ({ config }: ConfigContext): ExpoConfig => ({
-  ...(config as ExpoConfig),
-  plugins: [
-    ...(config.plugins ?? []),
-    [
-      "react-native-maps",
-      { androidGoogleMapsApiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY },
-    ],
-  ],
-});
+export default ({ config }: ConfigContext): ExpoConfig => {
+  const pushEnvironment = process.env.EXPO_PUBLIC_PUSH_ENVIRONMENT ?? "development";
+  if (!["development", "preview", "production"].includes(pushEnvironment)) {
+    throw new Error("EXPO_PUBLIC_PUSH_ENVIRONMENT debe ser development, preview o production.");
+  }
+  return {
+    ...(config as ExpoConfig),
+    android: {
+      ...config.android,
+      ...(process.env.GOOGLE_SERVICES_JSON ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON } : {}),
+    },
+    extra: { ...config.extra, pushEnvironment },
+    plugins: [...(config.plugins ?? []), "@maplibre/maplibre-react-native"],
+  };
+};

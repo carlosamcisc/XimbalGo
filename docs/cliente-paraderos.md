@@ -15,7 +15,7 @@ Este documento describe el trabajo de la rama `feature/XG-0012-Mostrar-informaci
 - **Nombre**, también como título del encabezado.
 - **Ubicación**: la dirección obtenida por geocodificación inversa de las coordenadas del paradero. Si no se obtiene, se muestran las coordenadas. Al llegar desde los cercanos se añade la distancia al cliente («A 350 m de ti»).
 - **Referencia para llegar** (`paraderos.referencia`), o «Sin referencia registrada».
-- **Ver en el mapa** abre el punto en la app de mapas del dispositivo (`geo:` en Android, Apple Maps en iOS) mediante `expo-linking`. Si no hay una app que lo acepte, abre Google Maps en el navegador. Se deshabilita si el paradero no tiene ubicación.
+- **Ver en el mapa** abre el punto en la app de mapas del dispositivo (`geo:` en Android, Apple Maps en iOS) mediante `expo-linking`. Si no hay una app que lo acepte, abre OpenStreetMap en el navegador. Se deshabilita si el paradero no tiene ubicación.
 - **Seleccionar como origen** regresa a Inicio con `navigation.popTo("ClienteInicio", { paraderoOrigen })`. Inicio lo aplica con las mismas reglas que antes (si coincide con el destino, se pide otro destino), muestra el aviso y limpia el parámetro.
 - Estados de carga y de error con «Reintentar», y deslizar hacia abajo para recargar. Si el paradero se desactivó, se informa que ya no está disponible.
 

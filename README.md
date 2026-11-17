@@ -40,7 +40,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 | Navegación | React Navigation 7 (native stack) |
 | Backend | Supabase: Auth, Postgres + PostGIS, RLS, RPC y Realtime |
 | Ubicación | `expo-location` |
-| Mapa | Google Maps nativo con `react-native-maps` (Maps SDK for Android) |
+| Mapa | MapLibre Native con OpenFreeMap (datos de OpenStreetMap), sin API key |
 | Animaciones | `lottie-react-native` |
 | Sesión local | `@react-native-async-storage/async-storage` |
 
@@ -50,6 +50,7 @@ La app conecta a **clientes** que buscan un taxi colectivo con **taxistas** que 
 
 - Node.js y npm.
 - Android Studio con un emulador o un dispositivo Android con depuración USB.
+- Para iOS: una Mac con Xcode, o una cuenta de Expo para compilar en la nube con EAS Build (ver [iOS](#ios)).
 - Un proyecto de Supabase con las migraciones de [supabase/migrations/](./supabase/migrations/) aplicadas.
 
 El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie), por lo que **no funciona en Expo Go**: se ejecuta como build de desarrollo.
@@ -64,10 +65,9 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    ```env
    EXPO_PUBLIC_SUPABASE_URL=
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-   GOOGLE_MAPS_ANDROID_API_KEY=
    EXPO_PUBLIC_URL_UBICACION_COMPARTIDA=
    ```
-3. Configura la key de Google Maps (ver [Google Maps](#google-maps)).
+3. Revisa [Mapas y rutas](#mapas-y-rutas): el mapa no necesita clave; GraphHopper se configura en Supabase.
 4. En Supabase, agrega `ximbalgo://recuperar-contrasena` a las URLs de redirección permitidas de Auth para que funcione la recuperación de contraseña.
 5. Para aplicar migraciones pendientes, revisa primero el proyecto enlazado:
    ```bash
@@ -75,30 +75,88 @@ El proyecto usa `expo-dev-client` y módulos nativos (ubicación, mapas, Lottie)
    npx supabase db push
    ```
 
-### Google Maps
+### Mapas y rutas
 
-El mapa usa Google Maps nativo con `react-native-maps` y solo se compila para Android.
+Android e iOS usan [MapLibre React Native](https://maplibre.org/maplibre-react-native/docs/setup/expo/) con el estilo Liberty de [OpenFreeMap](https://openfreemap.org/). Los mapas no necesitan cuenta ni API key. La atribución a OpenStreetMap y OpenMapTiles permanece accesible en el control del mapa.
 
-1. En Google Cloud, en el proyecto de la app, habilita **Maps SDK for Android**.
-2. En *Credenciales*, restringe la API key:
-   - **Restricción de aplicación**: *Apps para Android*, con el paquete `com.carlosmay.XimbalGo` y la huella SHA-1 de cada keystore que firme la app. La del keystore de debug (también firma el release mientras no haya uno propio) se obtiene con `cd android && ./gradlew signingReport`.
-   - **Restricción de API**: solo *Maps SDK for Android*.
-3. Pon la key en `GOOGLE_MAPS_ANDROID_API_KEY` del `.env`. [app.config.ts](./app.config.ts) la lee al compilar y el plugin de `react-native-maps` la escribe en el `AndroidManifest.xml`; no lleva el prefijo `EXPO_PUBLIC_` porque la app no la usa en JavaScript.
-4. Regenera la carpeta nativa y compila: `npx expo prebuild --platform android --clean` y `npm run android`.
+- [MapaSeguimiento.tsx](./src/components/MapaSeguimiento.tsx) muestra taxi, cliente, abordaje y paradero. Actualiza los marcadores sin recentrar mientras el usuario explora; el botón de centrar encuadra los puntos actuales.
+- [app.config.ts](./app.config.ts) instala el plugin nativo de MapLibre. Después de instalar las dependencias hay que generar un nuevo cliente nativo: un build anterior no incluye MapLibre.
+- En Android, regenera con `npx expo prebuild --platform android --clean` y compila con `npm run android`. Las carpetas nativas son generadas y no se versionan.
+- En iOS, genera una compilación con EAS o usa macOS y Xcode (ver más abajo).
+- La página de ubicación compartida usa MapLibre GL JS con OpenFreeMap. Los enlaces de navegador abren OpenStreetMap; el botón de la app intenta primero abrir la aplicación de mapas del dispositivo.
+- Las claves antiguas de Maps ya no se leen y pueden quitarse del `.env` y de EAS.
 
-Si el mapa sale gris, revisa `adb logcat | grep -i "maps"`: casi siempre es la SHA-1 o el paquete de la restricción.
+**GraphHopper** sigue calculando distancias y tiempos a paraderos desde la Edge Function `distancias-paraderos`. Su clave va como secreto `GRAPHHOPPER_API_KEY` en Supabase, nunca en el cliente. Ver [configuración y límites](./docs/distancias-paraderos.md). El plan gratuito tiene 500 créditos diarios para uso no comercial; la caché reduce llamadas y, si falla el servicio o se agota la cuota, se muestran distancias en línea recta sin tiempos. Mover el mapa y actualizar marcadores no llama a GraphHopper.
+
+Esta migración conserva las funciones actuales: el seguimiento muestra posiciones; no añade navegación giro a giro ni una línea de ruta por calles.
+
+### iOS
+
+En Windows no se puede compilar para iOS de forma local (`npm run ios` requiere macOS y Xcode). Se compila en la nube con EAS Build usando los perfiles de [eas.json](./eas.json):
+
+1. Instala EAS CLI e inicia sesión con la cuenta de Expo: `npm install -g eas-cli` y `eas login`.
+2. Enlaza el proyecto la primera vez: `eas init`.
+3. Sube las variables del `.env` a EAS, porque el `.env` no se sube al repositorio ni a EAS. Para cada variable y cada ambiente (`development`, `preview`, `production`): `eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value ... --environment development`. Las `EXPO_PUBLIC_*` pueden ser visibilidad *plaintext*. La clave de GraphHopper permanece en Supabase.
+4. Compila para el simulador de iOS (no requiere cuenta de Apple Developer): `eas build -p ios --profile development`. El simulador solo corre en macOS: en una Mac, instálalo con `eas build:run -p ios` o arrastra el `.app` del `.tar.gz` descargado al simulador.
+
+Para distribuir con EAS mediante TestFlight, App Store o instalación ad hoc se necesita la membresía Apple Developer. Para ad hoc, registra el dispositivo con `eas device:create` y usa un perfil sin `"simulator": true`.
+
+#### IPA sin firma para uso personal
+
+El perfil `ios-unsigned` compila una app de iPhone en modo Release en los servidores macOS de EAS y genera `app.ipa` sin certificados de Apple. La configuración está en [.eas/build/ios-unsigned.yml](./.eas/build/ios-unsigned.yml) y el empaquetado en [scripts/build-ios-unsigned.cjs](./scripts/build-ios-unsigned.cjs). Incluye el bundle JavaScript para funcionar sin Metro. Este perfil no genera un build de simulador ni envía la app a App Store.
+
+Desde PowerShell, en la carpeta del proyecto:
+
+```powershell
+npx.cmd eas-cli@latest login
+npx.cmd eas-cli@latest init
+```
+
+`init` se ejecuta solo al enlazar el proyecto por primera vez. En el panel del proyecto en Expo, crea estas variables en el ambiente **production**, con los valores de tu `.env`:
+
+```text
+EXPO_PUBLIC_SUPABASE_URL
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+EXPO_PUBLIC_URL_UBICACION_COMPARTIDA
+```
+
+Las tres pueden tener visibilidad `plaintext`: son configuración pública del cliente. La clave de GraphHopper se conserva como secreto de Supabase. El script detiene la compilación si faltan estas variables, sin imprimir sus valores.
+
+Para generar el IPA:
+
+```powershell
+npx.cmd eas-cli@latest build --platform ios --profile ios-unsigned
+```
+
+Al finalizar, descarga `app.ipa` desde el enlace del build de EAS. No se necesita una membresía Apple Developer para esta compilación sin firma; requiere una cuenta de Expo y cuota de compilación disponible. El archivo todavía debe firmarse antes de instalarlo.
+
+Para uso personal desde Windows, [Sideloadly](https://sideloadly.io/) permite firmar e instalar el IPA con una cuenta gratuita de Apple. Conecta el iPhone por USB, confía en la computadora, carga el IPA en Sideloadly y sigue sus pasos de firma e instalación. La cuenta de Apple se introduce en esa herramienta, nunca en el repositorio ni en las variables de EAS. Activa el modo desarrollador del iPhone si el sistema lo solicita. Con una cuenta gratuita la firma caduca a los siete días y debe renovarse para continuar usando la app.
+
+Validación disponible desde Windows: sintaxis del script y lectura de JSON/YAML. La compilación nativa y el funcionamiento en iPhone deben comprobarse con el primer build de EAS y la instalación del IPA firmado.
+
+Referencias: [compilaciones personalizadas](https://docs.expo.dev/custom-builds/get-started/), [withoutCredentials](https://docs.expo.dev/eas/json/#withoutcredentials) y [Sideloadly](https://sideloadly.io/).
+
+Detalles de iOS que ya resuelve el código:
+
+- **Toasts**: iOS no tiene `ToastAndroid`. [ToastMessaje.tsx](./src/components/ToastMessaje.tsx) dibuja su propio toast con `ToastHost` (montado en [App.tsx](./App.tsx)) dentro de un `FullWindowOverlay`, para que se vea aunque haya un `Modal` abierto. Usa siempre `ToastMessage.show`, nunca `ToastAndroid`.
+- **Sombras**: `elevation` solo funciona en Android. Junto a `elevation` van `shadowColor`, `shadowOpacity`, `shadowRadius` y `shadowOffset`.
+- **Fuentes**: con Inter el peso va en `fontFamily` (`InterMedium`, `InterSemiBold`, `InterBold`) o en la prop `weight` de `AppText`, nunca en `fontWeight`: iOS cambia a la fuente del sistema si se combinan.
+- **Ícono**: [assets/app-icon.png](./assets/app-icon.png) es cuadrado (1024×1024) y sin transparencia, como lo exige iOS.
 
 ## Ejecución del proyecto
 
 | Acción | Comando |
 |---|---|
 | Compilar e instalar el build de desarrollo en Android | `npm run android` (equivale a `npx expo run:android`) |
+| Compilar el build de desarrollo para el simulador de iOS (en la nube) | `eas build -p ios --profile development` |
+| Compilar e instalar en iOS desde una Mac | `npm run ios` (equivale a `npx expo run:ios`) |
 | Iniciar solo el servidor de Metro (con el build ya instalado) | `npm start` |
 | Generar e instalar el APK de release | `npx expo run:android --variant release` |
 | Verificar tipos | `npm run typecheck` |
+| Ejecutar pruebas de mapas y ubicación | `npm test` |
 | Regenerar la carpeta nativa `android/` | `npx expo prebuild --platform android --clean` |
 
-Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). La carpeta `android/` no se versiona.
+Nota: la carpeta nativa solo se regenera si hubo cambios en módulos nativos , en [app.json](./app.json) o en [app.config.ts](./app.config.ts). Las carpetas `android/` e `ios/` no se versionan.
 
 ## Arquitectura del proyecto
 

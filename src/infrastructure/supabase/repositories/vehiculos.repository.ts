@@ -5,6 +5,7 @@ import type {
   TaxiDisponible,
   TaxiReserva,
 } from "../../../modules/cliente/ubicacion";
+import { obtenerTaxistasConRuta } from "./rutas.repository";
 import { ubicacionVigente } from "../../../modules/taxista/types";
 
 type Vehiculo = Awaited<ReturnType<typeof obtenerVehiculos>>[number];
@@ -85,7 +86,12 @@ export async function obtenerTaxisDisponibles(
     throw error;
   }
 
+  const taxistas = await obtenerTaxistasConRuta();
+  const rutasPorVehiculo = new Map(taxistas.flatMap((taxista) =>
+    taxista.vehiculos.map((vehiculo) => [vehiculo.id, taxista] as const)));
   return data.map((taxi) => ({
+    origenRuta: rutasPorVehiculo.get(taxi.vehiculo_id)?.origen ?? null,
+    destinoRuta: rutasPorVehiculo.get(taxi.vehiculo_id)?.destino ?? null,
     id: taxi.vehiculo_id,
     matricula: taxi.matricula,
     nombreTaxista: taxi.nombre_taxista,
@@ -104,7 +110,7 @@ export async function obtenerTaxiReserva(vehiculoId: string): Promise<TaxiReserv
     .select(`
       id, matricula, marca, modelo, activo,
       taxista:taxistas!vehiculos_taxista_id_fkey(
-        nombres, apellidos, precio_ruta, taxista_activo, ubicacion_actualizada_en,
+        nombres, apellidos, precio_ruta, punto_partida, punto_destino, taxista_activo, ubicacion_actualizada_en,
         ruta:rutas!taxistas_ruta_id_fkey(nombre)
       ),
       asientos!asientos_vehiculo_id_fkey(estado)
@@ -126,6 +132,8 @@ export async function obtenerTaxiReserva(vehiculoId: string): Promise<TaxiReserv
     matricula: data.matricula,
     vehiculo: [data.marca, data.modelo].filter(Boolean).join(" ") || null,
     nombreTaxista: `${taxista.nombres} ${taxista.apellidos}`.trim(),
+    origenRuta: taxista.punto_partida,
+    destinoRuta: taxista.punto_destino,
     ruta: taxista.ruta?.nombre ?? null,
     precio: taxista.precio_ruta,
     asientosDisponibles: data.asientos.filter((asiento) => asiento.estado === "disponible").length,

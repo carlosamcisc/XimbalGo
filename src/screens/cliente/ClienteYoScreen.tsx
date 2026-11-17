@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AppState, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from "react-native";
+import { AppState, Modal, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from "react-native";
 import AppText from "../../components/AppText";
 import Button from "../../components/Button";
 import Card from "../../components/Card";
@@ -37,6 +37,7 @@ const ClienteYoScreen = ({ navigation }: Props) => {
     const { ubicacion, direccion, buscando, error, reintentar } = useClienteYo();
     const [minutos, setMinutos] = useState(DURACIONES_COMPARTIR[1].minutos);
     const [ahora, setAhora] = useState(Date.now());
+    const [mapaMaximizado, setMapaMaximizado] = useState(false);
     const { height } = useWindowDimensions();
     const minutosRestantes = compartida
         ? Math.max(0, Math.ceil((Date.parse(compartida.expiraEn) - ahora) / 60_000))
@@ -140,6 +141,16 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                         style={[styles.mapa, { height: Math.max(280, Math.min(460, height * 0.42)) }]}
                         cliente={ubicacion ? { coordenadas: ubicacion, titulo: "Tú" } : null}
                     />
+                    <Pressable
+                        onPress={() => setMapaMaximizado(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Maximizar mapa"
+                        accessibilityHint="Abre el mapa a pantalla completa para moverlo y cambiar el zoom"
+                        style={({ pressed }) => [styles.maximizarMapa, pressed && styles.presionado]}
+                    >
+                        <Icono nombre="fullscreen" tamanio={24} color={Colors.primary} />
+                        <AppText weight="semibold" style={styles.textoMaximizar}>Maximizar mapa</AppText>
+                    </Pressable>
 
                     <Card style={[styles.card, compartida && styles.cardActiva]}>
                         {compartida ? (
@@ -237,6 +248,33 @@ const ClienteYoScreen = ({ navigation }: Props) => {
                 </ScrollView>
             </View>
             <BottomTabBar tabs={TABS_CLIENTE} activeTab="yo" onPressTab={handlePressTab} />
+            <Modal
+                visible={mapaMaximizado}
+                animationType="slide"
+                presentationStyle="fullScreen"
+                onRequestClose={() => setMapaMaximizado(false)}
+            >
+                <SafeAreaView style={styles.mapaModal} edges={['top', 'bottom', 'left', 'right']}>
+                    <View style={styles.encabezadoMapa}>
+                        <AppText weight="bold" style={styles.tituloMapa}>Mi ubicación</AppText>
+                        <Pressable
+                            onPress={() => setMapaMaximizado(false)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Cerrar mapa a pantalla completa"
+                            style={({ pressed }) => [styles.cerrarMapa, pressed && styles.presionado]}
+                        >
+                            <Icono nombre="close" tamanio={24} color={Colors.white} />
+                            <AppText weight="semibold" style={styles.estadoTexto}>Cerrar</AppText>
+                        </Pressable>
+                    </View>
+                    {mapaMaximizado && (
+                        <MapaSeguimiento
+                            style={styles.mapaCompleto}
+                            cliente={ubicacion ? { coordenadas: ubicacion, titulo: "Tú" } : null}
+                        />
+                    )}
+                </SafeAreaView>
+            </Modal>
         </SafeAreaView>
     );
 };
@@ -282,11 +320,40 @@ const styles = StyleSheet.create({
     },
     errorEncabezado: { color: Colors.errorContainer },
     mapa: {
-        marginHorizontal: 16,
+        marginHorizontal: 10,
     },
+    maximizarMapa: {
+        marginHorizontal: 10,
+        marginTop: 8,
+        minHeight: 48,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        borderRadius: 16,
+        backgroundColor: Colors.primaryContainer,
+    },
+    textoMaximizar: { fontSize: 15, color: Colors.primary },
+    mapaModal: { flex: 1, backgroundColor: Colors.primary },
+    encabezadoMapa: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        gap: 12,
+    },
+    tituloMapa: { flex: 1, fontSize: 20, color: Colors.white },
+    cerrarMapa: {
+        minHeight: 48,
+        paddingHorizontal: 8,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    mapaCompleto: { flex: 1, borderRadius: 0 },
     card: {
         padding: 18,
-        marginHorizontal: 16,
+        marginHorizontal: 10,
         marginTop: 16,
         gap: 10,
         borderRadius: 24,
